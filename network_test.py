@@ -1,69 +1,46 @@
 import os
-import network
+from network import *
+from configuration import *
 import unittest
 
 
-#! /home/anthill/vlg/decaf_131205/bin/python
-#/home/data0/vlg/Data/Images/PASCAL_VOC_2007/VOCdevkit/VOC2007/JPEGImages/000001.jpg
-
-def test():
-    # load the network model
-    print 'Load the network model'
-    modeldir = '/home/ironfs/scratch/vlg/Data/Images/'\
-        'ILSVRC2012/decaf_model_131205'
-    net = DecafNet(modeldir + '/imagenet.decafnet.epoch90', \
-		   modeldir + '/imagenet.decafnet.meta')
-    # load an example image
-    imagefile = '/home/ironfs/scratch/vlg/Data/Images/'\
-        'ILSVRC2012/val/ILSVRC2012_val_00000001.JPEG'
-    print 'Load the image ' + imagefile
-    img = np.asarray(io.imread(imagefile))
-    # classification
-    scores = net.classify(img)
-    print 'Top-5 predicted labels: ' + str(net.top_k_prediction(scores, 5))
-    # export the activation values for the fc6 layer (a feature vector)
-    scores = net.classify(img, center_only=True)
-    feature = net.feature('fc6_cudanet_out')
-    print 'The fc6 layer has ' + str(feature.size) + ' neurons'
-
-
-
-    imagenet_model_dir = '/home/anthill/aleb/ironfs_vlg/Data/Images'\
-        '/ILSVRC2012/decaf_model_131205'
-    ilsvrc_image_dir = '/home/anthill/aleb/ironfs_vlg/Data/Images/ILSVRC2012'
-    #ilsvrc_image_list = ilsvrc_image_dir + '/val_images_DBG.txt'
-    #gt_labels_file = ilsvrc_image_dir + '/val_labels_DBG.txt'
-    ilsvrc_image_list = ilsvrc_image_dir + '/val_images.txt'
-    gt_labels_file = ilsvrc_image_dir + '/val_labels.txt'
-    classid_words_file = ilsvrc_image_dir + '/classid_wnid_words.txt'
-    # split the list of images
-    fd = open(ilsvrc_image_list, 'r')
-    imagefiles = fd.read().split('\n')
-    fd.close()
-    imagefiles = [x for x in imagefiles if len(x) > 0]
-
-
-
-
-@unittest.skipIf(os.uname()[1] != 'anthill.cs.dartmouth.edu',
-                'Skipping TestParFunAnthill because we are not on Anthill')
-class NetworkDecaf(unittest.TestCase):
+class NetworkDecafTest(unittest.TestCase):
     def setUp(self):
-        self.parfun = parfun.ParFunAnthill(sample_function)
+	self.conf = Configuration()
+        self.net = NetworkDecaf(self.conf.ilsvrc2012_decaf_model_spec,\
+				self.conf.ilsvrc2012_decaf_model,\
+				self.conf.ilsvrc2012_classid_wnid_words)
 
     def tearDown(self):
-        self.parfun = None
+        self.net = None
 
-    def test_run1(self):
-        self.parfun.add_task(2, 3)
-        self.parfun.add_task(2, 2)
-        self.parfun.add_task(4, 5)
-        out = self.parfun.run()
-        self.assertEqual(out[0], 6)
-        self.assertEqual(out[1], 4)
-        self.assertEqual(out[2], 20)
+    def test_get_label_id(self):
+        self.assertEqual(self.net.get_label_id('n04201297'), 0)
+	self.assertEqual(self.net.get_label_id('n03063599'), 1)
+	self.assertEqual(self.net.get_label_id('n03961711'), 999)
 
-    def test_run2(self):
+    def test_get_label_desc(self):
+        self.assertEqual(self.net.get_label_desc('n04201297'), 'shoji')
+	self.assertEqual(self.net.get_label_desc('n03063599'), 'coffee mug')
+	self.assertEqual(self.net.get_label_desc('n03961711'), 'plate rack')
+
+    def test_get_labels(self):
+	labels = self.net.get_labels()
+        self.assertEqual(labels[0], 'n04201297')
+	self.assertEqual(labels[1], 'n03063599')
+	self.assertEqual(labels[999], 'n03961711')
+
+    def test_evaluate(self):
+	img = np.asarray(io.imread('ILSVRC2012_val_00000001_n01751748.JPEG'))
+	scores = self.net.evaluate(img, layer_name = 'softmax')
+        self.assertAlmostEqual(scores[0], 6.9254136e-09)
+	self.assertAlmostEqual(scores[999], 1.2282071e-08)
+	self.assertAlmostEqual(max(scores), 0.36385602)
+	scores = self.net.evaluate(img, layer_name = 'fc6_relu')
+	self.assertEqual(scores.shape[0], 1)
+	self.assertEqual(scores.shape[1], 4096)
+        self.assertAlmostEqual(scores[0,0], 0.0)
+	self.assertAlmostEqual(scores[0,3], 6.447751)
 
 #=============================================================================
 
