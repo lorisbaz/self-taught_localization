@@ -48,9 +48,18 @@ class Configuration:
             '/home/alessandro/Data/decaf_ImageNet_model/imagenet.decafnet.epoch90'
             self.pascal2007_images = '/home/alessandro/Data/VOCdevkit/VOC2007'\
             '/JPEGImages'
-        elif os.uname()[1] == 'LORIS_COMPUTER':
-            # TODO
-            raise NotImplementedError()
+        elif os.uname()[1] == 'loris-linux':
+	    ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
+            self.ilsvrc2012_train_images = ilsvrc2012_root + '/img_train'
+            self.ilsvrc2012_val_images = ilsvrc2012_root + '/img_val'
+            self.ilsvrc2012_classid_wnid_words = \
+            ilsvrc2012_root + '/classid_wnid_words.txt'
+            self.ilsvrc2012_decaf_model_spec = \
+            '/home/lbazzani/CODE/DATA/decaf_ImageNet_model/imagenet.decafnet.meta'
+            self.ilsvrc2012_decaf_model = \
+            '/home/lbazzani/CODE/DATA/decaf_ImageNet_model/imagenet.decafnet.epoch90'
+            self.pascal2007_images = '/home/lbazzani/DATASETS/VOC2007'\
+            '/JPEGImages'
         else:
             raise ValueError('The current machine is not supported')
 
