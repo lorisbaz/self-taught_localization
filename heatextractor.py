@@ -19,15 +19,15 @@ class HeatmapExtractor:
 #=============================================================================
 class HeatmapExtractorSegm(HeatmapExtractor):
     """
-    Extract a set of heatmaps built from the results of the CNN by obfuscating 
+    Extracts a set of heatmaps built from the results of the CNN by obfuscating 
     segments of the image
     """
-    def __init__(self, network):
+    def __init__(self, network, sigmas, mins, scales):
         self.network = network
         # segmentation parameters
-        self.sigma_   = [0.1,0.3,0.6,1]
-        self.min_     = 40
-        self.scale_   = [100,300,500]
+        self.sigma_   = sigmas
+        self.min_     = mins
+        self.scale_   = scales
 
     def extract(self, image, label = ''):
 	"""
