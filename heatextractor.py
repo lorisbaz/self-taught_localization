@@ -57,7 +57,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                 image_obf[segm_mask==id_segment] = np.mean(IMAGENET_MEAN)
                 
             # predict CNN reponse for obfuscation
-            caffe_rep_obf   = self.network.eval(image_obf)
+            caffe_rep_obf   = self.network.evaluate(image_obf)
             
             # Given the class of the image, select the confidence
             heatmap_loc[segm_mask==id_segment] = 1-caffe_rep_obf[lab_id]    
