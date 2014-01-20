@@ -1,6 +1,7 @@
 import numpy as np
 from skimage import io
 from decaf.scripts.imagenet import DecafNet
+import caffe.imagenet
 
 
 class Network:
@@ -49,8 +50,8 @@ class NetworkDecaf(Network):
     """
     Implementation for the Decaf library.
     """
-    def __init__(self, model_spec_filename, model_filename, \
-        wnid_words_filename):
+    def __init__(self, model_spec_filename, model_filename,\
+                 wnid_words_filename):
         # load Decaf model
         self.net_ = DecafNet(model_filename, model_spec_filename)
         # build a dictionary label --> description
@@ -99,4 +100,53 @@ class NetworkDecaf(Network):
 
 #=============================================================================
 
-# TODO here to implement Caffe
+class NetworkCaffe(Network):
+    """
+    Implementation for the Caffe library.
+    """
+    def __init__(self, model_spec_filename, model_filename,\
+                 wnid_words_filename, caffe_mode = 'cpu'):
+        # load Caffe model
+        # *** TODO ***
+        # center_only should be True, but PyCaffe has a bug
+        # which makes the software crash :-/
+        self.net_ = caffe.imagenet.ImageNetClassifier( \
+                            model_spec_filename, model_filename, \
+                            center_only = False)
+        self.net_.caffenet.set_phase_test()
+        if caffe_mode == 'cpu':
+            self.net_.caffenet.set_mode_cpu()
+        elif caffe_mode == 'gpu':
+            self.net_.caffenet.set_mode_gpu()
+        else:
+            raise ValueError('caffe_mode not recognized')
+        # build a dictionary label --> description
+        # and a dictionary label --> label_id
+        self.dict_label_desc_ = {}
+        self.dict_label_id_ = {}
+        self.labels_ = []
+        fd = open(wnid_words_filename)
+        line_number = 0
+        for line in fd:
+            wnid = line[0:9].strip()
+            words = line[10:].strip()
+            self.dict_label_desc_[wnid] = words
+            self.dict_label_id_[wnid] = line_number
+            self.labels_.append(wnid)
+            line_number += 1
+        fd.close()
+
+    def get_label_id(self, label):
+        return self.dict_label_id_[label]
+
+    def get_label_desc(self, label):
+        return self.dict_label_desc_[label]
+
+    def get_labels(self):
+        return self.labels_
+
+    def evaluate(self, img, layer_name = 'softmax'):
+        if layer_name == 'softmax':
+            return self.net_.predict(img)
+        else:
+            raise ValueError('layer_name not supported')

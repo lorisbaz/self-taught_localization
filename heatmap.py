@@ -16,15 +16,15 @@ class Heatmap:
         raise NotImplementedError()
 
     def get(self):
-	"""
-	Returns a ndarray.float
-	"""
+        """
+        Returns a ndarray.float
+        """
         raise NotImplementedError()
 
     def export_to_jpeg(self):
-	"""
-	Returns a string of bytes containing a Jpeg visualization
-	"""
+        """
+        Returns a string of bytes containing a Jpeg visualization
+        """
         raise NotImplementedError()
 
     def save_to_jpeg(self, filename):
@@ -32,10 +32,10 @@ class Heatmap:
 
     @staticmethod
     def average_heatmaps(heatmaps):
-	"""
-	Returns a Heatmap object produced by averaging a set of
-	heatmaps.
-	"""
+        """
+        Returns a Heatmap object produced by averaging a set of
+        heatmaps.
+        """
 
 
 #=============================================================================
