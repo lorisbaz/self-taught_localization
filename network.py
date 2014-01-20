@@ -1,7 +1,13 @@
 import numpy as np
 from skimage import io
-from decaf.scripts.imagenet import DecafNet
-import caffe.imagenet
+try:
+    from decaf.scripts.imagenet import DecafNet
+except: 
+    print "Warning: Decaf not loaded. \n"
+try:
+    import caffe.imagenet
+except:
+    print "Warning: Caffe not loaded. \n"
 
 
 class Network:

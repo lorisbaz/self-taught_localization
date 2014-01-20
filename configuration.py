@@ -47,6 +47,9 @@ class Configuration:
             self.ilsvrc2012_caffe_model = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/caffe_reference_imagenet_model'
+            self.ilsvrc2012_avg_image = \
+                '/home/anthill/vlg/caffe_131211/caffe/python/caffe/imagenet'\
+                '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/anthill/vlg/caffe_131211/caffe/examples/synset_words.txt'
             self.pascal2007_images = \
@@ -70,12 +73,14 @@ class Configuration:
             self.ilsvrc2012_caffe_model = \
                 '/home/alessandro/Data/ILSVRC2012/caffe_model'\
                 '/caffe_reference_imagenet_model'
+            self.ilsvrc2012_avg_image = \
+                'TODO'
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/alessandro/Code/caffe_131211/caffe/examples'\
                 '/synset_words.txt'
             self.pascal2007_images = '/home/alessandro/Data/VOCdevkit/VOC2007'\
             '/JPEGImages'
-        elif os.uname()[1] == 'loris-linux':
+        elif os.uname()[1] == 'lbazzani-desk':
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
             self.ilsvrc2012_train_images = ilsvrc2012_root + '/img_train'
             self.ilsvrc2012_val_images = ilsvrc2012_root + '/img_val'
@@ -87,9 +92,18 @@ class Configuration:
             self.ilsvrc2012_decaf_model = \
                '/home/lbazzani/CODE/DATA/decaf_ImageNet_model'\
                '/imagenet.decafnet.epoch90'
-            self.ilsvrc2012_caffe_model_spec = 'TODO'
-            self.ilsvrc2012_caffe_model = 'TODO'
-            self.ilsvrc2012_caffe_wnids_words = 'TODO'
+            self.ilsvrc2012_caffe_model_spec = \
+                '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
+                '/imagenet_deploy.prototxt'
+            self.ilsvrc2012_caffe_model = \
+                '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
+                '/caffe_reference_imagenet_model'
+            self.ilsvrc2012_avg_image = \
+                '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
+                '/ilsvrc_2012_mean.npy'
+            self.ilsvrc2012_caffe_wnids_words = \
+                '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
+                '/synset_words.txt'
             self.pascal2007_images = '/home/lbazzani/DATASETS/VOC2007'\
                '/JPEGImages'
         else:
