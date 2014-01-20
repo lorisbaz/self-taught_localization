@@ -31,20 +31,19 @@ class HeatmapExtractorSegm(HeatmapExtractor):
 	Perform segmentation-based obfuscationa and returns a set of heatmaps (Heatmap objects)
 	"""
         # retrieve the label id
-        lab_id      = self.network.get_label_id(label)    
+        lab_id = self.network.get_label_id(label)    
         # Init the list of heamaps
-        heamaps     = []
+        heamaps = []
         # Classify the full image without obfuscation
-        caffe_rep_full   = net.predict(image)
+        caffe_rep_full = net.predict(image)
         # Perform segmentation
         segm_masks = self.segment.extract(image) # list of segmentation masks    
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
-            heatmap     = Heatmap(img.shape[0], img.shape[1]) # init heatmap     
-            segm_mask   = segm_masks[s] # retrieve s-th mask
+            heatmap = Heatmap(img.shape[0], img.shape[1]) # init heatmap     
+            segm_mask = segm_masks[s] # retrieve s-th mask
             # obfuscation & heatmap
-            heatmap_loc = np.zeros(np.shape(segm_mask))
             for id_segment in range(np.max(segm_mask)):
-                image_obf  = np.array(image) # copy array            
+                image_obf = np.array(image) # copy array            
                 # obfuscation 
                 if np.shape(image.shape)[0]>2: 
                     image_obf[segm_mask==id_segment,0] = self.network.get_mean_img()[0]
@@ -53,7 +52,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                 else: # consider ldg images
                     image_obf[segm_mask==id_segment] = np.mean(self.network.get_mean_img())
                 # predict CNN reponse for obfuscation
-                caffe_rep_obf   = self.network.evaluate(image_obf)
+                caffe_rep_obf = self.network.evaluate(image_obf)
                 # Given the class of the image, select the confidence
                 #confidence = 1-caffe_rep_obf[lab_id]     ## TODO: test this
                 confidence = caffe_rep_full[lab_id] - caffe_rep_obf[lab_id]
