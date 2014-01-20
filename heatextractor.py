@@ -24,7 +24,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
     def __init__(self, network, segment):
         self.network = network
         self.segment = segment
-
+        
     def extract(self, image, label = ''):
 	"""
 	Perform segmentation-based obfuscationa and returns a set of heatmaps (Heatmap objects)
@@ -40,7 +40,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
         
-            #heatmap     = Heatmap() # init heatmap     
+            heatmap     = Heatmap() # init heatmap     
 
             segm_mask   = segm_masks[s] # retrieve s-th mask
 
@@ -50,11 +50,11 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                 image_obf  = np.array(image) # copy array
 
                 if np.shape(image.shape)[0]>2: 
-                    image_obf[segm_mask==id_segment,0] = IMAGENET_MEAN[0]
-                    image_obf[segm_mask==id_segment,1] = IMAGENET_MEAN[1]
-                    image_obf[segm_mask==id_segment,2] = IMAGENET_MEAN[2]   
+                    image_obf[segm_mask==id_segment,0] = self.network.get_mean_img()[0]
+                    image_obf[segm_mask==id_segment,1] = self.network.get_mean_img()[1]
+                    image_obf[segm_mask==id_segment,2] = self.network.get_mean_img()[2]   
                 else: # consider ldg images
-                    image_obf[segm_mask==id_segment] = np.mean(IMAGENET_MEAN)
+                    image_obf[segm_mask==id_segment] = np.mean(self.network.get_mean_img())
 
                 # predict CNN reponse for obfuscation
                 caffe_rep_obf   = self.network.evaluate(image_obf)

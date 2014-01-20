@@ -49,7 +49,8 @@ class NetworkCaffeTest(unittest.TestCase):
         self.conf = Configuration()
         self.net = NetworkCaffe(self.conf.ilsvrc2012_caffe_model_spec,\
                                 self.conf.ilsvrc2012_caffe_model,\
-                                self.conf.ilsvrc2012_caffe_wnids_words)
+                                self.conf.ilsvrc2012_caffe_wnids_words,\
+                                self.conf.ilsvrc2012_caffe_avg_image)
 
     def tearDown(self):
         self.net = None

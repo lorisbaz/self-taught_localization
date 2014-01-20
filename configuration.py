@@ -47,7 +47,7 @@ class Configuration:
             self.ilsvrc2012_caffe_model = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/caffe_reference_imagenet_model'
-            self.ilsvrc2012_avg_image = \
+            self.ilsvrc2012_caffe_avg_image = \
                 '/home/anthill/vlg/caffe_131211/caffe/python/caffe/imagenet'\
                 '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
@@ -73,7 +73,7 @@ class Configuration:
             self.ilsvrc2012_caffe_model = \
                 '/home/alessandro/Data/ILSVRC2012/caffe_model'\
                 '/caffe_reference_imagenet_model'
-            self.ilsvrc2012_avg_image = \
+            self.ilsvrc2012_caffe_avg_image = \
                 'TODO'
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/alessandro/Code/caffe_131211/caffe/examples'\
@@ -98,7 +98,7 @@ class Configuration:
             self.ilsvrc2012_caffe_model = \
                 '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
                 '/caffe_reference_imagenet_model'
-            self.ilsvrc2012_avg_image = \
+            self.ilsvrc2012_caffe_avg_image = \
                 '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
                 '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \

@@ -1,5 +1,6 @@
 import numpy as np
 from skimage import io
+import os
 try:
     from decaf.scripts.imagenet import DecafNet
 except: 
@@ -32,6 +33,12 @@ class Network:
         """
         raise NotImplementedError()
 
+    def get_mean_img(self):
+        """
+        Returns the unique label id \in {0, ..., num_labels-1}
+        """
+        raise NotImplementedError()
+    
     def get_label_id(self, label):
         """
         Returns the unique label id \in {0, ..., num_labels-1}
@@ -76,6 +83,12 @@ class NetworkDecaf(Network):
         for i, desc in enumerate(self.net_.label_names):
             self.dict_label_id_[dict_desc_label[desc]] = i
             self.labels_.append(dict_desc_label[desc])
+        # Load the mean vector from file
+        self.net_.mean_img = np.mean(np.mean(self.net_._data_mean,axis=1),axis=0) # mean of 3 channels
+        self.net_.mean_img = self.net_.mean_img[::-1]   # it is in BGR convert in RGB
+        
+    def get_mean_img(self):
+        return self.net_.mean_img
 
     def get_label_id(self, label):
         return self.dict_label_id_[label]
@@ -111,7 +124,8 @@ class NetworkCaffe(Network):
     Implementation for the Caffe library.
     """
     def __init__(self, model_spec_filename, model_filename,\
-                 wnid_words_filename, caffe_mode = 'cpu'):
+                 wnid_words_filename, mean_img_filename, \
+                 caffe_mode = 'cpu'):
         # load Caffe model
         # *** TODO ***
         # center_only should be True, but PyCaffe has a bug
@@ -141,7 +155,14 @@ class NetworkCaffe(Network):
             self.labels_.append(wnid)
             line_number += 1
         fd.close()
+        # Load the mean vector from file
+        self.net_.mean_img = np.load(os.path.join(os.path.dirname(__file__), mean_img_filename))
+        self.net_.mean_img = np.mean(np.mean(self.net_.mean_img,axis=1),axis=0) # mean of 3 channels
+        self.net_.mean_img = self.net_.mean_img[::-1]   # it is in BGR convert in RGB
 
+    def get_mean_img(self):
+        return self.net_.mean_img
+    
     def get_label_id(self, label):
         return self.dict_label_id_[label]
 
