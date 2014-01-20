@@ -47,6 +47,9 @@ class Configuration:
             self.ilsvrc2012_caffe_model = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/caffe_reference_imagenet_model'
+            self.ilsvrc2012_avg_image = \
+                '/home/anthill/vlg/caffe_131211/caffe/python/caffe/imagenet'\
+                '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/anthill/vlg/caffe_131211/caffe/examples/synset_words.txt'
             self.pascal2007_images = \
@@ -97,7 +100,7 @@ class Configuration:
                 '/caffe_reference_imagenet_model'
             self.ilsvrc2012_avg_image = \
                 '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
-                '/ilsvrc_2012_mean.txt'
+                '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
                 '/synset_words.txt'
