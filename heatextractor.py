@@ -35,11 +35,11 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         # Init the list of heamaps
         heamaps = []
         # Classify the full image without obfuscation
-        caffe_rep_full = net.predict(image)
+        caffe_rep_full = self.network.evaluate(image)
         # Perform segmentation
         segm_masks = self.segment.extract(image) # list of segmentation masks    
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
-            heatmap = Heatmap(img.shape[0], img.shape[1]) # init heatmap     
+            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap     
             segm_mask = segm_masks[s] # retrieve s-th mask
             # obfuscation & heatmap
             for id_segment in range(np.max(segm_mask)):

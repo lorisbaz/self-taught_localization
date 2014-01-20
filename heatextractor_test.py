@@ -30,6 +30,7 @@ class HeatmapExtractorSegmCaffe(unittest.TestCase):
 #=============================================================================
 
 # TODO here test slic segmentation, whenever it is implemented
+# TODO here test DeCaf
 
 #=============================================================================
 
