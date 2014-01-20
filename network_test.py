@@ -7,9 +7,9 @@ import unittest
 class NetworkDecafTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()
-        self.net = NetworkDecaf(self.conf.ilsvrc2012_decaf_model_spec,\
-                                self.conf.ilsvrc2012_decaf_model,\
-                                self.conf.ilsvrc2012_classid_wnid_words)
+        self.net  = NetworkDecaf(self.conf.ilsvrc2012_decaf_model_spec,\
+                                 self.conf.ilsvrc2012_decaf_model,\
+                                 self.conf.ilsvrc2012_classid_wnid_words)
 
     def tearDown(self):
         self.net = None
