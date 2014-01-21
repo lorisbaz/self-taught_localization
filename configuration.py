@@ -74,12 +74,13 @@ class Configuration:
                 '/home/alessandro/Data/ILSVRC2012/caffe_model'\
                 '/caffe_reference_imagenet_model'
             self.ilsvrc2012_caffe_avg_image = \
-                'TODO'
+                '/home/alessandro/Code/caffe_131211/caffe/python/caffe/imagenet'\
+                '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/alessandro/Code/caffe_131211/caffe/examples'\
                 '/synset_words.txt'
             self.pascal2007_images = '/home/alessandro/Data/VOCdevkit/VOC2007'\
-            '/JPEGImages'
+                '/JPEGImages'
         elif os.uname()[1] == 'lbazzani-desk':
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
             self.ilsvrc2012_train_images = ilsvrc2012_root + '/img_train'
