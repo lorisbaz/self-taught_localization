@@ -41,6 +41,8 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertEqual(scores.shape[1], 4096)
         self.assertAlmostEqual(scores[0,0], 0.0)
         self.assertAlmostEqual(scores[0,3], 6.447751, places=5)
+        self.assertAlmostEqual(scores[0,564], 7.011354, places=5)
+        self.assertAlmostEqual(scores[0,3530], 18.45673, places=5)
 
 #=============================================================================
 
