@@ -15,7 +15,7 @@ class HeatmapExtractorSegmCaffe(unittest.TestCase):
                                 self.conf.ilsvrc2012_caffe_wnids_words,\
                                 self.conf.ilsvrc2012_caffe_avg_image)
         self.segm = ImgSegmFelzen(sigmas=[0.4, 0.6], mins=[40], scales=[100, 300])  
-        self.heatext = HeatmapExtractorSegm(self.net, self.segm)
+        self.heatext = HeatmapExtractorSegm(self.net, self.segm, confidence_tech = 'only_obf')
         
     def tearDown(self):
         self.conf = None
