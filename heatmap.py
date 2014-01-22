@@ -1,5 +1,5 @@
 import numpy as np
-import scipy.misc
+import skimage.io
 
 class Heatmap:
     """class for Heatmap"""
@@ -64,7 +64,7 @@ class Heatmap:
 
     def export_to_image(self):
         """
-        Returns a PIL image, which consists of a visualization of the values.
+        Returns a ndarray, which consists of a visualization of the values.
         All the values < 0 are mapped to zero, and all the ones > 1.0 are
         mapped to 255. The values in between are linearly scaled.
         """
@@ -74,14 +74,14 @@ class Heatmap:
                 raw_image[y,x] = round(self.vals_[y,x] * 255.0)
                 raw_image[y,x] = min(raw_image[y,x], 255)
                 raw_image[y,x] = max(raw_image[y,x], 0)
-        return scipy.misc.toimage(raw_image)
+        return raw_image
 
     def save_to_image(self, filename):
         """
         Same as 'export_to_image', but saving the visualization to a file.
         """
         image = self.export_to_image()
-        scipy.misc.imsave(filename, image)
+        skimage.io.imsave(filename, image)
 
     @staticmethod
     def sum_heatmaps(heatmaps):

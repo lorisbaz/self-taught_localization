@@ -110,7 +110,7 @@ class NetworkDecafTest(unittest.TestCase):
         """
         This test generates an an image with a gray gradient from
         left (black) to right (white).
-        TODO. Test that the gradient saved in the jpeg file does actually
+        TODO. Test that the gradient saved in the PNG file does actually
               match the expected one.
         """
         for y in range(self.heat2.vals_.shape[0]):
@@ -118,7 +118,7 @@ class NetworkDecafTest(unittest.TestCase):
                 self.heat2.vals_[y,x] = x / (1.5 * self.heat2.vals_.shape[1])
                 self.heat2.counts_[y,x] = 1
         image = self.heat2.export_to_image()
-        (fd, filename) = tempfile.mkstemp(suffix = '.jpg')
+        (fd, filename) = tempfile.mkstemp(suffix = '.png')
         os.close(fd)
         self.heat2.save_to_image(filename)
         os.remove(filename)
