@@ -45,7 +45,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
             heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap     
             segm_mask = segm_masks[s] # retrieve s-th mask
             # obfuscation & heatmap
-            for id_segment in range(np.max(segm_mask)):
+            for id_segment in range(np.max(segm_mask)+1):
                 image_obf = np.array(image) # copy array            
                 # obfuscation 
                 if np.shape(image.shape)[0]>2: # RGB images
@@ -66,7 +66,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                 # update the heatmap
                 heatmap.add_val_segment(confidence, id_segment, segm_mask, self.area_normalization) 
             heamaps.append(heatmap) # append the heatmap to the list                    
-        return heamaps
+        return heamaps, segm_masks
         
         
 #=============================================================================

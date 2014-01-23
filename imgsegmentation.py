@@ -34,8 +34,8 @@ class ImgSegmFelzen(ImgSegm):
         for sg in range(np.shape(self.sigma_)[0]):
             for m in range(np.shape(self.min_)[0]):
                 for sc in range(np.shape(self.scale_)[0]):
-                    segm_mask = segmentation.felzenszwalb(image, self.sigma_[sg],\
-                                            self.min_[m], self.scale_[sc]) 
+                    segm_mask = segmentation.felzenszwalb(image, self.scale_[sc],\
+                                            self.sigma_[sg], self.min_[m]) 
                     segmentations.append(segm_mask) # append the heatmap to the lis              
         return segmentations
         
