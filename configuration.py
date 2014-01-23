@@ -35,6 +35,9 @@ class Configuration:
             ilsvrc2012_root = '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012'
             self.ilsvrc2012_train_images = ilsvrc2012_root + '/train'
             self.ilsvrc2012_val_images = ilsvrc2012_root + '/val'
+            self.ilsvrc2012_test_images = ilsvrc2012_root + '/test'
+            self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/box_train'
+            self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/box_val'
             self.ilsvrc2012_classid_wnid_words = \
                 ilsvrc2012_root + '/classid_wnid_words.txt'
             self.ilsvrc2012_decaf_model_spec = \
@@ -59,6 +62,9 @@ class Configuration:
             ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'
             self.ilsvrc2012_train_images = ilsvrc2012_root + '/train'
             self.ilsvrc2012_val_images = ilsvrc2012_root + '/val'
+            self.ilsvrc2012_test_images = ilsvrc2012_root + '/test'
+            self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/box_train'
+            self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/box_val'
             self.ilsvrc2012_classid_wnid_words = \
                 ilsvrc2012_root + '/classid_wnid_words.txt'
             self.ilsvrc2012_decaf_model_spec = \
@@ -85,6 +91,9 @@ class Configuration:
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
             self.ilsvrc2012_train_images = ilsvrc2012_root + '/img_train'
             self.ilsvrc2012_val_images = ilsvrc2012_root + '/img_val'
+            self.ilsvrc2012_test_images = ilsvrc2012_root + '/img_test'
+            self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/box_train'
+            self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/box_val'
             self.ilsvrc2012_classid_wnid_words = \
                 ilsvrc2012_root + '/classid_wnid_words.txt'
             self.ilsvrc2012_decaf_model_spec = \
