@@ -7,6 +7,7 @@ from network import *
 from configuration import *
 from imgsegmentation import *
 from heatextractor import *
+from htmlreport import *
 
 # Parameters
 sigmas = [0.4, 0.5]
@@ -22,14 +23,16 @@ def get_label_from_gt(file,gt_path):
     lab_name = str(lab_name.firstChild.data) # get the value of the label
     return lab_name
 
-def visualize_partial_results(image, heatmaps, segm_masks):
+def visualize_partial_results(image, heatmaps):
     # Partial visualization for qualitativa understanding of the results
     import pylab as pl
     n_maps = np.shape(heatmaps)[0]
+    pl.subplot(1,n_maps+1,1)
+    pl.imshow(image)
     for p in range(n_maps):
         #pl.subplot(2,n_maps,2*p+1)
         #pl.imshow(segm_masks[p])
-        pl.subplot(1,n_maps,p)
+        pl.subplot(1,n_maps+1,p+2)
         pl.imshow(heatmaps[p].get_values())
     pl.show()
     
@@ -45,16 +48,29 @@ if __name__ == "__main__":
     segm = ImgSegmFelzen(scales, sigmas, mins)    
     # heatmap extraction based on segmentation
     heatext = HeatmapExtractorSegm(net, segm, confidence_tech = 'full_obf', area_normalization = False)
+    # Init html object to save results
+    htmlres = HtmlReport()
     
-    # cycle over classes and images in the validation set
+    # cycle over images in the validation set
     filename_list = glob.glob(conf.ilsvrc2012_val_images+'/*.JPEG')
-    file = filename_list[0]
-    #for file in filename_list:
-    img = imread(file)
-    class_label = get_label_from_gt(file,conf.ilsvrc2012_val_box_gt)
-    start = time.clock()
-    heatmaps = heatext.extract(img, class_label)
-    elapsed = (time.clock() - start)
-    # Some qualitative analysis
-    print 'Elapsed Time: ' + str(elapsed)
-    visualize_partial_results(img, heatmaps, segm_masks)       
+    counter = 1
+    #file = filename_list[23425]
+    for file in filename_list:
+        img = imread(file)
+        class_label = get_label_from_gt(file,conf.ilsvrc2012_val_box_gt)
+        start = time.clock()
+        heatmaps = heatext.extract(img, class_label)
+        elapsed = (time.clock() - start)
+        # save results
+        htmlres.add_image_embedded(img, proportion = 0.5) 
+        for p in range(np.shape(heatmaps)[0]):
+            htmlres.add_image_embedded(heatmaps[p].get_values(), proportion = 0.5) 
+        # estimate time for each image & print some info
+        counter = counter + 1 
+        print os.path.basename(file) + ', elapsed Time: ' + str(elapsed) + \
+              ', process: ' + str(counter/float(np.shape(filename_list)[0])) + '%' + '\n'      
+        ## Some qualitative analysis
+        #visualize_partial_results(img, heatmaps)       
+
+    # save html
+    htmlres.save('results.html')
