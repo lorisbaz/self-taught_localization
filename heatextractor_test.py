@@ -14,7 +14,7 @@ class HeatmapExtractorSegmCaffe(unittest.TestCase):
                                 self.conf.ilsvrc2012_caffe_model,\
                                 self.conf.ilsvrc2012_caffe_wnids_words,\
                                 self.conf.ilsvrc2012_caffe_avg_image)
-        self.segm = ImgSegmFelzen(sigmas=[0.4, 0.6], mins=[40], scales=[100, 300])  
+        self.segm = ImgSegmFelzen(scales=[200, 300], sigmas=[0.4, 0.5], mins=[40])  
         self.heatext = HeatmapExtractorSegm(self.net, self.segm, confidence_tech = 'only_obf')
         
     def tearDown(self):
@@ -29,14 +29,14 @@ class HeatmapExtractorSegmCaffe(unittest.TestCase):
         print 'Heatmap computation using segmentation may take a while (around 30-40 seconds)...'
         heatmaps = self.heatext.extract(img,'n01751748')
         self.assertEqual(np.shape(heatmaps)[0], 4)
-        self.assertAlmostEqual(np.sum(heatmaps[0].get_values()), 7.226420715, places=5)
-        self.assertAlmostEqual(heatmaps[0].get_values()[50,50], 0.001178693, places=5)
-        self.assertAlmostEqual(np.sum(heatmaps[1].get_values()), 0.421182818, places=5)
-        self.assertAlmostEqual(heatmaps[1].get_values()[70,70], 0.0, places=5)
-        self.assertAlmostEqual(np.sum(heatmaps[2].get_values()), 6.376812301, places=5)
-        self.assertAlmostEqual(heatmaps[2].get_values()[50,50], 0.001235786, places=5)
-        self.assertAlmostEqual(np.sum(heatmaps[3].get_values()), 0.302846163, places=5)
-        self.assertAlmostEqual(heatmaps[3].get_values()[50,50], 8.763283776e-05, places=5)
+        self.assertAlmostEqual(np.sum(heatmaps[0].get_values()), 23.29836165, places=5)
+        self.assertAlmostEqual(heatmaps[0].get_values()[50,50], 0.046209613, places=5)
+        self.assertAlmostEqual(np.sum(heatmaps[1].get_values()), 23.31647561, places=5)
+        self.assertAlmostEqual(heatmaps[1].get_values()[70,70], 0.000112873, places=5)
+        self.assertAlmostEqual(np.sum(heatmaps[2].get_values()), 28.93356962, places=5)
+        self.assertAlmostEqual(heatmaps[2].get_values()[50,50], 0.017993079, places=5)
+        self.assertAlmostEqual(np.sum(heatmaps[3].get_values()), 21.76335575, places=5)
+        self.assertAlmostEqual(heatmaps[3].get_values()[50,50], 0.017954075, places=5)
         
 #=============================================================================
 

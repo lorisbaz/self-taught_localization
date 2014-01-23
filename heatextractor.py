@@ -66,7 +66,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                 # update the heatmap
                 heatmap.add_val_segment(confidence, id_segment, segm_mask, self.area_normalization) 
             heamaps.append(heatmap) # append the heatmap to the list                    
-        return heamaps, segm_masks
+        return heamaps
         
         
 #=============================================================================

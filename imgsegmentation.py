@@ -19,7 +19,7 @@ class ImgSegmFelzen(ImgSegm):
     """
     Extract a set of segmentations depending on the selected method
     """
-    def __init__(self, sigmas, mins, scales):
+    def __init__(self, scales, sigmas, mins):
         # segmentation parameters
         self.sigma_ = sigmas
         self.min_ = mins

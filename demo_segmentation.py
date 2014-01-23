@@ -23,14 +23,16 @@ def get_label_from_gt(file,gt_path):
     return lab_name
 
 def visualize_partial_results(image, heatmaps, segm_masks):
+    # Partial visualization for qualitativa understanding of the results
     import pylab as pl
     n_maps = np.shape(heatmaps)[0]
     for p in range(n_maps):
-        pl.subplot(2,n_maps,2*p+1)
-        pl.imshow(segm_masks[p])
-        pl.subplot(2,n_maps,2*p+2)
+        #pl.subplot(2,n_maps,2*p+1)
+        #pl.imshow(segm_masks[p])
+        pl.subplot(1,n_maps,p)
         pl.imshow(heatmaps[p].get_values())
     pl.show()
+    
     
 ## MAIN ##
 if __name__ == "__main__":
@@ -40,7 +42,7 @@ if __name__ == "__main__":
                        conf.ilsvrc2012_caffe_wnids_words,\
                        conf.ilsvrc2012_caffe_avg_image)
     # segmentation obj Felzenswalb
-    segm = ImgSegmFelzen(sigmas, mins, scales)    
+    segm = ImgSegmFelzen(scales, sigmas, mins)    
     # heatmap extraction based on segmentation
     heatext = HeatmapExtractorSegm(net, segm, confidence_tech = 'full_obf', area_normalization = False)
     
@@ -51,7 +53,7 @@ if __name__ == "__main__":
     img = imread(file)
     class_label = get_label_from_gt(file,conf.ilsvrc2012_val_box_gt)
     start = time.clock()
-    heatmaps, segm_masks = heatext.extract(img, class_label)
+    heatmaps = heatext.extract(img, class_label)
     elapsed = (time.clock() - start)
     # Some qualitative analysis
     print 'Elapsed Time: ' + str(elapsed)

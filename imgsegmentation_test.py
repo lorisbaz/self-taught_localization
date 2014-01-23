@@ -5,8 +5,8 @@ import unittest
 class ImgSegmFelzen(unittest.TestCase):
     def setUp(self):
         from imgsegmentation import *     
-        self.segmenter1 = ImgSegmFelzen(sigmas=[0.4], mins=[40], scales=[300]) # test single segmentations
-        self.segmenter2 = ImgSegmFelzen(sigmas=[0.1, 0.4], mins=[40], scales=[100, 300]) # test multiple segmentations
+        self.segmenter1 = ImgSegmFelzen(scales=[300], sigmas=[0.4], mins=[40]) # test single segmentations
+        self.segmenter2 = ImgSegmFelzen(scales=[200, 300], sigmas=[0.3, 0.4], mins=[40]) # test multiple segmentations
         
     def tearDown(self):
         self.segmenter1 = None
@@ -15,19 +15,19 @@ class ImgSegmFelzen(unittest.TestCase):
     def test_extract(self):
         img = imread('ILSVRC2012_val_00000001_n01751748.JPEG')
         segm_mask = self.segmenter1.extract(img)
-        self.assertEqual(segm_mask[0][100,10], 131)
-        self.assertEqual(segm_mask[0][100,100], 268)
-        self.assertEqual(np.max(segm_mask[0]), 671)
+        self.assertEqual(segm_mask[0][100,10], 127)
+        self.assertEqual(segm_mask[0][100,100], 0)
+        self.assertEqual(np.max(segm_mask[0]), 662)
         segm_masks = self.segmenter2.extract(img)
-        self.assertEqual(segm_masks[0][100,10], 282)
-        self.assertEqual(segm_masks[0][100,100], 32)
-        self.assertEqual(np.max(segm_masks[0]), 1669)
-        self.assertEqual(segm_masks[2][100,10], 126)
-        self.assertEqual(segm_masks[2][100,100], 310)
-        self.assertEqual(np.max(segm_masks[2]), 1642)
-        self.assertEqual(segm_masks[3][100,10], 131)
-        self.assertEqual(segm_masks[3][100,100], 268)
-        self.assertEqual(np.max(segm_masks[3]), 671)
+        self.assertEqual(segm_masks[0][100,10], 0)
+        self.assertEqual(segm_masks[0][100,100], 0)
+        self.assertEqual(np.max(segm_masks[0]), 0)
+        self.assertEqual(segm_masks[2][100,10], 66)
+        self.assertEqual(segm_masks[2][100,100], 0)
+        self.assertEqual(np.max(segm_masks[2]), 409)
+        self.assertEqual(segm_masks[3][100,10], 127)
+        self.assertEqual(segm_masks[3][100,100], 0)
+        self.assertEqual(np.max(segm_masks[3]), 662)
 
 #=============================================================================
 
