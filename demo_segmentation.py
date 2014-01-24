@@ -11,10 +11,10 @@ from heatextractor import *
 from htmlreport import *
 
 # Parameters
-sigmas = [0.5, 0.8]
+sigmas = [0.4, 0.5]
 mins = [40] 
 scales = [300]
-fix_sz = 200
+fix_sz = 300
 
 def get_label_from_gt(file,gt_path):
     # NOTE: this function is for ImageNet ONLY
@@ -72,9 +72,9 @@ if __name__ == "__main__":
         heatmaps = heatext.extract(img, class_label)
         elapsed = (time.clock() - start)
         # save results
-        htmlres.add_image_embedded(img, proportion = 0.5) 
+        htmlres.add_image_embedded(img, proportion = 0.8) 
         for p in range(np.shape(heatmaps)[0]):
-            htmlres.add_image_embedded(heatmaps[p].get_values(), proportion = 0.5) 
+            htmlres.add_image_embedded(heatmaps[p].get_values(), proportion = 0.8) 
         # estimate time for each image & print some info
         counter = counter + 1 
         print os.path.basename(file) + ', elapsed Time: ' + str(elapsed) + \
