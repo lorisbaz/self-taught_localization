@@ -85,7 +85,7 @@ class NetworkDecaf(Network):
             self.labels_.append(dict_desc_label[desc])
         # Load the mean vector from file
         self.net_.mean_img = np.mean(np.mean(self.net_._data_mean,axis=1),axis=0) # mean of 3 channels
-        self.net_.mean_img = self.net_.mean_img[::-1]   # it is in BGR convert in RGB
+        #self.net_.mean_img = self.net_.mean_img[::-1]   # it is in BGR convert in RGB
         
     def get_mean_img(self):
         return self.net_.mean_img

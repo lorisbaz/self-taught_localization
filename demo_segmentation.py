@@ -1,6 +1,7 @@
 import numpy as np
 import time
 from skimage.data import imread
+from skimage.transform import resize
 from xml.dom import minidom
 import glob
 from network import *
@@ -10,9 +11,10 @@ from heatextractor import *
 from htmlreport import *
 
 # Parameters
-sigmas = [0.4, 0.5]
+sigmas = [0.5, 0.8]
 mins = [40] 
 scales = [300]
+fix_sz = 200
 
 def get_label_from_gt(file,gt_path):
     # NOTE: this function is for ImageNet ONLY
@@ -57,6 +59,14 @@ if __name__ == "__main__":
     #file = filename_list[23425]
     for file in filename_list:
         img = imread(file)
+        # rescale max(H,W) ->  fix_sz
+        img_sz = np.shape(img)
+        max_sz = np.argmax(img_sz)
+        prop_sz = fix_sz/float(img_sz[max_sz])
+        if max_sz==0:
+            img = resize(img, (fix_sz, int(prop_sz*img_sz[1])))
+        else:
+            img = resize(img, (int(prop_sz*img_sz[0]), fix_sz))
         class_label = get_label_from_gt(file,conf.ilsvrc2012_val_box_gt)
         start = time.clock()
         heatmaps = heatext.extract(img, class_label)
@@ -70,7 +80,8 @@ if __name__ == "__main__":
         print os.path.basename(file) + ', elapsed Time: ' + str(elapsed) + \
               ', process: ' + str(counter/float(np.shape(filename_list)[0])) + '%' + '\n'      
         ## Some qualitative analysis
-        #visualize_partial_results(img, heatmaps)       
+        #visualize_partial_results(img, heatmaps) 
+        break
 
     # save html
     htmlres.save('results.html')
