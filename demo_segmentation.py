@@ -12,7 +12,7 @@ from htmlreport import *
 
 # Parameters
 sigmas = [0.4, 0.5]
-mins = [40] 
+mins = [40]
 scales = [300]
 fix_sz = 300
 
@@ -37,8 +37,8 @@ def visualize_partial_results(image, heatmaps):
         pl.subplot(1,n_maps+1,p+2)
         pl.imshow(heatmaps[p].get_values())
     pl.show()
-    
-    
+
+
 ## MAIN ##
 if __name__ == "__main__":
     conf = Configuration()
@@ -47,14 +47,14 @@ if __name__ == "__main__":
                        conf.ilsvrc2012_caffe_wnids_words,\
                        conf.ilsvrc2012_caffe_avg_image)
     # segmentation obj Felzenswalb
-    segm = ImgSegmFelzen(scales, sigmas, mins)    
+    segm = ImgSegmFelzen(scales, sigmas, mins)
     # heatmap extraction based on segmentation
     heatext = HeatmapExtractorSegm(net, segm, confidence_tech = 'full_obf', area_normalization = False)
     # Init html object to save results
     htmlres = HtmlReport()
-    
+
     # cycle over images in the validation set
-    filename_list = glob.glob(conf.ilsvrc2012_val_images+'/*.JPEG')
+    filename_list = glob.glob(conf.ilsvrc2012_val_images_dir + '/*.JPEG')
     counter = 1
     #file = filename_list[23425]
     for file in filename_list:
@@ -72,15 +72,15 @@ if __name__ == "__main__":
         heatmaps = heatext.extract(img, class_label)
         elapsed = (time.clock() - start)
         # save results
-        htmlres.add_image_embedded(img, proportion = 0.8) 
+        htmlres.add_image_embedded(img, proportion = 0.8)
         for p in range(np.shape(heatmaps)[0]):
-            htmlres.add_image_embedded(heatmaps[p].get_values(), proportion = 0.8) 
+            htmlres.add_image_embedded(heatmaps[p].get_values(), proportion = 0.8)
         # estimate time for each image & print some info
-        counter = counter + 1 
+        counter = counter + 1
         print os.path.basename(file) + ', elapsed Time: ' + str(elapsed) + \
-              ', process: ' + str(counter/float(np.shape(filename_list)[0])) + '%' + '\n'      
+              ', process: ' + str(counter/float(np.shape(filename_list)[0])) + '%' + '\n'
         ## Some qualitative analysis
-        #visualize_partial_results(img, heatmaps) 
+        #visualize_partial_results(img, heatmaps)
         break
 
     # save html

@@ -8,13 +8,28 @@ import os
 class Configuration:
     """
     The following public vaiables (constants) are available:
-    - ilsvrc2012_train_images
+    - ilsvrc2012_root_images_dir
+           root directory storing the all the images
+    - ilsvrc2012_train_images_dir
            directory storing the training images
-    - ilsvrc2012_val_images
+    - ilsvrc2012_val_images_dir
            directory storing the validation images
+    - ilsvrc2012_test_images_dir
+           directory storing the test images
+
+    - ilsvrc2012_val_images
+           list of validation images (each entry is "val/imagename.JPEG")
+    - ilsvrc2012_val_labels
+           list of labels for the validation images
+           according the official ILSVRC2012 specification
+
     - ilsvrc2012_classid_wnid_words
            containing the classid, wnid and words,
            according the official ILSVRC2012 specification
+    - ilsvrc2012_train_box_gt
+           directory containing the XML files of the training bbox information
+    - ilsvrc2012_val_box_gt
+           directory containing the XML files of the validation bbox information
 
     - ilsvrc2012_decaf_model_spec
            the meta file for decaf
@@ -33,9 +48,12 @@ class Configuration:
     def __init__(self):
         if os.uname()[1] == 'anthill.cs.dartmouth.edu':
             ilsvrc2012_root = '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012'
-            self.ilsvrc2012_train_images = ilsvrc2012_root + '/train'
-            self.ilsvrc2012_val_images = ilsvrc2012_root + '/val'
-            self.ilsvrc2012_test_images = ilsvrc2012_root + '/test'
+            self.ilsvrc2012_root_images_dir = ilsvrc2012_root
+            self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
+            self.ilsvrc2012_val_images_dir = ilsvrc2012_root + '/val'
+            self.ilsvrc2012_test_images_dir = ilsvrc2012_root + '/test'
+            self.ilsvrc2012_val_images = ilsvrc2012_root + '/val_images.txt'
+            self.ilsvrc2012_val_labels = ilsvrc2012_root + '/val_labels.txt'
             self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/bbox_train'
             self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/bbox_val'
             self.ilsvrc2012_classid_wnid_words = \
@@ -60,9 +78,12 @@ class Configuration:
                 '/PASCAL_VOC_2007/VOCdevkit/VOC2007/JPEGImages'
         elif os.uname()[1] == 'alessandro-Linux':
             ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'
-            self.ilsvrc2012_train_images = ilsvrc2012_root + '/train'
-            self.ilsvrc2012_val_images = ilsvrc2012_root + '/val'
-            self.ilsvrc2012_test_images = ilsvrc2012_root + '/test'
+            self.ilsvrc2012_root_images_dir = ilsvrc2012_root
+            self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
+            self.ilsvrc2012_val_images_dir = ilsvrc2012_root + '/val'
+            self.ilsvrc2012_test_images_dir = ilsvrc2012_root + '/test'
+            self.ilsvrc2012_val_images = ilsvrc2012_root + '/val_images.txt'
+            self.ilsvrc2012_val_labels = ilsvrc2012_root + '/val_labels.txt'
             self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/bbox_train'
             self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/bbox_val'
             self.ilsvrc2012_classid_wnid_words = \
@@ -89,9 +110,12 @@ class Configuration:
                 '/JPEGImages'
         elif os.uname()[1] == 'lbazzani-desk':
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
-            self.ilsvrc2012_train_images = ilsvrc2012_root + '/img_train'
-            self.ilsvrc2012_val_images = ilsvrc2012_root + '/img_val'
-            self.ilsvrc2012_test_images = ilsvrc2012_root + '/img_test'
+            self.ilsvrc2012_root_images_dir = ilsvrc2012_root
+            self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/img_train'
+            self.ilsvrc2012_val_images_dir = ilsvrc2012_root + '/img_val'
+            self.ilsvrc2012_test_images_dir = ilsvrc2012_root + '/img_test'
+            self.ilsvrc2012_val_images = ilsvrc2012_root + '/val_images.txt'
+            self.ilsvrc2012_val_labels = ilsvrc2012_root + '/val_labels.txt'
             self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/bbox_train'
             self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/bbox_val'
             self.ilsvrc2012_classid_wnid_words = \
