@@ -30,10 +30,10 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         self.confidence_tech_ = confidence_tech
         
     def extract(self, image, label = ''):
-	"""
-	Perform segmentation-based obfuscation and returns a set of heatmaps 
+        """
+        Perform segmentation-based obfuscation and returns a set of heatmaps 
         (Heatmap objects)
-	"""
+        """
         # retrieve the label id
         lab_id = self.network_.get_label_id(label)    
         # Init the list of heamaps
@@ -47,6 +47,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
             heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap     
             segm_mask = segm_masks[s] # retrieve s-th mask
+            heatmap.set_segment_map(segm_mask)
             # obfuscation & heatmap
             for id_segment in range(np.max(segm_mask)+1):
                 image_obf = np.array(image) # copy array            

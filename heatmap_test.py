@@ -55,9 +55,25 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertEqual(self.heat.counts_[1,1], 2)
         self.assertEqual(self.heat.counts_[1,2], 1)
 
+    def test_set_segment_map1(self):
+        # this tests the case when segment_map is a ndarray
+        seg_map = np.array([[0, 1, 0], [2, 1, 2]], np.int32)
+        self.heat.set_segment_map(seg_map)
+        self.assertEqual(len(self.heat.segment_map_), 3)
+        self.assertEqual(len(self.heat.segment_map_[0]), 2)
+        self.assertEqual(len(self.heat.segment_map_[1]), 2)
+        self.assertEqual(len(self.heat.segment_map_[2]), 2)
+        self.assertEqual(self.heat.segment_map_[0][0], (0,0))
+        self.assertEqual(self.heat.segment_map_[0][1], (2,0))
+        self.assertEqual(self.heat.segment_map_[1][0], (1,0))
+        self.assertEqual(self.heat.segment_map_[1][1], (1,1))
+        self.assertEqual(self.heat.segment_map_[2][0], (0,1))
+        self.assertEqual(self.heat.segment_map_[2][1], (2,1))
+
     def test_add_val_segment1(self):
         seg_map = np.array([[0, 1, 0], [2, 1, 2]], np.int32)
-        self.heat.add_val_segment(0.1, 0, seg_map, True)
+        self.heat.set_segment_map(seg_map)
+        self.heat.add_val_segment(0.1, 0, True)
         self.assertEqual(self.heat.vals_[0,0], 0.05)
         self.assertEqual(self.heat.vals_[0,1], 0.0)
         self.assertEqual(self.heat.vals_[0,2], 0.05)
@@ -65,7 +81,8 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertEqual(self.heat.counts_[0,1], 0)
         self.assertEqual(self.heat.counts_[0,2], 1)
         seg_map = np.array([[1, 2, 3], [1, 2, 3]], np.int32)
-        self.heat.add_val_segment(0.1, 1, seg_map, True)
+        self.heat.set_segment_map(seg_map)
+        self.heat.add_val_segment(0.1, 1, True)
         self.assertEqual(self.heat.vals_[0,0], 0.05+0.05)
         self.assertEqual(self.heat.vals_[0,1], 0.0)
         self.assertEqual(self.heat.vals_[0,2], 0.05)
@@ -75,7 +92,8 @@ class NetworkDecafTest(unittest.TestCase):
 
     def test_add_val_segment2(self):
         seg_map = np.array([[0, 1, 0], [2, 1, 2]], np.int32)
-        self.heat.add_val_segment(0.1, 0, seg_map, False)
+        self.heat.set_segment_map(seg_map)
+        self.heat.add_val_segment(0.1, 0, False)
         self.assertEqual(self.heat.vals_[0,0], 0.1)
         self.assertEqual(self.heat.vals_[0,1], 0.0)
         self.assertEqual(self.heat.vals_[0,2], 0.1)
@@ -83,7 +101,8 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertEqual(self.heat.counts_[0,1], 0)
         self.assertEqual(self.heat.counts_[0,2], 1)
         seg_map = np.array([[1, 2, 3], [1, 2, 3]], np.int32)
-        self.heat.add_val_segment(0.3, 1, seg_map, False)
+        self.heat.set_segment_map(seg_map)
+        self.heat.add_val_segment(0.3, 1, False)
         self.assertEqual(self.heat.vals_[0,0], 0.1+0.3)
         self.assertEqual(self.heat.vals_[0,1], 0.0)
         self.assertEqual(self.heat.vals_[0,2], 0.1)
