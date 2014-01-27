@@ -83,7 +83,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
 
 class HeatmapExtractorSliding(HeatmapExtractor):
     """
-    Extracts a set of heatmaps built from the results of the CNN by obfuscating 
+    Extracts a set of heatmaps built from the results of the CNN by sliding 
     rectangular regions
     """
     def __init__(self, network, box_sz, stride, confidence_tech = 'full_obf', \
@@ -114,7 +114,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
             xs = np.linspace(0, image.shape[1]-box_sz, \
                              (image.shape[1]-box_sz)/float(self.stride_)+1)
             xs = np.int32(xs)
-            ys = np.linspace(0, image.shape[1]-box_sz, \
+            ys = np.linspace(0, image.shape[0]-box_sz, \
                              (image.shape[0]-box_sz)/float(self.stride_)+1)
             ys = np.int32(ys)
             # crop img and compute CNN response

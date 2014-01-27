@@ -54,7 +54,9 @@ if __name__ == "__main__":
     # segmentation obj Felzenswalb
     segm = ImgSegmFelzen(scales, sigmas, mins)
     # heatmap extractor
-    heatext = HeatmapExtractorSegm(net, segm, confidence_tech = 'full_obf', \
+    #heatext = HeatmapExtractorSegm(net, segm, confidence_tech = 'full_obf', \
+    #                               area_normalization = False)
+    heatext = HeatmapExtractorSliding(net, box_sz, stride, confidence_tech = 'full_obf', \
                                    area_normalization = False)
     # Init html object to save results
     htmlres = HtmlReport()
