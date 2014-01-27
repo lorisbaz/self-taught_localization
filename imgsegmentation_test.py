@@ -4,9 +4,15 @@ import unittest
 
 class ImgSegmFelzen(unittest.TestCase):
     def setUp(self):
-        from imgsegmentation import *     
-        self.segmenter1 = ImgSegmFelzen(scales=[300], sigmas=[0.4], mins=[40]) # test single segmentations
-        self.segmenter2 = ImgSegmFelzen(scales=[200, 300], sigmas=[0.3, 0.4], mins=[40]) # test multiple segmentations
+        # TODO fix this
+        from imgsegmentation import *
+        # test single segmentations
+        self.segmenter1 = ImgSegmFelzen(scales = [300], sigmas = [0.4], \
+                                        min_sizes = [40]) 
+        # test multiple segmentations
+        self.segmenter2 = ImgSegmFelzen(scales = [200, 300], \
+                                        sigmas = [0.3, 0.4], \
+                                        min_sizes = [40]) 
         
     def tearDown(self):
         self.segmenter1 = None
