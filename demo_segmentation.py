@@ -11,9 +11,14 @@ from heatextractor import *
 from htmlreport import *
 
 # Parameters
+# - segmentation
 sigmas = [0.4, 0.5]
 mins = [40]
 scales = [300]
+# - gray box or sliding windows
+box_sz = [10, 20, 30]
+stride = 5
+# resize the biggest dimention of the image to fix_sz
 fix_sz = 300
 
 def get_label_from_gt(file,gt_path):
@@ -21,7 +26,7 @@ def get_label_from_gt(file,gt_path):
     filename = os.path.basename(file) # remove path
     filename = os.path.splitext(filename)[0] # remove file extension
     xmldoc = minidom.parse(gt_path + '/' + filename +'.xml') # parse xml file
-    lab_name = xmldoc.getElementsByTagName('name')[0] # get the element 'name' that contains the label name
+    lab_name = xmldoc.getElementsByTagName('name')[0] # get the label name
     lab_name = str(lab_name.firstChild.data) # get the value of the label
     return lab_name
 
@@ -48,8 +53,9 @@ if __name__ == "__main__":
                        conf.ilsvrc2012_caffe_avg_image)
     # segmentation obj Felzenswalb
     segm = ImgSegmFelzen(scales, sigmas, mins)
-    # heatmap extraction based on segmentation
-    heatext = HeatmapExtractorSegm(net, segm, confidence_tech = 'full_obf', area_normalization = False)
+    # heatmap extractor
+    heatext = HeatmapExtractorSegm(net, segm, confidence_tech = 'full_obf', \
+                                   area_normalization = False)
     # Init html object to save results
     htmlres = HtmlReport()
 
@@ -74,11 +80,13 @@ if __name__ == "__main__":
         # save results
         htmlres.add_image_embedded(img, proportion = 0.8)
         for p in range(np.shape(heatmaps)[0]):
-            htmlres.add_image_embedded(heatmaps[p].get_values(), proportion = 0.8)
+            htmlres.add_image_embedded(heatmaps[p].get_values(), \
+                                       proportion = 0.8)
         # estimate time for each image & print some info
         counter = counter + 1
         print os.path.basename(file) + ', elapsed Time: ' + str(elapsed) + \
-              ', process: ' + str(counter/float(np.shape(filename_list)[0])) + '%' + '\n'
+              ', process: ' + str(counter/float(np.shape(filename_list)[0])) \
+              + '%' + '\n'
         ## Some qualitative analysis
         #visualize_partial_results(img, heatmaps)
         break
