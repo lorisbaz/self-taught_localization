@@ -73,6 +73,7 @@ if __name__ == "__main__":
             img = resize(img, (fix_sz, int(prop_sz*img_sz[1])))
         else:
             img = resize(img, (int(prop_sz*img_sz[0]), fix_sz))
+        img = skimage.img_as_ubyte(img)
         class_label = get_label_from_gt(file,conf.ilsvrc2012_val_box_gt)
         start = time.clock()
         heatmaps = heatext.extract(img, class_label)

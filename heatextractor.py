@@ -114,7 +114,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                              (image.shape[1]-box_sz)/float(self.stride_)+1)
             xs = np.int32(xs)
             ys = np.linspace(0, image.shape[1]-box_sz, \
-                             (image.shape[1]-box_sz)/float(self.stride_)+1)
+                             (image.shape[0]-box_sz)/float(self.stride_)+1)
             ys = np.int32(ys)
             # crop img and compute CNN response
             for x in xs:
