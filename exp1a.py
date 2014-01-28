@@ -10,6 +10,7 @@ from configuration import *
 from imgsegmentation import *
 from heatextractor import *
 from htmlreport import *
+from util import *
 
 # experiment name
 exp_name = 'exp1a'
@@ -22,6 +23,8 @@ conf = Configuration()
 images_file = conf.ilsvrc2012_val_images
 labels_file = conf.ilsvrc2012_val_labels
 # Felzenswalb segmentation params: (scale, sigma, min)
+# seg_params = [(200, 0.1, 400), \
+#               (800, 1.0, 400)]
 seg_params = [(200, 0.1, 400), \
               (200, 0.5, 400), \
               (200, 1.0, 400), \
@@ -34,7 +37,7 @@ seg_params = [(200, 0.1, 400), \
 # we first resize each image to this size, if bigger 
 fix_sz = 300
 # the maximum size of an image in the html files
-html_max_img_size = 300
+html_max_img_size = 150
 # method for calculating the confidence
 heatextractor_confidence_tech = 'full_obf'
 # normalize the confidence by area?
@@ -55,10 +58,10 @@ def pipeline(images, output_html):
     (wnid, image_filename)
     """
     # Instantiate some objects
-    net = NetworkCaffe(conf.ilsvrc2012_caffe_model_spec, \
-                       conf.ilsvrc2012_caffe_model, \
-                       conf.ilsvrc2012_caffe_wnids_words, \
-                       conf.ilsvrc2012_caffe_avg_image)
+    net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
+                       conf.ilsvrc2012_decaf_model, \
+                       conf.ilsvrc2012_classid_wnid_words, \
+                       center_only = True)
     segmenter = ImgSegmFelzen(params = seg_params)
     heatext = HeatmapExtractorSegm( \
        net, segmenter, confidence_tech = heatextractor_confidence_tech, \
@@ -69,14 +72,11 @@ def pipeline(images, output_html):
         image_wnid, image_file = image
         print 'Elaborating ' + os.path.basename(image_file)
         img = skimage.io.imread(image_file)
-        # rescale the image (if necessary)
-        great_size = np.max(img.shape)
-        if great_size > fix_sz:
-            proportion = fix_sz / float(great_size)
-            width = int(img.shape[1] * float(proportion))
-            height = int(img.shape[0] * float(proportion))    
-            img = skimage.transform.resize(img, (height, width))
+        # rescale the image (if necessary), and crop it to the central region
+        img = resize_image_max_size(img, fix_sz)
         img = skimage.img_as_ubyte(img)
+        img = crop_image_center(img)
+        # add the image to the html
         print 'Image size: ({0}, {1})'.format(img.shape[0], img.shape[1])
         desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
         htmlres.add_image_embedded(img, max_size = html_max_img_size, \
@@ -85,11 +85,13 @@ def pipeline(images, output_html):
         if visualize_segmentation_masks:
             seg_masks = segmenter.extract(img)
             for idx, seg in enumerate(seg_masks):
-                desc = 'seg {0} {1}'.format(idx, str(seg_params[idx]))
                 num_segments = np.max(seg)+1
+                desc = 'seg {0} {1} (num_segs: {2})'\
+                         .format(idx, str(seg_params[idx]), num_segments)
                 seg_img = np.float32(seg) / float(num_segments)
                 seg_img = skimage.img_as_ubyte(seg_img)
-                htmlres.add_image_embedded(seg_img, max_size = html_max_img_size, \
+                htmlres.add_image_embedded(seg_img, \
+                                           max_size = html_max_img_size, \
                                            text = desc)
         # extract the heatmaps
         if visualize_heatmaps:
@@ -99,6 +101,12 @@ def pipeline(images, output_html):
                 htmlres.add_image_embedded(heatmap.export_to_image(), \
                                            max_size = html_max_img_size, \
                                            text = desc)
+            desc = 'AVG seg'
+            heatmap_avg = Heatmap.sum_heatmaps(heatmaps)
+            heatmap_avg.normalize_counts()
+            htmlres.add_image_embedded(heatmap_avg.export_to_image(), \
+                                       max_size = html_max_img_size, \
+                                       text = desc)
         htmlres.add_newline()
     # save html and exit
     htmlres.save(output_html)
