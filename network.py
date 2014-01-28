@@ -64,9 +64,10 @@ class NetworkDecaf(Network):
     Implementation for the Decaf library.
     """
     def __init__(self, model_spec_filename, model_filename,\
-                 wnid_words_filename):
+                 wnid_words_filename, center_only = False):
         # load Decaf model
         self.net_ = DecafNet(model_filename, model_spec_filename)
+        self.center_only_ = center_only
         # build a dictionary label --> description
         self.dict_label_desc_ = {}
         dict_desc_label = {}
@@ -100,8 +101,7 @@ class NetworkDecaf(Network):
         return self.labels_
 
     def evaluate(self, img, layer_name = 'softmax'):
-        # TODO use multiple scores
-        scores = self.net_.classify(img, center_only=True)
+        scores = self.net_.classify(img, center_only = self.center_only_)
         if layer_name == 'softmax':
             return scores
         elif layer_name == 'fc7_relu':
@@ -126,14 +126,14 @@ class NetworkCaffe(Network):
     """
     def __init__(self, model_spec_filename, model_filename,\
                  wnid_words_filename, mean_img_filename, \
-                 caffe_mode = 'cpu'):
+                 caffe_mode = 'cpu', center_only = False):
         # load Caffe model
         # *** TODO ***
         # center_only should be True, but PyCaffe has a bug
         # which makes the software crash :-/
         self.net_ = caffe.imagenet.ImageNetClassifier( \
                             model_spec_filename, model_filename, \
-                            center_only = False)
+                            center_only)
         self.net_.caffenet.set_phase_test()
         if caffe_mode == 'cpu':
             self.net_.caffenet.set_mode_cpu()

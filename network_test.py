@@ -9,7 +9,8 @@ class NetworkDecafTest(unittest.TestCase):
         self.conf = Configuration()
         self.net  = NetworkDecaf(self.conf.ilsvrc2012_decaf_model_spec,\
                                  self.conf.ilsvrc2012_decaf_model,\
-                                 self.conf.ilsvrc2012_classid_wnid_words)
+                                 self.conf.ilsvrc2012_classid_wnid_words,
+                                 center_only = True)
 
     def tearDown(self):
         self.net = None
@@ -40,9 +41,9 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertEqual(scores.shape[0], 1)
         self.assertEqual(scores.shape[1], 4096)
         self.assertAlmostEqual(scores[0,0], 0.0)
-        self.assertAlmostEqual(scores[0,3], 6.447751, places=5)
-        self.assertAlmostEqual(scores[0,564], 7.011354, places=5)
-        self.assertAlmostEqual(scores[0,3530], 18.45673, places=5)
+        self.assertAlmostEqual(scores[0,3], 6.447751, places=4)
+        self.assertAlmostEqual(scores[0,564], 7.011354, places=4)
+        self.assertAlmostEqual(scores[0,3530], 18.45673, places=4)
 
 #=============================================================================
 
