@@ -147,7 +147,7 @@ class Configuration:
             self.pascal2007_images = '/home/lbazzani/DATASETS/VOC2007'\
                '/JPEGImages'
             self.experiments_output_directory = \
-               '/home/alessandro/CODE/DATA/obfuscation_results'
+               '/home/lbazzani/CODE/DATA/obfuscation_results'
         else:
             raise ValueError('The current machine is not supported')
 
