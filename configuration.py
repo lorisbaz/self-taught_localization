@@ -117,9 +117,9 @@ class Configuration:
         elif os.uname()[1] == 'lbazzani-desk':
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
-            self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/img_train'
-            self.ilsvrc2012_val_images_dir = ilsvrc2012_root + '/img_val'
-            self.ilsvrc2012_test_images_dir = ilsvrc2012_root + '/img_test'
+            self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
+            self.ilsvrc2012_val_images_dir = ilsvrc2012_root + '/val'
+            self.ilsvrc2012_test_images_dir = ilsvrc2012_root + '/test'
             self.ilsvrc2012_val_images = ilsvrc2012_root + '/val_images.txt'
             self.ilsvrc2012_val_labels = ilsvrc2012_root + '/val_labels.txt'
             self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/bbox_train'

@@ -14,7 +14,7 @@ class HeatmapExtractorSegmCaffe(unittest.TestCase):
                                 self.conf.ilsvrc2012_caffe_model,\
                                 self.conf.ilsvrc2012_caffe_wnids_words,\
                                 self.conf.ilsvrc2012_caffe_avg_image)
-        self.segm = ImgSegmFelzen(scales=[200, 300], sigmas=[0.4, 0.5], mins=[40])  
+        self.segm = ImgSegmFelzen(scales=[200, 300], sigmas=[0.4, 0.5], min_sizes=[40])  
         self.heatext = HeatmapExtractorSegm(self.net, self.segm, \
                                             confidence_tech = 'only_obf')
         
@@ -50,11 +50,11 @@ class HeatmapExtractorBoxCaffe(unittest.TestCase):
                                 self.conf.ilsvrc2012_caffe_model,\
                                 self.conf.ilsvrc2012_caffe_wnids_words,\
                                 self.conf.ilsvrc2012_caffe_avg_image)
-        box_sz = [10, 30]
-        stride = 10
-        self.heatext = HeatmapExtractorBox(self.net, box_sz, stride, \
+        params = [(10, 10), \
+		  (30, 10)]
+        self.heatext = HeatmapExtractorBox(self.net, params, \
                                            confidence_tech = 'only_obf')
-        
+         
     def tearDown(self):
         self.conf = None
         self.net = None
@@ -82,10 +82,10 @@ class HeatmapExtractorSlidingCaffe(unittest.TestCase):
                                 self.conf.ilsvrc2012_caffe_model,\
                                 self.conf.ilsvrc2012_caffe_wnids_words,\
                                 self.conf.ilsvrc2012_caffe_avg_image)
-        box_sz = [20, 40]
-        stride = 10
-        self.heatext = HeatmapExtractorSliding(self.net, box_sz, stride, \
-                                               confidence_tech = 'only_obf')
+        params = [(20, 10), \
+		  (40, 10)]
+        self.heatext = HeatmapExtractorSliding(self.net, params, \
+                                               confidence_tech = 'only_win')
         
     def tearDown(self):
         self.conf = None
@@ -106,7 +106,6 @@ class HeatmapExtractorSlidingCaffe(unittest.TestCase):
         
 #=============================================================================
 
-# TODO here test slic segmentation, whenever it is implemented
 # TODO here test DeCaf
 
 #=============================================================================
