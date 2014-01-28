@@ -22,8 +22,15 @@ conf = Configuration()
 images_file = conf.ilsvrc2012_val_images
 labels_file = conf.ilsvrc2012_val_labels
 # Felzenswalb segmentation params: (scale, sigma, min)
-seg_params = [(0.4, 100, 400), \
-              (0.8, 500, 400)]
+seg_params = [(200, 0.1, 400), \
+              (200, 0.5, 400), \
+              (200, 1.0, 400), \
+              (400, 0.1, 400), \
+              (400, 0.5, 400), \
+              (400, 1.0, 400), \
+              (800, 0.1, 400), \
+              (800, 0.5, 400), \
+              (800, 1.0, 400)]
 # we first resize each image to this size, if bigger 
 fix_sz = 300
 # the maximum size of an image in the html files
@@ -36,6 +43,10 @@ heatextractor_area_normalization = False
 output_dir = conf.experiments_output_directory + '/' + exp_name
 # parallelize the script on Anthill?
 run_on_anthill = False
+# segmentation masks?
+visualize_segmentation_masks = True
+# visualize heatmaps?
+visualize_heatmaps = False
 
 
 def pipeline(images, output_html):
@@ -67,17 +78,30 @@ def pipeline(images, output_html):
             img = skimage.transform.resize(img, (height, width))
         img = skimage.img_as_ubyte(img)
         print 'Image size: ({0}, {1})'.format(img.shape[0], img.shape[1])
+        # extract the segmentation masks
+        if visualize_segmentation_masks:
+            seg_masks = segmenter.extract(img)
+            desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
+            htmlres.add_image_embedded(img, max_size = html_max_img_size, \
+                                        text = desc)
+            for idx, seg in enumerate(seg_masks):
+                desc = 'seg {0} {1}'.format(idx, str(seg_params[idx]))
+                num_segments = np.max(seg)+1
+                seg_img = np.float32(seg) / float(num_segments)
+                seg_img = skimage.img_as_ubyte(seg_img)
+                htmlres.add_image_embedded(seg_img, max_size = html_max_img_size, \
+                                           text = desc)
         # extract the heatmaps
-        heatmaps = heatext.extract(img, image_wnid)
-        # compose the html file
-        desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
-        htmlres.add_image_embedded(img, max_size = html_max_img_size, \
-                                   text = desc)
-        for idx, heatmap in enumerate(heatmaps):
-            desc = 'heatmap {0}'.format(idx) 
-            htmlres.add_image_embedded(heatmap.export_to_image(), \
-                                       max_size = html_max_img_size, \
+        if visualize_heatmaps:
+            heatmaps = heatext.extract(img, image_wnid)
+            desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
+            htmlres.add_image_embedded(img, max_size = html_max_img_size, \
                                        text = desc)
+            for idx, heatmap in enumerate(heatmaps):
+                desc = 'heatmap {0}'.format(idx) 
+                htmlres.add_image_embedded(heatmap.export_to_image(), \
+                                           max_size = html_max_img_size, \
+                                           text = desc)
         htmlres.add_newline()
     # save html and exit
     htmlres.save(output_html)
