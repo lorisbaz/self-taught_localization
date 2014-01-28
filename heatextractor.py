@@ -45,8 +45,8 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         """
         # retrieve the label id
         lab_id = self.network_.get_label_id(label)    
-        # Init the list of heamaps
-        heamaps = []
+        # Init the list of heatmaps
+        heatmaps = []
         # Classify the full image without obfuscation
         if (self.confidence_tech_ == 'full_obf') or \
            (self.confidence_tech_ == 'full_obf_positive'):
@@ -89,8 +89,8 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                 # update the heatmap
                 heatmap.add_val_segment(confidence, id_segment, \
                                         self.area_normalization_) 
-            heamaps.append(heatmap) # append the heatmap to the list                    
-        return heamaps
+            heatmaps.append(heatmap) # append the heatmap to the list                    
+        return heatmaps
         
         
 #=============================================================================
@@ -126,8 +126,8 @@ class HeatmapExtractorSliding(HeatmapExtractor):
 	"""
         # retrieve the label id
         lab_id = self.network_.get_label_id(label)    
-        # Init the list of heamaps
-        heamaps = []
+        # Init the list of heatmaps
+        heatmaps = []
         # Classify the full image without obfuscation
         if (self.confidence_tech_ == 'full_win') or \
            (self.confidence_tech_ == 'full_win_positive'):
@@ -135,7 +135,9 @@ class HeatmapExtractorSliding(HeatmapExtractor):
         # Cycle over boxes        
         for param in self.params_: # for box parameter
 	    box_sz, stride = param
-            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
+            print 'sliding window {0} / {1} '.format(np.shape(heatmaps)[0]+1, \
+					       	     len(self.params_)) 
+	    heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
             # generate indexes
             xs = np.linspace(0, image.shape[1]-box_sz, \
                              (image.shape[1]-box_sz)/float(stride)+1)
@@ -167,8 +169,8 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                                          self.area_normalization_) 
                     #print str(x) + ' ' + str(y) + ' __ '
             heatmap.normalize_counts()
-            heamaps.append(heatmap) # append the heatmap to the list                    
-        return heamaps
+            heatmaps.append(heatmap) # append the heatmap to the list                    
+        return heatmaps
 
 
 #=============================================================================
@@ -204,8 +206,8 @@ class HeatmapExtractorBox(HeatmapExtractor):
         """
         # retrieve the label id
         lab_id = self.network_.get_label_id(label)    
-        # Init the list of heamaps
-        heamaps = []
+        # Init the list of heatmaps
+        heatmaps = []
         # Classify the full image without obfuscation
         if (self.confidence_tech_ == 'full_obf') or \
            (self.confidence_tech_ == 'full_obf_positive'):
@@ -213,7 +215,9 @@ class HeatmapExtractorBox(HeatmapExtractor):
         # Cycle over boxes        
         for param in self.params_: # for box parameter
 	    box_sz, stride = param
-            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
+            print 'box mask {0} / {1} '.format(np.shape(heatmaps)[0]+1, \
+					       len(self.params_)) 
+	    heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
             # generate indexes
             xs = np.linspace(0, image.shape[1]-box_sz, \
                              (image.shape[1]-box_sz)/float(stride)+1)
@@ -252,5 +256,5 @@ class HeatmapExtractorBox(HeatmapExtractor):
                                          self.area_normalization_) 
                     #print str(x) + ' ' + str(y) + ' __ '
             heatmap.normalize_counts()
-            heamaps.append(heatmap) # append the heatmap to the list                    
-        return heamaps
+            heatmaps.append(heatmap) # append the heatmap to the list                    
+        return heatmaps
