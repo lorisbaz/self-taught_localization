@@ -13,7 +13,7 @@ from htmlreport import *
 from util import *
 
 # experiment name
-exp_name = 'exp1a'
+exp_name = 'exp01_01'
 # number of classes to elaborate
 num_classes = 2
 # number of images per class to elaborate
