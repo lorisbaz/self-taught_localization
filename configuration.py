@@ -20,11 +20,11 @@ class Configuration:
     - ilsvrc2012_val_images
            list of validation images (each entry is "val/imagename.JPEG")
     - ilsvrc2012_val_labels
-           list of labels for the validation images
+           list of labels for the validation images (from 1 to 1000)
            according the official ILSVRC2012 specification
 
     - ilsvrc2012_classid_wnid_words
-           containing the classid, wnid and words,
+           containing the classid, wnid and words (separated by a tab),
            according the official ILSVRC2012 specification
     - ilsvrc2012_train_box_gt
            directory containing the XML files of the training bbox information
@@ -43,6 +43,8 @@ class Configuration:
 
     - pascal2007_images
            directory storing the images for PASCAL VOC 2007
+
+    - experiments_output_directory
     """
 
     def __init__(self):
@@ -76,6 +78,8 @@ class Configuration:
             self.pascal2007_images = \
                 '/home/data0/vlg/Data/Images' \
                 '/PASCAL_VOC_2007/VOCdevkit/VOC2007/JPEGImages'
+            self.experiments_output_directory = \
+                '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'
         elif os.uname()[1] == 'alessandro-Linux':
             ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
@@ -108,6 +112,8 @@ class Configuration:
                 '/synset_words.txt'
             self.pascal2007_images = '/home/alessandro/Data/VOCdevkit/VOC2007'\
                 '/JPEGImages'
+            self.experiments_output_directory = \
+                '/home/alessandro/Data_projects/grayobfuscation'
         elif os.uname()[1] == 'lbazzani-desk':
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
@@ -140,6 +146,7 @@ class Configuration:
                 '/synset_words.txt'
             self.pascal2007_images = '/home/lbazzani/DATASETS/VOC2007'\
                '/JPEGImages'
+            self.experiments_output_directory = 'TODO for Loris'
         else:
             raise ValueError('The current machine is not supported')
 

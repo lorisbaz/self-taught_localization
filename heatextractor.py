@@ -43,13 +43,18 @@ class HeatmapExtractorSegm(HeatmapExtractor):
            (self.confidence_tech_ == 'full_obf_positive'):
             caffe_rep_full = self.network_.evaluate(image)
         # Perform segmentation
-        segm_masks = self.segment_.extract(image) # list of segmentation masks    
+        segm_masks = self.segment_.extract(image) # list of segmentation masks   
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
             heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap     
             segm_mask = segm_masks[s] # retrieve s-th mask
+            num_segments = np.max(segm_mask)+1
+            print 'segm_mask {0} / {1} ({2} segments)'.format( \
+                     s, len(segm_masks), num_segments)
             heatmap.set_segment_map(segm_mask)
             # obfuscation & heatmap
-            for id_segment in range(np.max(segm_mask)+1):
+            for id_segment in range(num_segments):
+                if id_segment % (num_segments / 10) == 0:
+                    print 'segment {0} / {1}'.format(id_segment, num_segments)
                 image_obf = np.array(image) # copy array            
                 # obfuscation 
                 if np.shape(image.shape)[0]>2: # RGB images
@@ -73,7 +78,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                     confidence = max(caffe_rep_full[lab_id] - \
                                      caffe_rep_obf[lab_id], 0.0)
                 # update the heatmap
-                heatmap.add_val_segment(confidence, id_segment, segm_mask, \
+                heatmap.add_val_segment(confidence, id_segment, \
                                         self.area_normalization_) 
             heamaps.append(heatmap) # append the heatmap to the list                    
         return heamaps

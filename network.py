@@ -100,6 +100,7 @@ class NetworkDecaf(Network):
         return self.labels_
 
     def evaluate(self, img, layer_name = 'softmax'):
+        # TODO use multiple scores
         scores = self.net_.classify(img, center_only=True)
         if layer_name == 'softmax':
             return scores

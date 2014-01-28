@@ -20,7 +20,7 @@ class ImgSegmFelzen(ImgSegm):
     Extract a set of segmentations depending on the selected method
     """
 
-    def __init__(self, scales, sigmas, min_sizes, params = []):
+    def __init__(self, scales = [], sigmas = [], min_sizes = [], params = []):
         """
         Segmentation parameters for the Felzenszwalb algorithm.
         params, if specified, is a list of tuples (scale, sigma, min)

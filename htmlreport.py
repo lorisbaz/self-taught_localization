@@ -1,4 +1,5 @@
 import base64
+import numpy as np
 import os
 import skimage
 import skimage.io
@@ -67,6 +68,12 @@ class HtmlReport():
         """
         self.body_ += text
 
+    def add_newline(self):
+        """
+        Go to a new line.
+        """
+        self.body_ += '<br style="clear:both" />'
+
     def generate_html(self):
         """
         Returns the Html (a string).
@@ -92,7 +99,6 @@ class HtmlReport():
         return skimage.transform.resize(img, (height, width))
 
     def add_image_support_(self, img, src, text):
-    
         self.body_+= \
               '<div style="float:left;width:{0}px;margin-right:5px;">'\
               '<img width="{1}" height="{2}" src="{3}"/>{4}'\
