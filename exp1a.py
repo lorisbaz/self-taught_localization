@@ -46,7 +46,7 @@ run_on_anthill = False
 # segmentation masks?
 visualize_segmentation_masks = True
 # visualize heatmaps?
-visualize_heatmaps = False
+visualize_heatmaps = True
 
 
 def pipeline(images, output_html):
@@ -78,12 +78,12 @@ def pipeline(images, output_html):
             img = skimage.transform.resize(img, (height, width))
         img = skimage.img_as_ubyte(img)
         print 'Image size: ({0}, {1})'.format(img.shape[0], img.shape[1])
+        desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
+        htmlres.add_image_embedded(img, max_size = html_max_img_size, \
+                                    text = desc)
         # extract the segmentation masks
         if visualize_segmentation_masks:
             seg_masks = segmenter.extract(img)
-            desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
-            htmlres.add_image_embedded(img, max_size = html_max_img_size, \
-                                        text = desc)
             for idx, seg in enumerate(seg_masks):
                 desc = 'seg {0} {1}'.format(idx, str(seg_params[idx]))
                 num_segments = np.max(seg)+1
@@ -94,9 +94,6 @@ def pipeline(images, output_html):
         # extract the heatmaps
         if visualize_heatmaps:
             heatmaps = heatext.extract(img, image_wnid)
-            desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
-            htmlres.add_image_embedded(img, max_size = html_max_img_size, \
-                                       text = desc)
             for idx, heatmap in enumerate(heatmaps):
                 desc = 'heatmap {0}'.format(idx) 
                 htmlres.add_image_embedded(heatmap.export_to_image(), \

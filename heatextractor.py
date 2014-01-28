@@ -24,6 +24,15 @@ class HeatmapExtractorSegm(HeatmapExtractor):
     """
     def __init__(self, network, segment, confidence_tech = 'full_obf', \
                  area_normalization = True):
+        """
+        segment is of type ImgSegm.
+        confidence_tech is the type of extracted confidence which can be:
+        - 'only_obf': 1 - classification_score for the given label of the 
+                      obfuscated image
+        - 'full_obf': classification_score for the image 
+                          - classification_score of the obfuscated image
+        - 'full_obf_positive': max(full_obf, 0)
+        """
         self.network_ = network
         self.segment_ = segment
         self.area_normalization_ = area_normalization
@@ -93,6 +102,9 @@ class HeatmapExtractorSliding(HeatmapExtractor):
     """
     def __init__(self, network, box_sz, stride, confidence_tech = 'full_obf', \
                  area_normalization = True):
+        """
+        TODO for box_sz, stride
+        """
         self.network_ = network
         self.box_sz_ = box_sz
         self.stride_ = stride
@@ -159,6 +171,16 @@ class HeatmapExtractorBox(HeatmapExtractor):
     """
     def __init__(self, network, box_sz, stride, confidence_tech = 'full_obf', \
                  area_normalization = True):
+        """
+        TODO box_sz, etc..
+
+        confidence_tech is the type of extracted confidence which can be:
+        - 'only_obf': 1 - classification_score for the given label of the 
+                      obfuscated image
+        - 'full_obf': classification_score for the image 
+                          - classification_score of the obfuscated image
+        - 'full_obf_positive': max(full_obf, 0)
+        """
         self.network_ = network
         self.box_sz_ = box_sz
         self.stride_ = stride
@@ -166,10 +188,10 @@ class HeatmapExtractorBox(HeatmapExtractor):
         self.confidence_tech_ = confidence_tech
         
     def extract(self, image, label = ''):
-	"""
-	Perform box-based obfuscation and returns a set of heatmaps 
+        """
+        Perform box-based obfuscation and returns a set of heatmaps 
         (Heatmap objects)
-	"""
+        """
         # retrieve the label id
         lab_id = self.network_.get_label_id(label)    
         # Init the list of heamaps
