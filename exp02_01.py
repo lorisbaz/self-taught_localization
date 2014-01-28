@@ -36,7 +36,7 @@ class Params:
     # the maximum size of an image in the html files
     html_max_img_size = 150
     # method for calculating the confidence
-    heatextractor_confidence_tech = 'full_obf'
+    heatextractor_confidence_tech = 'full_obf_positive'
     # normalize the confidence by area?
     heatextractor_area_normalization = False
     # output directory
