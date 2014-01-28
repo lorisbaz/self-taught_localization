@@ -45,71 +45,72 @@ def get_filenames(params):
     return out
 
 
-def pipeline(images, output_html):
+def pipeline(images, output_html,params):
     """
     Run the pipeline for this experiment. images is a list of
     (wnid, image_filename)
     """
     # Instantiate some objects
+    conf = params.conf
     net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
                        conf.ilsvrc2012_decaf_model, \
                        conf.ilsvrc2012_classid_wnid_words, \
                        center_only = True)
-    segmenter = ImgSegmFelzen(params = seg_params)
-    heatext = HeatmapExtractorSegm( \
-       net, segmenter, confidence_tech = heatextractor_confidence_tech, \
-       area_normalization = heatextractor_area_normalization)
+    segmenter = ImgSegmFelzen(params = params.seg_params)
+    heatext = HeatmapExtractorSegm(net, segmenter, \
+		   confidence_tech = params.heatextractor_confidence_tech, \
+	           area_normalization = params.heatextractor_area_normalization)
     htmlres = HtmlReport()
     # loop over the images
     for image in images:
-        image_wnid, image_file = image
-        print 'Elaborating ' + os.path.basename(image_file)
-        img = skimage.io.imread(image_file)
-        # rescale the image (if necessary), and crop it to the central region
-        img = resize_image_max_size(img, fix_sz)
-        img = skimage.img_as_ubyte(img)
-        img = crop_image_center(img)
-        # add the image to the html
-        print 'Image size: ({0}, {1})'.format(img.shape[0], img.shape[1])
-        desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
-        htmlres.add_image_embedded(img, max_size = html_max_img_size, \
-                                    text = desc)
-        # extract the segmentation masks
-        if visualize_segmentation_masks:
-            seg_masks = segmenter.extract(img)
-            for idx, seg in enumerate(seg_masks):
-                num_segments = np.max(seg)+1
-                desc = 'seg {0} {1} (num_segs: {2})'\
-                         .format(idx, str(seg_params[idx]), num_segments)
-                seg_img = np.float32(seg) / float(num_segments)
-                seg_img = skimage.img_as_ubyte(seg_img)
-                htmlres.add_image_embedded(seg_img, \
-                                           max_size = html_max_img_size, \
-                                           text = desc)
-        # extract the heatmaps
-        if visualize_heatmaps:
-            heatmaps = heatext.extract(img, image_wnid)
-            for idx, heatmap in enumerate(heatmaps):
-                desc = 'heatmap {0}'.format(idx) 
-                htmlres.add_image_embedded(heatmap.export_to_image(), \
-                                           max_size = html_max_img_size, \
-                                           text = desc)
-            desc = 'AVG seg'
-            heatmap_avg = Heatmap.sum_heatmaps(heatmaps)
-            heatmap_avg.normalize_counts()
-            htmlres.add_image_embedded(heatmap_avg.export_to_image(), \
-                                       max_size = html_max_img_size, \
-                                       text = desc)
-        htmlres.add_newline()
+	image_wnid, image_file = image
+	print 'Elaborating ' + os.path.basename(image_file)
+	img = skimage.io.imread(image_file)
+	# rescale the image (if necessary), and crop it to the central region
+	img = resize_image_max_size(img, params.fix_sz)
+	img = skimage.img_as_ubyte(img)
+	img = crop_image_center(img)
+	# add the image to the html
+	print 'Image size: ({0}, {1})'.format(img.shape[0], img.shape[1])
+	desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
+	htmlres.add_image_embedded(img, max_size = params.html_max_img_size, \
+				    text = desc)
+	# extract the segmentation masks
+	if params.visualize_segmentation_masks:
+	    seg_masks = segmenter.extract(img)
+	    for idx, seg in enumerate(seg_masks):
+		num_segments = np.max(seg)+1
+		desc = 'seg {0} {1} (num_segs: {2})'\
+			 .format(idx, str(params.seg_params[idx]), num_segments)
+		seg_img = np.float32(seg) / float(num_segments)
+		seg_img = skimage.img_as_ubyte(seg_img)
+		htmlres.add_image_embedded(seg_img, \
+					   max_size = params.html_max_img_size, \
+					   text = desc)
+	# extract the heatmaps
+	if params.visualize_heatmaps:
+	    heatmaps = heatext.extract(img, image_wnid)
+	    for idx, heatmap in enumerate(heatmaps):
+		desc = 'heatmap {0}'.format(idx) 
+		htmlres.add_image_embedded(heatmap.export_to_image(), \
+					   max_size = params.html_max_img_size, \
+					   text = desc)
+	    desc = 'AVG seg'
+	    heatmap_avg = Heatmap.sum_heatmaps(heatmaps)
+	    heatmap_avg.normalize_counts()
+	    htmlres.add_image_embedded(heatmap_avg.export_to_image(), \
+				       max_size = params.html_max_img_size, \
+				       text = desc)
+	htmlres.add_newline()
     # save html and exit
     htmlres.save(output_html)
     return 0
-    
+	    
 
 def run_exp(params):
     # create output directory
     if os.path.exists(params.output_dir) == False:
-        os.makedirs(params.output_dir)
+	os.makedirs(params.output_dir)
     # load the filenames of the first 10 classes of 
     # ILSVRC2012-validation, and divide the images by class
     images = get_filenames(params)
@@ -119,22 +120,23 @@ def run_exp(params):
     current_wnid = images[0][0]
     current_idx = 0
     for image in images:
-        if image[0] != current_wnid:
-            current_idx += 1
-            current_wnid = image[0]
-        images_by_class[current_idx].append(image)
+	if image[0] != current_wnid:
+	    current_idx += 1
+	    current_wnid = image[0]
+	images_by_class[current_idx].append(image)
     assert current_idx == params.num_classes-1
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-        parfun = ParFunAnthill(pipeline)
+	parfun = ParFunAnthill(pipeline)
     else:
         parfun = ParFunDummy(pipeline)
     for i, images in enumerate(images_by_class):
         output_html = '%s/%02d.html' % (params.output_dir, i)
         parfun.add_task(images[0:min(len(images), \
                         params.num_images_per_class)], \
-                        output_html)
+                        output_html, \
+			params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:
