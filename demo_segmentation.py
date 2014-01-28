@@ -16,8 +16,8 @@ sigmas = [0.4, 0.5]
 mins = [40]
 scales = [300]
 # - gray box or sliding windows
-box_sz = [10, 20, 30]
-stride = 5
+box_sz = [50, 100, 150]
+stride = 20
 # resize the biggest dimention of the image to fix_sz
 fix_sz = 300
 
@@ -92,7 +92,7 @@ if __name__ == "__main__":
               + '%' + '\n'
         ## Some qualitative analysis
         #visualize_partial_results(img, heatmaps)
-        break
+        #break
 
     # save html
     htmlres.save('results.html')

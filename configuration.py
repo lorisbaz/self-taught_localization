@@ -146,7 +146,8 @@ class Configuration:
                 '/synset_words.txt'
             self.pascal2007_images = '/home/lbazzani/DATASETS/VOC2007'\
                '/JPEGImages'
-            self.experiments_output_directory = 'TODO for Loris'
+            self.experiments_output_directory = \
+               '/home/alessandro/CODE/DATA/obfuscation_results'
         else:
             raise ValueError('The current machine is not supported')
 
