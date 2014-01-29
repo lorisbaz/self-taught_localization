@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # number of classes to elaborate
     params.num_classes = 10
     # number of images per class to elaborate
-    params.num_images_per_class = 20
+    params.num_images_per_class = 2
     # default Configuration, image and label files
     params.conf = conf
     params.images_file = conf.ilsvrc2012_val_images
@@ -46,10 +46,12 @@ if __name__ == "__main__":
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     # parallelize the script on Anthill?
-    params.run_on_anthill = True
+    params.run_on_anthill = False
     # segmentation masks?
     params.visualize_segmentation_masks = True
     # visualize heatmaps?
     params.visualize_heatmaps = True
+    params.visual_factor = 10e-2 # normalize output for
+				 # better visualization
     # RUN THE EXPERIMENT
     exp01.run_exp(params)

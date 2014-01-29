@@ -58,7 +58,8 @@ class Heatmap:
         assert self.segment_map_ != None
         normalization_factor = 1.0
         if area_normalization:
-            normalization_factor = float(len(self.segment_map_[segment_id]))
+            normalization_factor = float(len(self.segment_map_[segment_id])) \
+				   / float(np.prod(np.shape(self.vals_)))
         for (x, y) in self.segment_map_[segment_id]:
             self.vals_[y, x] += val / float(normalization_factor)
             self.counts_[y, x] += 1
@@ -79,7 +80,7 @@ class Heatmap:
         """
         return self.vals_
 
-    def export_to_image(self, colormap = False):
+    def export_to_image(self, colormap = False, factor = 1.0):
         """
         Returns a ndarray, which consists of a visualization of the values.
         All the values < 0 are mapped to zero, and all the ones > 1.0 are
@@ -88,8 +89,9 @@ class Heatmap:
         raw_image = np.zeros(self.vals_.shape, np.uint8)
         for y in range(self.vals_.shape[0]):
             for x in range(self.vals_.shape[1]):
-                tmp_image = round(self.vals_[y,x] * 255.0)
-                tmp_image = min(tmp_image, 255)
+       		tmp_image = self.vals_[y,x] * factor         
+		tmp_image = round(tmp_image * 255.0)
+                tmp_image = min(tmp_image, 255)	
                 raw_image[y,x] = max(tmp_image, 0)
 	if colormap:
 	    cmap = plt.get_cmap('jet') # retrieve color map
