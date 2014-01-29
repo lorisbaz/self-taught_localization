@@ -12,10 +12,13 @@ from heatextractor import *
 from htmlreport import *
 from util import *
 
+class Params:
+    def __init__(self):
+        pass
 
 def get_filenames(params):
     """
-    Return a list of (wnid, filename) for all the files 
+    Return a list of (wnid, filename) for all the files
     with label_id \in {1, ..., num_classe}
     """
     conf = params.conf
@@ -45,7 +48,7 @@ def get_filenames(params):
     return out
 
 
-def pipeline(images, output_html,params):
+def pipeline(images, output_html, params):
     """
     Run the pipeline for this experiment. images is a list of
     (wnid, image_filename)
@@ -91,7 +94,7 @@ def pipeline(images, output_html,params):
 	if params.visualize_heatmaps:
 	    heatmaps = heatext.extract(img, image_wnid)
 	    for idx, heatmap in enumerate(heatmaps):
-		desc = 'heatmap {0}'.format(idx) 
+		desc = 'heatmap {0}'.format(idx)
 		htmlres.add_image_embedded(heatmap.export_to_image(), \
 					   max_size = params.html_max_img_size, \
 					   text = desc)
@@ -105,13 +108,13 @@ def pipeline(images, output_html,params):
     # save html and exit
     htmlres.save(output_html)
     return 0
-	    
+
 
 def run_exp(params):
     # create output directory
     if os.path.exists(params.output_dir) == False:
 	os.makedirs(params.output_dir)
-    # load the filenames of the first 10 classes of 
+    # load the filenames of the first 10 classes of
     # ILSVRC2012-validation, and divide the images by class
     images = get_filenames(params)
     images = sorted(images, key=lambda x: x[0])
@@ -128,7 +131,7 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-	parfun = ParFunAnthill(pipeline)
+    	parfun = ParFunAnthill(pipeline)
     else:
         parfun = ParFunDummy(pipeline)
     for i, images in enumerate(images_by_class):
@@ -136,7 +139,7 @@ def run_exp(params):
         parfun.add_task(images[0:min(len(images), \
                         params.num_images_per_class)], \
                         output_html, \
-			params)
+			            params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:
