@@ -12,6 +12,9 @@ from heatextractor import *
 from htmlreport import *
 from util import *
 
+class Params:
+    def __init__(self):
+        pass
 
 def get_filenames(params):
     """
