@@ -79,15 +79,17 @@ def pipeline(images, output_html,params):
 	    heatmaps = heatext.extract(img, image_wnid)
 	    for idx, heatmap in enumerate(heatmaps):
 		desc = 'heatmap {0}'.format(idx) 
-		htmlres.add_image_embedded(heatmap.export_to_image(), \
-					   max_size = params.html_max_img_size, \
-					   text = desc)
+		htmlres.add_image_embedded(\
+				heatmap.export_to_image(colormap=True), \
+				max_size = params.html_max_img_size, \
+				text = desc)
 	    desc = 'AVG seg'
 	    heatmap_avg = Heatmap.sum_heatmaps(heatmaps)
 	    heatmap_avg.normalize_counts()
-	    htmlres.add_image_embedded(heatmap_avg.export_to_image(), \
-				       max_size = params.html_max_img_size, \
-				       text = desc)
+	    htmlres.add_image_embedded(\
+				heatmap_avg.export_to_image(colormap=True), \
+				max_size = params.html_max_img_size, \
+				text = desc)
 	htmlres.add_newline()
     # save html and exit
     htmlres.save(output_html)

@@ -19,16 +19,13 @@ class Params:
     # number of classes to elaborate
     num_classes = 2
     # number of images per class to elaborate
-    num_images_per_class = 3
+    num_images_per_class = 3 
     # default Configuration, image and label files
     conf = Configuration()
     images_file = conf.ilsvrc2012_val_images
     labels_file = conf.ilsvrc2012_val_labels
     # Felzenswalb segmentation params: (scale, sigma, min)
-    box_params = [(20, 5), \
-                  (40, 5), \
-		  (60, 5), \
-		  (20, 10), \
+    box_params = [(20, 10), \
                   (40, 10), \
                   (60, 10), ]
     # we first resize each image to this size, if bigger 

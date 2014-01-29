@@ -1,4 +1,5 @@
 import numpy as np
+import pylab as plt
 import skimage.io
 
 class Heatmap:
@@ -78,7 +79,7 @@ class Heatmap:
         """
         return self.vals_
 
-    def export_to_image(self):
+    def export_to_image(self, colormap = False):
         """
         Returns a ndarray, which consists of a visualization of the values.
         All the values < 0 are mapped to zero, and all the ones > 1.0 are
@@ -87,9 +88,12 @@ class Heatmap:
         raw_image = np.zeros(self.vals_.shape, np.uint8)
         for y in range(self.vals_.shape[0]):
             for x in range(self.vals_.shape[1]):
-                raw_image[y,x] = round(self.vals_[y,x] * 255.0)
-                raw_image[y,x] = min(raw_image[y,x], 255)
-                raw_image[y,x] = max(raw_image[y,x], 0)
+                tmp_image = round(self.vals_[y,x] * 255.0)
+                tmp_image = min(tmp_image, 255)
+                raw_image[y,x] = max(tmp_image, 0)
+	if colormap:
+	    cmap = plt.get_cmap('jet') # retrieve color map
+	    raw_image = cmap(raw_image)
         return raw_image
 
     def save_to_image(self, filename):
