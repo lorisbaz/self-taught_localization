@@ -19,9 +19,9 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp01_01'
     # number of classes to elaborate
-    params.num_classes = 10
+    params.num_classes = 20
     # number of images per class to elaborate
-    params.num_images_per_class = 2
+    params.num_images_per_class = 10
     # default Configuration, image and label files
     params.conf = conf
     params.images_file = conf.ilsvrc2012_val_images

@@ -87,7 +87,7 @@ def pipeline(images, output_html,params):
 				max_size = params.html_max_img_size, \
 				text = desc)
 	    desc = 'AVG seg'
-	    heatmap_avg = Heatmap.sum_heatmaps(heatmaps)
+	    heatmap_avg = Heatmap.avg_heatmaps(heatmaps) 
 	    heatmap_avg.normalize_counts()
 	    htmlres.add_image_embedded(\
 				heatmap_avg.export_to_image(colormap=True), \

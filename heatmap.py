@@ -116,7 +116,7 @@ class Heatmap:
         heat_shape = heatmaps[0].vals_.shape
         heat_out = Heatmap(heat_shape[1], heat_shape[0])
         for heat in heatmaps:
-            heat_out.vals_ += heat.vals_
+            heat_out.vals_ += heat.vals_ 
             heat_out.counts_ += heat.counts_
         return heat_out
 

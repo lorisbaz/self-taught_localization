@@ -96,16 +96,16 @@ def pipeline(images, output_html, params):
 	    for idx, heatmap in enumerate(heatmaps):
 		desc = 'heatmap {0}'.format(idx)
 		htmlres.add_image_embedded( \
-			   heatmap.export_to_image(params.visual_factor), \
-			   max_size = params.html_max_img_size, \
-			   text = desc)
+		       heatmap.export_to_image(factor = params.visual_factor), \
+		       max_size = params.html_max_img_size, \
+		       text = desc)
 	    desc = 'AVG seg'
 	    heatmap_avg = Heatmap.sum_heatmaps(heatmaps)
 	    heatmap_avg.normalize_counts()
 	    htmlres.add_image_embedded( \
-   		          heatmap_avg.export_to_image(params.visual_factor), \
-			  max_size = params.html_max_img_size, \
-			  text = desc)
+   		   heatmap_avg.export_to_image(factor = params.visual_factor), \
+		   max_size = params.html_max_img_size, \
+		   text = desc)
 	htmlres.add_newline()
     # save html and exit
     htmlres.save(output_html)
