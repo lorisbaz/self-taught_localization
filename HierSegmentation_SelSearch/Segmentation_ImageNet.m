@@ -6,7 +6,7 @@ clear; clc;
 
 % dataset selection
 dSET_ = 'val'; % 'val', 'train' -> TODO: add training set
-
+tiny_example = 1;
 
 %% Parameters
 seg_params.colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
@@ -104,10 +104,15 @@ switch dSET_
         
         % organize tasks by class (like in the python code)
         n_classes = max(labelList);
-        %n_classes = 2;
-        imageListClass = cell(n_classes,1);
+        if tiny_example
+            n_classes = 2;
+        end
+        imageListClass = cell(1,n_classes);
         for i = 1:n_classes
             idx = find(labelList==i);
+            if tiny_example
+                idx = idx(1:5);
+            end
             imageListClass{i} = [imageList(idx)];
         end
     
