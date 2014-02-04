@@ -8,7 +8,7 @@ clear; clc;
 dSET_ = 'val'; % 'val', 'train' -> TODO: add training set
 tiny_example = 1;
 
-%% Parameters
+% Parameters
 seg_params.colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
 
 % Here you specify which similarity functions to use in merging
@@ -26,15 +26,16 @@ seg_params.simFunctionHandles = seg_params.simFunctionHandles(1); % only the one
 seg_params.ks = seg_params.ks(1:2);
 
 
-%% Configurations
+% Configurations
+rootPath = pwd;
+toolboxPath = '/home/anthill/aleb/clients/aleb/aleb/toolbox/';
 hostname = char( getHostName( java.net.InetAddress.getLocalHost ) );
 switch (hostname)
     case 'anthill.cs.dartmouth.edu'
         imagePath = '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012/';
-        savePath  = '/home/ironfs/scratch/vlg/Data_projects/segment_ILSVRC2012/';
-        selectivePath = '/home/anthill/vlg/SelectiveSearchCodeIJCV/';
-        
-        addpath('/home/anthill/aleb/clients/aleb/aleb/toolbox/')
+        savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ILSVRC2012/';
+        selectivePath = '/home/anthill/vlg/SelectiveSearchCodeIJCV/';        
+        addpath(toolboxPath)
         
         run_on_anthill = 1;
         
@@ -54,9 +55,22 @@ switch (hostname)
 
 end
 % add required libraires
-addpath('utils');
+addpath([rootPath '/utils']);
 addpath(genpath(selectivePath));
         
+% create the output directories
+if ~exist(savePath, 'file')
+  mkdir(savePath);
+end
+if ~exist([savePath '/val'], 'file')
+  mkdir([savePath '/val']);
+end
+if ~exist([savePath '/train'], 'file')
+  mkdir([savePath '/train']);
+end
+if ~exist([savePath '/test'], 'file')
+  mkdir([savePath '/test']);
+end
 
 if run_on_anthill
     % Anthill processes
@@ -65,7 +79,7 @@ if run_on_anthill
 end
 
 
-%% Check if Compiled 
+% Check if Compiled 
 % ...anisotropic gaussian filter
 if(~exist('anigauss'))
     fprintf('Compile the anisotropic gauss filtering with \n');
@@ -85,7 +99,7 @@ if(~exist('mexFelzenSegmentIndex'))
 end
 
 
-%% Load image set
+% Load image set
 switch dSET_
     case 'val'
         % Load image list
@@ -122,13 +136,15 @@ switch dSET_
         error('Not implemented yet. Only Validation is supported.')
 end
 
-%% Segmentation - Run
+% Segmentation - Run
 if run_on_anthill  % ...on the cluster
-    cluster_opts.cluster_opts = '-l ironfs -l h_rt=00:10:00 -l virtual_free=2G -l mem_free=2G';
+    cluster_opts.qsubargs = '-l ironfs -l h_rt=00:10:00 -l virtual_free=2G -l mem_free=2G';
+    cluster_opts.paths = {rootPath, [rootPath '/utils'], toolboxPath, genpath(selectivePath)};
+    num_tasks = n_classes;  % Note: set to 0 for debugging
     % Run tasks on cluster
     val = parallelize_function(@extract_segmentation, {imageListClass, ...
                                imagePath, savePath, seg_params}, ...
-                               [1, 0, 0, 0], n_classes, cluster_opts);
+                               [1, 0, 0, 0], num_tasks, cluster_opts);
     
 else      % ...on standard PC
     extract_segmentation(imageList, imagePath, savePath, seg_params);

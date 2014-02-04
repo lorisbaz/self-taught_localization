@@ -1,8 +1,11 @@
-function extract_segmentation(testIms, imagePath, savePath, seg_params)
+function val = extract_segmentation(testIms, imagePath, savePath, seg_params)
+
+% output value
+val = 0;
 
 totalTime = 0;
 for i=1:length(testIms)
-    fprintf('%d ', i);
+    fprintf('Elaborating %d / %d %s\n', i, length(testIms), testIms{i});
     
     % VOCopts.img
     im = imread([imagePath testIms{i}]);
@@ -60,5 +63,9 @@ for i=1:length(testIms)
 %         hdf5write([savePath strtok(testIms{i},'.') '.h5'], [strtok(testIms{i},'.') '/nodes_' num2str(idx)], uint16(tree{idx}.nodes), 'WriteMode', 'append');
 %     end
     save([savePath strtok(testIms{i},'.') '.mat'],'blobIndIm','tree')
-    
+end
+
+% output value
+val = 1;
+
 end
