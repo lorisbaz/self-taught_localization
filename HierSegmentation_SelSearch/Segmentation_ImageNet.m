@@ -186,9 +186,9 @@ end
 % Segmentation - Run
 fprintf('---Starting processing---\n')
 if run_on_anthill  % ...on the cluster
-    cluster_opts.qsubargs = '-l ironfs -l h_rt=00:10:00 -l virtual_free=2G -l mem_free=2G';
+    cluster_opts.qsubargs = '-l ironfs -l h_rt=02:59:00 -l virtual_free=1G -l mem_free=1G';
     cluster_opts.paths = {rootPath, [rootPath '/utils'], toolboxPath, genpath(selectivePath)};
-    num_tasks = n_classes;  % Note: set to 0 for debugging
+    num_tasks = 100;  % Note: set to 0 for debugging
     % Run tasks on cluster
     val = parallelize_function(@extract_segmentation, {imageListClass, ...
                                imagePath, savePath, seg_params}, ...
