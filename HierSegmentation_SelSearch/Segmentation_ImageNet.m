@@ -1,12 +1,12 @@
-% This demo shows how to use the software described in our IJCV paper: 
-%   Selective Search for Object Recognition,
+function Segmentation_ImageNet(dSET_)
+% Run segmentation of [1] on ImageNet
+%    dSET_ = 'val or 'train'
+%   [1] Selective Search for Object Recognition,
 %   J.R.R. Uijlings, K.E.A. van de Sande, T. Gevers, A.W.M. Smeulders, IJCV 2013
 % ---Modified by Loris Bazzani 01/2014 to run on the cluster and ImageNet
-clear; % clc;
 
-% dataset selection
-dSET_ = 'train'; % 'val', 'train'
-tiny_example = 0;
+
+tiny_example = 0; % for debugging
 
 % Parameters
 seg_params.colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
