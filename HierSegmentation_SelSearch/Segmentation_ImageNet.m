@@ -2,11 +2,11 @@
 %   Selective Search for Object Recognition,
 %   J.R.R. Uijlings, K.E.A. van de Sande, T. Gevers, A.W.M. Smeulders, IJCV 2013
 % ---Modified by Loris Bazzani 01/2014 to run on the cluster and ImageNet
-clear; clc;
+clear; % clc;
 
 % dataset selection
-dSET_ = 'val'; % 'val', 'train' -> TODO: add training set
-tiny_example = 1;
+dSET_ = 'train'; % 'val', 'train'
+tiny_example = 0;
 
 % Parameters
 seg_params.colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
@@ -25,6 +25,11 @@ seg_params.colorTypes = seg_params.colorTypes(1:2); % 'Fast' uses HSV and Lab
 seg_params.simFunctionHandles = seg_params.simFunctionHandles(1); % only the one of the paper
 seg_params.ks = seg_params.ks(1:2);
 
+fprintf('---Parameters setup---\n')
+fprintf([' * k: ', num2str(seg_params.ks), '\n'])
+fprintf(' * min_segm: same as k \n')
+fprintf([' * sigma: ', num2str(seg_params.sigma), '\n'])
+
 
 % Configurations
 rootPath = pwd;
@@ -33,6 +38,9 @@ hostname = char( getHostName( java.net.InetAddress.getLocalHost ) );
 switch (hostname)
     case 'anthill.cs.dartmouth.edu'
         imagePath = '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012/';
+        trainPath = [imagePath 'train/'];
+        valPath = [imagePath 'val/'];
+        testPath = [imagePath 'test/'];
         savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ILSVRC2012/';
         selectivePath = '/home/anthill/vlg/SelectiveSearchCodeIJCV/';        
         addpath(toolboxPath)
@@ -40,7 +48,10 @@ switch (hostname)
         run_on_anthill = 1;
         
     case 'alessandro-Linux'
-        imagePath = '/home/alessandro/Data/ILSVRC2012';
+        imagePath = '/home/alessandro/Data/ILSVRC2012/';
+        trainPath = [imagePath 'train/'];
+        valPath = [imagePath 'val/'];
+        testPath = [imagePath 'test/'];
         savePath  = 'TODO';
         selectivePath = 'TODO';
         
@@ -48,6 +59,9 @@ switch (hostname)
         
     case 'lbazzani-desk'
         imagePath = '/home/lbazzani/DATASETS/ILSVRC2012/';
+        trainPath = [imagePath 'train/'];
+        valPath = [imagePath 'val/'];
+        testPath = [imagePath 'test/'];
         savePath  = '/home/lbazzani/CODE/DATA/ILSVRC2012/segmentation/';
         selectivePath = '/home/lbazzani/CODE/3rd_part_libs/SelectiveSearchCodeIJCV/';
 
@@ -100,6 +114,7 @@ end
 
 
 % Load image set
+fprintf('---Prepare computation---\n')
 switch dSET_
     case 'val'
         % Load image list
@@ -129,14 +144,47 @@ switch dSET_
             end
             imageListClass{i} = [imageList(idx)];
         end
-    
-    %case 'test'    
-    %case 'train'  
+               
+    case 'train'
+        classList_filename = [imagePath 'classid_wnid_words.txt'];
+        filestream = fopen(classList_filename);
+        imageList = textscan(filestream,'%d %s %s','delimiter','\t'); % read image list
+        %imageList = imageList{1};
+        fclose(filestream);
+        
+        labelList = imageList{1};
+        labelList_name = imageList{2};
+        
+        % organize tasks by class (like in the python code)
+        n_classes = max(labelList);
+        if tiny_example
+            n_classes = 2;
+        end
+        imageListClass = cell(1,n_classes);
+        for i = 1:n_classes            
+            imlist = dir([trainPath labelList_name{i} '/*.JPEG']);
+            n_img = length(imlist);
+            if tiny_example
+                n_img = 5;
+            end
+            for j = 1:n_img       
+                imageListClass{i}{j,1} = ['train/' labelList_name{i} '/' imlist(j).name];
+            end
+            if ~exist([savePath 'train/' labelList_name{i}], 'file')
+                mkdir([savePath 'train/' labelList_name{i}]);
+            end
+            
+        end
+        
+    case 'test'
+        error('Not implemented yet.')
+        
     otherwise
-        error('Not implemented yet. Only Validation is supported.')
+        error('Not implemented yet.')
 end
 
 % Segmentation - Run
+fprintf('---Starting processing---\n')
 if run_on_anthill  % ...on the cluster
     cluster_opts.qsubargs = '-l ironfs -l h_rt=00:10:00 -l virtual_free=2G -l mem_free=2G';
     cluster_opts.paths = {rootPath, [rootPath '/utils'], toolboxPath, genpath(selectivePath)};
@@ -147,6 +195,8 @@ if run_on_anthill  % ...on the cluster
                                [1, 0, 0, 0], num_tasks, cluster_opts);
     
 else      % ...on standard PC
-    extract_segmentation(imageList, imagePath, savePath, seg_params);
+    for i = 1:n_classes 
+        extract_segmentation(imageListClass{i}, imagePath, savePath, seg_params);
+    end
 end
 fprintf('\n');
