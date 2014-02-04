@@ -1,7 +1,5 @@
 import cv2
 import numpy as np
-import skimage
-import skimage.io
 import unittest
 
 import bboxextractor
@@ -65,13 +63,14 @@ class GrabCutBBoxExtractor(unittest.TestCase):
     def test_extract(self):
         test_image = 'ILSVRC2012_val_00000001_n01751748.JPEG'
         test_mask = 'ILSVRC2012_val_00000001_n01751748_test_mask.png'
-        mask = skimage.io.imread(test_mask, as_grey=True)
-        img = skimage.io.imread(test_image)
+        mask = cv2.imread(test_mask)
+        mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+        img = cv2.imread(test_image)
         bboxes, image_desc = self.extract.extract(img, [mask])
         idx = 0
         for img, desc in image_desc:
             print desc
-            skimage.io.imsave('imgdesc{0}.png'.format(idx), img)
+            cv2.imwrite('imgdesc{0}.png'.format(idx), img)
             idx += 1
 
 #=============================================================================

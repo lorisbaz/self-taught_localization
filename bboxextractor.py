@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 from matplotlib import pyplot
-import skimage.transform
 import sklearn
 import sklearn.cluster
 import sys
@@ -19,7 +18,7 @@ class BBoxExtractor:
         heatmaps is a list of ndarrays;
         OUTPUT:
         - a list of BBox
-        - a list of (image, description) which is implementation-dependent and 
+        - a list of (image, description) which is implementation-dependent and
                could be used for visualization/debugging purposes
         """
         raise NotImplementError()
@@ -31,9 +30,9 @@ class BBoxExtractor:
         Returns a set of BBox objects, calculated from the outer rectangles
         of the connected components of mask (4-points connectivity),
         using the 'object_values' for the
-        labeling (if a pixels has value any of the object_values, then we 
-        declare that pixel part of the object). 
-        The confidence value is calculated by using the corresponding normalized 
+        labeling (if a pixels has value any of the object_values, then we
+        declare that pixel part of the object).
+        The confidence value is calculated by using the corresponding normalized
         content of the heatmap.
         INPUT:
         mask: int ndarray
@@ -57,14 +56,14 @@ class BBoxExtractor:
                 if not(is_object(mask[y,x], object_values)):
                     continue
                 # found a seed: (x, y) belongs to the object.
-                # run DFS, while keeping track of the min/max x/y values 
+                # run DFS, while keeping track of the min/max x/y values
                 # for each connected component found
                 stack = [(x,y)]
                 rect = [sys.maxint, sys.maxint, -sys.maxint, -sys.maxint]
                 while len(stack) > 0:
                     x, y = stack.pop()
                     visited[y,x] = 1
-                    if is_object(mask[y,x], object_values):                        
+                    if is_object(mask[y,x], object_values):
                         rect[0] = min(x, rect[0]); rect[1] = min(y, rect[1])
                         rect[2] = max(x+1, rect[2]); rect[3] = max(y+1, rect[3])
                         if x-1 >= 0 and not(visited[y,x-1]):
@@ -117,8 +116,7 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         mask_image = np.multiply(mask.copy(), 80)
         out_image_desc.append( (mask_image, 'initial k-means mask') )
         # 3) run GrabCut
-        gc_img = skimage.transform.resize(img.copy(), mask.shape)
-        gc_img = skimage.img_as_ubyte(gc_img).copy()
+        gc_img = cv2.resize(img.copy(), (mask.shape[1], mask.shape[0])).copy()
         assert mask.dtype == np.uint8
         assert gc_img.dtype == np.uint8
         gc_rect = None
@@ -138,7 +136,7 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         # 6) remove very small bboxes, and normalize the bboxes to one
         out_bboxes = []
         for bbox in bboxes:
-            if bbox.area() > self.min_bbox_size_:                
+            if bbox.area() > self.min_bbox_size_:
                 out_bboxes.append(bbox)
         return out_bboxes, out_image_desc
 
