@@ -8,6 +8,9 @@ function Segmentation_ImageNet(dSET_)
 tiny_example = 0; % for debugging
 
 % Parameters
+resize_big_images = 800; % resize images that are bigger that resize_big_images
+                          % set it to 0 if you want to disable it
+                          
 seg_params.colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
 
 % Here you specify which similarity functions to use in merging
@@ -83,12 +86,12 @@ if run_on_anthill  % ...on the cluster
     num_tasks = 100;  % Note: set to 0 for debugging
     % Run tasks on cluster
     val = parallelize_function(@extract_segmentation, {imageListClass, ...
-                               imagePath, savePath, seg_params}, ...
-                               [1, 0, 0, 0], num_tasks, cluster_opts);
+                               imagePath, savePath, seg_params, resize_big_images}, ...
+                               [1, 0, 0, 0, 0], num_tasks, cluster_opts);
     
 else      % ...on standard PC
     for i = 1:n_classes 
-        extract_segmentation(imageListClass{i}, imagePath, savePath, seg_params);
+        extract_segmentation(imageListClass{i}, imagePath, savePath, seg_params, resize_big_images);
     end
 end
 fprintf('\n');
