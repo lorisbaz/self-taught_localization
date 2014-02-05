@@ -46,12 +46,8 @@ class Configuration:
 
     - experiments_output_directory
            root directory storing all the partial and final results
-    - ilsvrc2012_train_segm_results_dir
-           directory storing the segmentation results of the training set
-    - ilsvrc2012_test_segm_results_dir
-           directory storing the segmentation results of the testing set
-    - ilsvrc2012_val_segm_results_dir
-           directory storing the segmentation results of the validation set
+    - ilsvrc2012_segm_results_dir
+           directory storing the segmentation results
     """
 
     def __init__(self):
@@ -87,15 +83,8 @@ class Configuration:
                 '/PASCAL_VOC_2007/VOCdevkit/VOC2007/JPEGImages'
             self.experiments_output_directory = \
                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'
-       	    self.ilsvrc2012_train_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'train' 
-	    self.ilsvrc2012_test_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'test'        
-	    self.ilsvrc2012_val_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'val' 
+       	    self.ilsvrc2012_segm_results_dir = \
+	       self.experiments_output_directory + '/segment_ILSVRC2012' 
 	elif os.uname()[1] == 'alessandro-Linux':
             ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
@@ -130,15 +119,8 @@ class Configuration:
                 '/JPEGImages'
             self.experiments_output_directory = \
                 '/home/alessandro/Data_projects/grayobfuscation'
-	    self.ilsvrc2012_train_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'train' 
-	    self.ilsvrc2012_test_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'test'        
-	    self.ilsvrc2012_val_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'val'        
+       	    self.ilsvrc2012_segm_results_dir = \
+	       self.experiments_output_directory + '/segment_ILSVRC2012' 
 	elif os.uname()[1] == 'lbazzani-desk':
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
@@ -173,15 +155,8 @@ class Configuration:
                '/JPEGImages'
             self.experiments_output_directory = \
                '/home/lbazzani/CODE/DATA/obfuscation_results'
-	    self.ilsvrc2012_train_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'train' 
-	    self.ilsvrc2012_test_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'test'        
-	    self.ilsvrc2012_val_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' \
-	       + 'val'	
+       	    self.ilsvrc2012_segm_results_dir = \
+	       self.experiments_output_directory + '/segment_ILSVRC2012' 
 	else:
             raise ValueError('The current machine is not supported')
 
