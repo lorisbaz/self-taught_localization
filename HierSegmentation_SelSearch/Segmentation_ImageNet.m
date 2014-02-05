@@ -8,7 +8,7 @@ function Segmentation_ImageNet(dSET_)
 tiny_example = 0; % for debugging
 
 % Parameters
-resize_big_images = 800; % resize images that are bigger that resize_big_images
+resize_big_images = 600; % resize images that are bigger that resize_big_images
                           % set it to 0 if you want to disable it
                           
 seg_params.colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
