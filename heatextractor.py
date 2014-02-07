@@ -61,7 +61,8 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                      s, len(segm_masks), num_segments)
             heatmap.set_segment_map(segm_mask)
             # obfuscation & heatmap
-            for id_segment in range(num_segments):
+            segm_list = np.unique(segm_mask)
+	    for id_segment in segm_list: #range(num_segments):
                 if id_segment % (num_segments / 10) == 0:
                     print 'segment {0} / {1}'.format(id_segment, num_segments)
                 image_obf = np.array(image) # copy array            
