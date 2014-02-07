@@ -61,7 +61,7 @@ def pipeline(images, output_html, params):
                        center_only = True)
     segmenter = ImgSegmFromMatFiles(conf.ilsvrc2012_segm_results_dir, \
 				    conf.ilsvrc2012_root_images_dir, \
-				    images)
+				    params.fix_sz)
     heatext = HeatmapExtractorSegm(net, segmenter, \
 		   confidence_tech = params.heatextractor_confidence_tech, \
 	           area_normalization = params.heatextractor_area_normalization)
@@ -75,6 +75,8 @@ def pipeline(images, output_html, params):
 	img = resize_image_max_size(img, params.fix_sz)
 	img = skimage.img_as_ubyte(img)
 	img = crop_image_center(img)
+        # sync segmentation loader	
+    	segmenter.set_image_name(image_file)
 	# add the image to the html
 	print 'Image size: ({0}, {1})'.format(img.shape[0], img.shape[1])
 	desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
@@ -86,7 +88,7 @@ def pipeline(images, output_html, params):
 	    for idx, seg in enumerate(seg_masks):
 		num_segments = np.max(seg)+1
 		desc = 'seg {0} {1} (num_segs: {2})'\
-			 .format(idx, str(params.seg_params[idx]), num_segments)
+			 .format(idx, str(np.shape(seg_masks)[0]), num_segments)
 		seg_img = np.float32(seg) / float(num_segments)
 		seg_img = skimage.img_as_ubyte(seg_img)
 		htmlres.add_image_embedded(seg_img, \
