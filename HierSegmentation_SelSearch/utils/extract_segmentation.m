@@ -46,7 +46,7 @@ for i=1:length(testIms)
 %                 % visualization
 %                 subplot(5,5,1)
 %                 imagesc(im), axis image
-%                 [real_hier, hBlobs] = RecreateBlobHierarchyIndImLevels(blobIndIm, blobBoxes, hierarchy{h});
+%                 [real_hier, hBlobs] = RecreateBlobHierarchyIndImLevels(blobIndIm{idx}, blobBoxes, hierarchy{h});
 %                 % visualize if needed
 %                 for l = 1:min(length(real_hier),24)
 %                     subplot(5,5,l+1), imagesc(real_hier{l}, [0,max(real_hier{end}(:))]),

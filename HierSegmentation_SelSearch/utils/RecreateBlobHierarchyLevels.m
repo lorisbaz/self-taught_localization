@@ -40,18 +40,24 @@ while (length(hBlobs)>maxid_segm_Li)
             hBlobs{i} = MergeBlobs(hBlobs{n(1)}, hBlobs{n(2)});
             
             % overwrite the merged segment with the new label
-            TMP_img = real_hierarchy{L}(hBlobs{i}.rect(1):hBlobs{i}.rect(3),hBlobs{i}.rect(2):hBlobs{i}.rect(4));
-            TMP_img(hBlobs{i}.mask) = i;
-            real_hierarchy{L}(hBlobs{i}.rect(1):hBlobs{i}.rect(3),hBlobs{i}.rect(2):hBlobs{i}.rect(4)) = TMP_img;
-            
+%             TMP_img = real_hierarchy{L}(hBlobs{i}.rect(1):hBlobs{i}.rect(3),hBlobs{i}.rect(2):hBlobs{i}.rect(4));
+%             TMP_img(hBlobs{i}.mask) = i;
+%             real_hierarchy{L}(hBlobs{i}.rect(1):hBlobs{i}.rect(3),hBlobs{i}.rect(2):hBlobs{i}.rect(4)) = TMP_img;           
+%             if sum(hBlobs{i}.mask(:))~=sum(sum(real_hierarchy{L}==n(1)))+sum(sum(real_hierarchy{L}==n(2)))
+%                fprintf('fanculo')  % heavy debug!!! and back engineer!!! 
+%             end
+            real_hierarchy{L}(real_hierarchy{L}==n(1)) = i;
+            real_hierarchy{L}(real_hierarchy{L}==n(2)) = i;
+
             n_new_segm_Li1 = n_new_segm_Li1 + 1;
             
             coverage(n(1)) = 1;
-            coverage(n(2)) = 1;            
+            coverage(n(2)) = 1;      
+            imagesc(real_hierarchy{L})
+            
         end
         
     end
-
     maxid_segm_Li = n_segm_Li + n_new_segm_Li1;
 
     L = L + 1;
