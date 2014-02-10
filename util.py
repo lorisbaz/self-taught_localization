@@ -1,6 +1,8 @@
 import numpy as np
+import os
 import skimage
 import skimage.transform
+import tempfile
 
 def resize_image_max_size(img, fix_sz):
     """
@@ -29,3 +31,29 @@ def crop_image_center(img):
         img = img[offset:(offset+img.shape[1]), 0:img.shape[1]]
     return img
 
+def convert_image_to_jpeg_string(img):
+    # TODO this procedure is very hacky (how is that skimage does not
+    #      accept a file handler?)
+    # save a temporary filename, and read its bytes
+    (fd, tmpfilename) = tempfile.mkstemp(suffix = '.jpg')
+    os.close(fd)
+    skimage.io.imsave(tmpfilename, img)
+    fd = open(tmpfilename, 'rb')
+    img_str = fd.read()
+    fd.close()
+    os.remove(tmpfilename)
+    return img_str
+
+def convert_jpeg_string_to_image(img_jpeg_string):
+    # TODO this procedure is very hacky (how is that skimage does not
+    #      accept a file handler?)
+    # save a temporary filename, and read its bytes
+    (fd, tmpfilename) = tempfile.mkstemp(suffix = '.jpg')
+    os.close(fd)
+    fd = open(tmpfilename, 'wb')
+    fd.write(img_jpeg_string)
+    fd.close()
+    img = skimage.io.imread(tmpfilename)
+    os.remove(tmpfilename)
+    return img
+    

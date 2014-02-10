@@ -6,6 +6,8 @@ import skimage.io
 import skimage.transform
 import tempfile
 
+import util
+
 class HtmlReport():
     """
     Simple implementation to generate html reports
@@ -35,17 +37,9 @@ class HtmlReport():
                    is resized having the maximum edge of size 'max_size'.
         'text' is some text (or Html code) put under the image.
         """
-        # TODO this procedure is very hacky (how is that skimage does not
-        #      accept a file handler?)
-        # save a temporary filename, and read its bytes
+        # resize the image, and convert it to jpeg
         img = self.resize_image_(img, proportion, max_size)
-        (fd, tmpfilename) = tempfile.mkstemp(suffix = '.jpg')
-        os.close(fd)
-        skimage.io.imsave(tmpfilename, img)
-        fd = open(tmpfilename, 'rb')
-        img_str = fd.read()
-        fd.close()
-        os.remove(tmpfilename)
+        img_str = util.convert_image_to_jpeg_string(img)
         # convert the bytes to base64 and add the image to the html page
         img_str_base64 = base64.b64encode(img_str)
         src = 'data:image/jpg;base64,' + img_str_base64
