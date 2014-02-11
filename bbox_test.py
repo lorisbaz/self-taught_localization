@@ -30,15 +30,15 @@ class BBoxTest(unittest.TestCase):
         self.assertAlmostEqual(self.bint.xmax, 50.0/30.0, places=5)
         self.assertAlmostEqual(self.bint.ymax, 40.0/50.0, places=5)
 
-    def test_intersection(self):
+    def test_intersect(self):
         # test bflt
-        self.bflt.intersection(bbox.BBox(0.15, 0.4, 0.35, 0.7))
+        self.bflt.intersect(bbox.BBox(0.15, 0.4, 0.35, 0.7))
         self.assertAlmostEqual(self.bflt.xmin, 0.2, places=5)
         self.assertAlmostEqual(self.bflt.ymin, 0.4, places=5)
         self.assertAlmostEqual(self.bflt.xmax, 0.35, places=5)
         self.assertAlmostEqual(self.bflt.ymax, 0.6, places=5)
         # test bint
-        self.bint.intersection(bbox.BBox(50, 10, 80, 60))
+        self.bint.intersect(bbox.BBox(50, 10, 80, 60))
         self.assertAlmostEqual(self.bint.xmin, 60, places=5)
         self.assertAlmostEqual(self.bint.ymin, 30, places=5)
         self.assertAlmostEqual(self.bint.xmax, 80, places=5)

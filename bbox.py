@@ -21,8 +21,13 @@ class BBox:
         self.confidence = confidence
 
     def __str__(self):
-        return 'bbox: [{0}. {1}. {2}. {3}] conf: {4}'.format( \
-                  self.xmin, self.ymin, self.xmax, self.ymax, self.confidence)
+        xmin = float(self.xmin)
+        ymin = float(self.ymin)
+        xmax = float(self.xmax)
+        ymax = float(self.ymax)
+        confidence = float(self.confidence)
+        return 'bbox: [{0:.2}. {1:.2}. {2:.2}. {3:.2}] conf: {4:.5} .'.format( \
+                  xmin, ymin, xmax, ymax, confidence)
 
     def area(self):
         return np.abs(self.xmax-self.xmin)*np.abs(self.ymax-self.ymin)
@@ -42,7 +47,7 @@ class BBox:
         self.ymax = (self.ymax - outer_box.ymin) / out_box_height
         return self
     
-    def intersection(self, bbox):
+    def intersect(self, bbox):
         """
         Intersection with the given bbox.
         Note: confidence is not modified.
@@ -58,7 +63,7 @@ class BBox:
         """
         Calculates the Jaccard similarity (the similarity used in the PASCAL VOC)
         """
-        area_intersection = bbox.copy().intersection(self).area()
+        area_intersection = bbox.copy().intersect(self).area()
         area_union = self.area() + bbox.area() - area_intersection
         return area_intersection / float(area_union)
 

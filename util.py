@@ -4,6 +4,8 @@ import skimage
 import skimage.transform
 import tempfile
 
+from bbox import *
+
 def resize_image_max_size(img, fix_sz):
     """
     Return a resized version of the image, where the longest edge has 
@@ -23,13 +25,20 @@ def crop_image_center(img):
     Returns the crop of the image, made by taking the central region.
     """
     img = np.copy(img)
+    bb = get_center_crop(img)
+    img = img[bb.ymin:bb.ymax, bb.xmin:bb.xmax]
+    return img
+
+def get_center_crop(img):
+    """
+    Return a BBox representing the central crop of the image
+    """
     if img.shape[0] < img.shape[1]:
         offset = (img.shape[1] - img.shape[0]) / 2
-        img = img[0:img.shape[0], offset:(offset+img.shape[0])]
+        return BBox(offset, 0, offset+img.shape[0], img.shape[0])
     else:
         offset = (img.shape[0] - img.shape[1]) / 2
-        img = img[offset:(offset+img.shape[1]), 0:img.shape[1]]
-    return img
+        return BBox(0, offset, img.shape[1], offset+img.shape[1])
 
 def convert_image_to_jpeg_string(img):
     # TODO this procedure is very hacky (how is that skimage does not
