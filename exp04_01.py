@@ -1,3 +1,8 @@
+import logging
+# Log format (Note: this has to be here, because other import suppress it)
+logging.basicConfig(level=logging.INFO, \
+                    format='%(asctime)s %(message)s', \
+                    datefmt='%m/%d/%Y %I:%M:%S %p')    
 import numpy as np
 import os
 import os.path
@@ -45,5 +50,7 @@ if __name__ == "__main__":
     params.visualize_heatmaps = True
     params.visual_factor = 10e-2 # normalize output for
 				 # better visualization
+    logging.info('Started')
     # RUN THE EXPERIMENT
     exp04.run_exp(params)
+

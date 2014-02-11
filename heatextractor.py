@@ -1,6 +1,7 @@
 import numpy as np
 from heatmap import *
 from imgsegmentation import *
+import logging
 
 class HeatmapExtractor:
     """class for HeatmapExtractor"""
@@ -49,34 +50,35 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         heatmaps = []
         # Classify the full image without obfuscation
         if (self.confidence_tech_ == 'full_obf') or \
-           (self.confidence_tech_ == 'full_obf_positive'):
-            caffe_rep_full = self.network_.evaluate(image)
+            (self.confidence_tech_ == 'full_obf_positive'):
+            caffe_rep_full = self.network_.evaluate(image)  
         # Perform segmentation
-        segm_masks = self.segment_.extract(image) # list of segmentation masks   
+        segm_masks = self.segment_.extract(image) # list of segmentation
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
-            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap     
+            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
             segm_mask = segm_masks[s] # retrieve s-th mask
             num_segments = np.max(segm_mask)+1
-            print 'segm_mask {0} / {1} ({2} segments)'.format( \
-                     s, len(segm_masks), num_segments)
+            logging.info('segm_mask {0} / {1} ({2} segments)'.format( \
+                      s, len(segm_masks), num_segments))
             heatmap.set_segment_map(segm_mask)
             # obfuscation & heatmap
             segm_list = np.unique(segm_mask)
-	    for id_segment in segm_list: #range(num_segments):
+            for id_segment in segm_list: #range(num_segments):
                 if id_segment % (num_segments / 10) == 0:
-                    print 'segment {0} / {1}'.format(id_segment, num_segments)
+                    logging.info('segment {0} / {1}'.format(id_segment, \
+                                 num_segments))
                 image_obf = np.array(image) # copy array            
                 # obfuscation 
                 if np.shape(image.shape)[0]>2: # RGB images
                     image_obf[segm_mask==id_segment,0] = \
-                                                self.network_.get_mean_img()[0]
+                                            self.network_.get_mean_img()[0]
                     image_obf[segm_mask==id_segment,1] = \
-                                                self.network_.get_mean_img()[1]
+                                            self.network_.get_mean_img()[1]
                     image_obf[segm_mask==id_segment,2] = \
-                                                self.network_.get_mean_img()[2]   
+                                            self.network_.get_mean_img()[2]   
                 else: # GRAY images
                     image_obf[segm_mask==id_segment] = \
-                                           np.mean(self.network_.get_mean_img())
+                                      np.mean(self.network_.get_mean_img())
                 # predict CNN reponse for obfuscation
                 caffe_rep_obf = self.network_.evaluate(image_obf)
                 # Given the class of the image, select the confidence
@@ -105,26 +107,26 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                  area_normalization = True):
         """
       	network is of type Network
-	params are tuples of sliding window parameters:
-	- bbox_sz: size of the bounding box
-	- stride: regular stride of the windows over the image
+        params are tuples of sliding window parameters:
+        - bbox_sz: size of the bounding box
+        - stride: regular stride of the windows over the image
         confidence_tech is the type of extracted confidence which can be:
         - 'only_win': 1 - classification_score for the given label of the 
                       slide window
         - 'full_win': classification_score for the image 
                           - classification_score of the slide window
         - 'full_win_positive': max(full_win, 0)   
-	"""
+        """
         self.network_ = network
         self.params_ = params
         self.area_normalization_ = area_normalization
         self.confidence_tech_ = confidence_tech
         
     def extract(self, image, label = ''):
-	"""
-	Compute CNN response for sliding windows and returns a set of heatmaps 
-        (Heatmap objects)
-	"""
+        """
+        Compute CNN response for sliding windows and returns a set of heatmaps 
+            (Heatmap objects)
+        """
         # retrieve the label id
         lab_id = self.network_.get_label_id(label)    
         # Init the list of heatmaps
@@ -135,10 +137,11 @@ class HeatmapExtractorSliding(HeatmapExtractor):
             caffe_rep_full = self.network_.evaluate(image)
         # Cycle over boxes        
         for param in self.params_: # for box parameter
-	    box_sz, stride = param
-            print 'sliding window {0} / {1} '.format(np.shape(heatmaps)[0]+1, \
-					       	     len(self.params_)) 
-	    heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
+            box_sz, stride = param
+            logging.info('sliding window {0} / {1} '\
+                         .format(np.shape(heatmaps)[0]+1, \
+    				     len(self.params_)))
+            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
             # generate indexes
             xs = np.linspace(0, image.shape[1]-box_sz, \
                              (image.shape[1]-box_sz)/float(stride)+1)
@@ -185,9 +188,9 @@ class HeatmapExtractorBox(HeatmapExtractor):
                  area_normalization = True):
         """
         network is of type Network
-	params are tuples of sliding window parameters:
-	- bbox_sz: size of the bounding box
-	- stride: regular stride of the windows over the image
+	    params are tuples of sliding window parameters:
+	    - bbox_sz: size of the bounding box
+	    - stride: regular stride of the windows over the image
         confidence_tech is the type of extracted confidence which can be:
         - 'only_obf': 1 - classification_score for the given label of the 
                       obfuscated image
@@ -197,7 +200,7 @@ class HeatmapExtractorBox(HeatmapExtractor):
         """
         self.network_ = network
         self.params_ = params
-	self.area_normalization_ = area_normalization
+        self.area_normalization_ = area_normalization
         self.confidence_tech_ = confidence_tech
         
     def extract(self, image, label = ''):
@@ -215,10 +218,11 @@ class HeatmapExtractorBox(HeatmapExtractor):
             caffe_rep_full = self.network_.evaluate(image)
         # Cycle over boxes        
         for param in self.params_: # for box parameter
-	    box_sz, stride = param
-            print 'box mask {0} / {1} '.format(np.shape(heatmaps)[0]+1, \
-					       len(self.params_)) 
-	    heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
+            box_sz, stride = param
+            logging.info('box mask {0} / {1} '\
+                          .format(np.shape(heatmaps)[0]+1, \
+    				      len(self.params_)))
+            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
             # generate indexes
             xs = np.linspace(0, image.shape[1]-box_sz, \
                              (image.shape[1]-box_sz)/float(stride)+1)
