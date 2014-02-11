@@ -62,16 +62,17 @@ def pipeline(images, output_html, params):
                        center_only = True)
     segmenter = ImgSegmFromMatFiles(conf.ilsvrc2012_segm_results_dir, \
     			    conf.ilsvrc2012_root_images_dir, \
-    			    params.fix_sz)
+    			    params.fix_sz, subset_par=True)
     heatext = HeatmapExtractorSegm(net, segmenter, \
                     confidence_tech = params.heatextractor_confidence_tech, \
-                   area_normalization = params.heatextractor_area_normalization)
+                    area_normalization = params.heatextractor_area_normalization)
     htmlres = HtmlReport()
     # loop over the images
     for image in images:
         image_wnid, image_file = image
         logging.info('Elaborating ' + os.path.basename(image_file))
         img = skimage.io.imread(image_file)
+        orig_size = np.shape(img)
         # rescale the image (if necessary), and crop it to the central region
         img = resize_image_max_size(img, params.fix_sz)
         img = skimage.img_as_ubyte(img)
@@ -79,7 +80,9 @@ def pipeline(images, output_html, params):
         # sync segmentation loader	
         segmenter.set_image_name(image_file)
         # add the image to the html
-        logging.info('Image size: ({0}, {1})'.format(img.shape[0], img.shape[1]))
+        logging.info('Image size: orig. ({0}, {1}) -> crop ({2},{3})' \
+                      .format(orig_size[0], orig_size[1], \
+                              img.shape[0], img.shape[1]))
         desc = '{0}\n{1}'.format(image_wnid, os.path.basename(image_file))
         htmlres.add_image_embedded(img, max_size = params.html_max_img_size, \
     	                           text = desc)

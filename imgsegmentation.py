@@ -54,13 +54,15 @@ class ImgSegmFromMatFiles(ImgSegm):
     Load a set of segmentations stored in a certain directory
     """
 
-    def __init__(self, directory, img_root_dir, fix_sz, num_levels=3):
+    def __init__(self, directory, img_root_dir, fix_sz, subset_par=False, num_levels=3):
         """
         Segmentation files stored in directory
 	    - directory: where segmentation files are stored
 	    - img_root_dir: where images are stored
-	    - num_levels: number of levels for each parameter
 	    - fix_sz: size of centered image block
+        - subset_par: if True take a subset of segmentations paramters
+                      to speed up the obfuscation part
+        - num_levels: number of levels for each parameterv
         """
         self.directory_ = directory
         self.img_root_dir_ = img_root_dir
@@ -68,6 +70,7 @@ class ImgSegmFromMatFiles(ImgSegm):
         self.imagename_ = None # index the file_list
         self.num_levels_ = num_levels
         self.fix_sz_ = fix_sz
+        self.subset_ = subset_par
 
     def extract(self, image):
         """
@@ -87,7 +90,12 @@ class ImgSegmFromMatFiles(ImgSegm):
 	
         # Create segmentations from the tree of labels
         segm_all = []
-        for i in range(np.shape(segm_L1)[1]): 
+        if self.subset_:
+            range_segm = [1,3] # select only k=100
+        else:
+            range_segm = range(np.shape(segm_L1)[1])
+
+        for i in range_segm: 
             segmentations = [] 	
             # make sure that is uint16 (I spent a day to find this bug!!)
             segm_L1[0,i] = np.uint16(segm_L1[0,i])   
@@ -121,12 +129,16 @@ class ImgSegmFromMatFiles(ImgSegm):
                 maxid_segm_Li = n_segm_Li + num_new_segm_Li1
                 # store segmentation 
                 segmentations.append(segm_mask_Li1) 
-   
+            
+            if self.subset_:
+                start = 1 # start from second-level segmentation
+            else:
+                start = 0
             # keep num_levels segmentations (last flat segmentation removed)
             rule_last = np.shape(segmentations)[0] - 1 	  
             #segm_all.append(segmentations[0]) # always keep the first layer
-            for j in range(0,rule_last, \
-      	                   np.uint16(rule_last/(self.num_levels_))):
+            for j in range(start,rule_last + 1, \
+                     np.uint16((rule_last-start)/(self.num_levels_ - 1))):
                 segm_all.append(segmentations[j])
 	
         #pl.subplot(6,6,1)
@@ -142,12 +154,14 @@ class ImgSegmFromMatFiles(ImgSegm):
                                 np.shape(image)[0],np.shape(image)[1]),\
                                 dtype=np.uint16)
         for k in range(np.shape(segm_all)[0]):
-            factor = np.float(np.max(segm_all[k]))
-            TMP = np.copy(segm_all[k]/factor)
-            TMP = resize_image_max_size(TMP, self.fix_sz_)
-            TMP = TMP*factor
-            #TMP = skimage.img_as_ubyte(TMP)
-            segm_all_rz[k,:,:] = np.uint16(crop_image_center(TMP))
+            # resize (not needed!)
+            #factor = np.float(np.max(segm_all[k]))
+            #TMP = np.copy(segm_all[k]/factor) # project in [0,1]
+            #TMP = resize_image_max_size(TMP, self.fix_sz_)
+            #TMP = np.uint16(crop_image_center(TMP*factor))
+            #TMP = resize_mat_max_size_nn(TMP, )
+            # store results
+            segm_all_rz[k,:,:] = np.uint16(crop_image_center(segm_all[k]))
  
         return segm_all_rz
 
