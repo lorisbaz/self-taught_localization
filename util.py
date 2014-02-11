@@ -1,3 +1,8 @@
+import logging
+# Log format (Note: this has to be here, because other import suppress it)
+logging.basicConfig(level=logging.INFO, \
+              format='%(asctime)s %(message)s %(funcName)s %(levelno)s', \
+              datefmt='%m/%d/%Y %I:%M:%S %p')
 import numpy as np
 import os
 import skimage

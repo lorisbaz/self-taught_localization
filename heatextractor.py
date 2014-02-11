@@ -56,17 +56,18 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         segm_masks = self.segment_.extract(image) # list of segmentation
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
             heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
-            segm_mask = segm_masks[s] # retrieve s-th mask
-            num_segments = np.max(segm_mask)+1
-            logging.info('segm_mask {0} / {1} ({2} segments)'.format( \
-                      s, len(segm_masks), num_segments))
+            segm_mask = segm_masks[s] # retrieve s-th mask 
             heatmap.set_segment_map(segm_mask)
-            # obfuscation & heatmap
             segm_list = np.unique(segm_mask)
+            num_segments = len(segm_list) + 1
+            max_segments = np.max(segm_mask) + 1
+            logging.info('segm_mask {0} / {1} ({2} segments)'.format( \
+                         s, len(segm_masks), num_segments))
+            # obfuscation & heatmap
             for id_segment in segm_list: #range(num_segments):
-                if id_segment % (num_segments / 10) == 0:
+                if id_segment % (max_segments / 10) == 0:
                     logging.info('segment {0} / {1}'.format(id_segment, \
-                                 num_segments))
+                                 max_segments))
                 image_obf = np.array(image) # copy array            
                 # obfuscation 
                 if np.shape(image.shape)[0]>2: # RGB images

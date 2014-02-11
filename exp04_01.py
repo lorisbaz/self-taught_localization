@@ -1,8 +1,4 @@
-import logging
-# Log format (Note: this has to be here, because other import suppress it)
-logging.basicConfig(level=logging.INFO, \
-                    format='%(asctime)s %(message)s', \
-                    datefmt='%m/%d/%Y %I:%M:%S %p')    
+from util import *
 import numpy as np
 import os
 import os.path
@@ -15,7 +11,6 @@ from configuration import *
 from imgsegmentation import *
 from heatextractor import *
 from htmlreport import *
-from util import *
 import exp04
 
 if __name__ == "__main__":
@@ -32,7 +27,7 @@ if __name__ == "__main__":
     params.images_file = conf.ilsvrc2012_val_images
     params.labels_file = conf.ilsvrc2012_val_labels
     # we first resize each image to this size, if bigger
-    params.fix_sz = 300
+    params.fix_sz = 600
     # the maximum size of an image in the html files
     params.html_max_img_size = 200
     # method for calculating the confidence
