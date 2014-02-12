@@ -1,16 +1,34 @@
 import util
 
+class AnnotatedHeatmap:
+    """
+    Object defining an heatmap with annotations.
+    The public fields are:
+    - heatmap: nd-array.
+    - description: string. A textual description of what this heatmap refers to.
+    - type: string. the classname that generated this heatmap.
+    - spec: implementation-specific data, containing more information regarding
+            how the heatmap has been extracted.
+    """
+    def __init__(self):
+        self.heatmap = None
+        self.description = ''
+        self.type = ''
+        self.specs = None
 
 class AnnotatedObject:
     """
     Everything regarding the annotation of an object.
     The public fields are:
     - label: string (i.e. 'n0001000')
-    - bboxes: list of BBox objects
-    - heatmaps: list of Heatmap objects
+    - confidence: float.  The confidence value associated with this object
+           (Normally it refers to the full-image confidence)
+    - bboxes: list of BBox objects (if any)
+    - heatmaps: list of AnnotatedHeatmap objects
     """
-    def __init__(self):
-        self.label = ''
+    def __init__(self, label='', confidence=0.0):
+        self.label = label
+        self.confidence = confidence
         self.bboxes = []
         self.heatmaps = []
 
@@ -31,8 +49,6 @@ class AnnotatedImage:
     - image_name: string
                   The unique file identifier of the image
                   (i.e. 'val/ILSVRC2012_val_00000001.JPEG')
-    - gt_label: full-image gt label
-    - pred_label: full-image pred label
     - gt_objects: array of AnnotatedObject objects
     - pred_objects: array of AnnotatedObject objects
     - crop_description: string, containing a description regarding how the image 
@@ -45,17 +61,15 @@ class AnnotatedImage:
         self.image_width = 0
         self.image_height = 0
         self.image_name = ''
-        self.gt_label = ''
-        self.pred_label = ''
         self.gt_objects = []
         self.pred_objects = []
         self.crop_description = ''
         self.segmentation_name = ''
 
     def __str__(self):
-        out = '{0}:{1} [{2} x {3}]\n'.format(self.image_name, self.gt_label, \
-                                             self.image_height, \
-                                             self.image_width)
+        out = '{0}:[{1} x {2}]\n'.format(self.image_name, \
+                                         self.image_height, \
+                                         self.image_width)
         out += 'gt_objects:\n'
         for obj in self.gt_objects:
             out += '  ' + str(obj)

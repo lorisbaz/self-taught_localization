@@ -72,9 +72,8 @@ def visualize_annotated_image(anno):
     draw = ImageDraw.Draw(img)
     for obj in anno.gt_objects:
         for bb in obj.bboxes:
-            if obj.label == anno.gt_label:
-                draw.rectangle([bb.xmin, bb.ymin, bb.xmax-1, bb.ymax-1], \
-                               outline='red')
+            draw.rectangle([bb.xmin, bb.ymin, bb.xmax-1, bb.ymax-1], \
+                            outline='red')
     del draw
     img.show()
 
@@ -101,7 +100,7 @@ def pipeline(images, outputdb, params):
         anno.set_image(img)
         anno.image_name = os.path.basename(image_file)
         anno.crop_description = 'central crop'
-        anno.gt_label = image_wnid.strip()
+        anno.gt_objects.append(AnnotatedObject(image_wnid.strip(), 1.0))
         # read the ground truth XML file
         xmlfile = conf.ilsvrc2012_val_box_gt + '/' \
                     + os.path.basename(image_file).replace('.JPEG', '.xml')
