@@ -71,3 +71,23 @@ def convert_jpeg_string_to_image(img_jpeg_string):
     os.remove(tmpfilename)
     return img
     
+def split_list(l, num_chunks):
+    """
+    Split the given list 'l' into 'num_chunks' lists, trying to balance
+    the number of elements in every sublist.
+    Returns the list of sub-lists.
+    """
+    out = [[] for i in range(num_chunks)]
+    numel = [0]*num_chunks
+    idx = 0
+    for i in range(len(l)):
+        numel[idx] += 1
+        idx += 1
+        if idx >= num_chunks:
+            idx = 0
+    idx = 0
+    for i in range(num_chunks):
+        for j in range(numel[i]):
+            out[i].append(l[idx])
+            idx += 1
+    return out

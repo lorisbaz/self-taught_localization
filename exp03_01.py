@@ -31,6 +31,8 @@ if __name__ == "__main__":
     # output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
+    # number of output chunks (the number of databases to create)
+    params.num_chunks = 10
     # parallelize the script on Anthill?
     params.run_on_anthill = False
     # visualize images (for DEBUGGING)

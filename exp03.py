@@ -1,8 +1,10 @@
 import cPickle as pickle
+import gdbm
 import logging
 import numpy as np
 import os
 import os.path
+import random
 import sys
 import scipy.misc
 import skimage.io
@@ -77,13 +79,15 @@ def visualize_annotated_image(anno):
     del draw
     img.show()
 
-def pipeline(images, params):
+def pipeline(images, outputdb, params):
     """
     Run the pipeline for this experiment. images is a list of
     (wnid, image_filename), or the SAME CLASS (i.e. wnid is a constant). 
     """
-    # Instantiate some objects
+    # Instantiate some objects, and open the database
     conf = params.conf
+    print outputdb
+    db = gdbm.open(outputdb, 'cf')
     # loop over the images
     for image in images:
         image_wnid, image_file = image
@@ -124,8 +128,6 @@ def pipeline(images, params):
                 bb = BBox(xmin, ymin, xmax, ymax)
                 bb.intersect(bbox_center_crop)
                 bb.translate(bbox_center_crop.xmin, bbox_center_crop.ymin)
-                #bb.normalize_to_outer_box(bbox_center_crop)
-                #bb.intersect(BBox(0, 0, 1, 1))
                 anno_objects_dict[label].bboxes.append(bb)
         for key, value in anno_objects_dict.iteritems():
             anno.gt_objects.append(value)
@@ -133,44 +135,36 @@ def pipeline(images, params):
         # visualize the annotation (just for debugging)
         if params.visualize_annotated_images:
             visualize_annotated_image(anno)
-        # pickle the AnnotatedImage, saving to the disk a file
-        outputfile = params.output_dir + '/' \
-                       + os.path.basename(image_file).replace('.JPEG', '.pkl')
-        logging.info('Writing file ' + outputfile)
-        fd = open(outputfile, 'wb')
-        pickle.dump(anno, fd)
-        fd.close()
+        # adding the AnnotatedImage to the database
+        logging.info('Adding the record to the database')
+        key = os.path.basename(image_file).strip()
+        value = pickle.dumps(anno, protocol=2)
+        db[key] = value
         logging.info('End record')
+    # write the database
+    logging.info('Writing file ' + outputdb)
+    db.sync()
+    db.close()
     return 0
-
 
 
 def run_exp(params):
     # create output directory
     if os.path.exists(params.output_dir) == False:
         os.makedirs(params.output_dir)
-    # load the filenames of the first 10 classes of
-    # ILSVRC2012-validation, and divide the images by class
+    # load the filenames of the the images and randomly shuffle it
     images = get_filenames(params)
-    images = sorted(images, key=lambda x: x[0])
-    images_by_class = [[] for i in range(params.num_classes)]
-    assert len(images_by_class) == params.num_classes
-    current_wnid = images[0][0]
-    current_idx = 0
-    for image in images:
-	if image[0] != current_wnid:
-	    current_idx += 1
-	    current_wnid = image[0]
-	images_by_class[current_idx].append(image)
-    assert current_idx == params.num_classes-1
+    random.shuffle(images)
+    image_chunks = split_list(images, params.num_chunks)
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
     	parfun = ParFunAnthill(pipeline)
     else:
         parfun = ParFunDummy(pipeline)
-    for i, images in enumerate(images_by_class):
-        parfun.add_task(images, params)
+    for i in range(len(image_chunks)):
+        outputdb = params.output_dir + '/%05d'%i + '.gdbm'
+        parfun.add_task(image_chunks[i], outputdb, params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:
