@@ -38,7 +38,7 @@ if __name__ == "__main__":
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     # parallelize the script on Anthill?
-    params.run_on_anthill = False
+    params.run_on_anthill = True
     # segmentation masks?
     params.visualize_segmentation_masks = True
     # visualize heatmaps?

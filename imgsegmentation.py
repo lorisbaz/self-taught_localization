@@ -66,8 +66,8 @@ class ImgSegmFromMatFiles(ImgSegm):
         """
         self.directory_ = directory
         self.img_root_dir_ = img_root_dir
-        #self.file_list_ = file_list
         self.imagename_ = None # index the file_list
+        self.segmname_ = None
         self.num_levels_ = num_levels
         self.fix_sz_ = fix_sz
         self.subset_ = subset_par
@@ -79,10 +79,7 @@ class ImgSegmFromMatFiles(ImgSegm):
 	    # Print
         logging.info('Loading segmentations from disk')
         # Load file
-        matfile = self.imagename_
-        matfile = matfile.replace(self.img_root_dir_,'')
-        matfile = matfile.replace('JPEG','mat')
-        segm_mat = io.loadmat(self.directory_ + matfile)
+        segm_mat = io.loadmat(self.directory_ + self.segmname_)
 	
         # Parse segmentation files
         segm_L1 = segm_mat.get('blobIndIm')
@@ -171,3 +168,14 @@ class ImgSegmFromMatFiles(ImgSegm):
         """
         self.imagename_ = imagename
 
+    def set_segm_name(self, imagename):
+        """
+        Set both image name and segmentation name to 
+        synchronize the segmenter with the image list
+        """
+        self.imagename_ = imagename
+        segmname = imagename        
+        segmname = segmname.replace(self.img_root_dir_,'')
+        segmname = segmname.replace('JPEG','mat') 
+        self.segmname_ = segmname
+ 
