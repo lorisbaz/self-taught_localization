@@ -1,5 +1,5 @@
 import cPickle as pickle
-import gdbm
+import bsddb
 import logging
 import numpy as np
 import os
@@ -16,7 +16,6 @@ from PIL import ImageDraw
 from annotatedimage import *
 from bbox import *
 from heatmap import *
-from network import *
 from configuration import *
 from imgsegmentation import *
 from heatextractor import *
@@ -82,12 +81,12 @@ def visualize_annotated_image(anno):
 def pipeline(images, outputdb, params):
     """
     Run the pipeline for this experiment. images is a list of
-    (wnid, image_filename), or the SAME CLASS (i.e. wnid is a constant). 
+    (wnid, image_filename), or the SAME CLASS (i.e. wnid is a constant).
     """
     # Instantiate some objects, and open the database
     conf = params.conf
     print outputdb
-    db = gdbm.open(outputdb, 'cf')
+    db = bsddb.btopen(outputdb, 'c')
     # loop over the images
     for image in images:
         image_wnid, image_file = image
@@ -114,11 +113,11 @@ def pipeline(images, outputdb, params):
         assert size_height == original_img.shape[0]
         objects = annotation.findall('object')
         anno_objects_dict = {} # dictionary label --> AnnoObject
-        for obj in objects:            
+        for obj in objects:
             label = obj.find('name').text.strip()
             if label not in anno_objects_dict:
                 anno_objects_dict[label] = AnnotatedObject()
-                anno_objects_dict[label].label = label            
+                anno_objects_dict[label].label = label
             bboxes = obj.findall('bndbox')
             for bbox in bboxes:
                 xmin = int(bbox.find('xmin').text)
@@ -159,11 +158,11 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline)
+    	parfun = ParFunAnthill(pipeline, time_requested = 10)
     else:
         parfun = ParFunDummy(pipeline)
     for i in range(len(image_chunks)):
-        outputdb = params.output_dir + '/%05d'%i + '.gdbm'
+        outputdb = params.output_dir + '/%05d'%i + '.db'
         parfun.add_task(image_chunks[i], outputdb, params)
     out = parfun.run()
     for i, val in enumerate(out):
