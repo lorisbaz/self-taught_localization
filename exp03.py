@@ -72,8 +72,9 @@ def visualize_annotated_image(anno):
     draw = ImageDraw.Draw(img)
     for obj in anno.gt_objects:
         for bb in obj.bboxes:
-            draw.rectangle([bb.xmin, bb.ymin, bb.xmax-1, bb.ymax-1], \
-                            outline='red')
+            if obj.label == anno.get_gt_label():
+                draw.rectangle([bb.xmin, bb.ymin, bb.xmax-1, bb.ymax-1], \
+                               outline='red')
     del draw
     img.show()
 

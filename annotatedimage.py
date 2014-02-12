@@ -1,3 +1,5 @@
+import sys
+
 import util
 
 class AnnotatedHeatmap:
@@ -91,6 +93,19 @@ class AnnotatedImage:
         assert self.image_width == img.shape[1]
         assert self.image_height == img.shape[0]
         return img
+
+    def get_gt_label(self):
+        """
+        Return the top-scoring (full image) gt label, 
+        by looking at the AnnotatedObjects with no bboxes.
+        """
+        label = ''
+        max_conf = sys.float_info.min
+        for obj in self.gt_objects:
+            if len(obj.bboxes)==0 and obj.confidence>max_conf:
+                label = obj.label
+                max_conf = obj.confidence
+        return label
 
 
 
