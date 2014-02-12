@@ -39,15 +39,6 @@ Configure;
 if ~exist(savePath, 'file')
   mkdir(savePath);
 end
-if ~exist([savePath '/val'], 'file')
-  mkdir([savePath '/val']);
-end
-if ~exist([savePath '/train'], 'file')
-  mkdir([savePath '/train']);
-end
-if ~exist([savePath '/test'], 'file')
-  mkdir([savePath '/test']);
-end
 
 if run_on_anthill
     % Anthill processes

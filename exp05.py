@@ -110,17 +110,26 @@ def pipeline(outputdb, params):
         logging.info('***** Elaborating ' + os.path.basename(anno.image_name))  
         # sync segmentation loader  
         segmenter.set_segm_name(anno.image_name)
+        anno.segmentation_name = segmenter.segmname_
         # predict label for full image
         rep_vec = net.evaluate(img)
         pred_label = np.argmax(rep_vec)
-        pred_label = net.get_labels()[pred_label]
+        anno.pred_label = net.get_labels()[pred_label]
         # heatmaps extraction (with gt_label)
         heatmaps = heatext.extract(img, anno.gt_label) 
-        # adding the AnnotatedImage with the heatmaps to the database
-        logging.info('Adding the record to the database')
+        # add the heatmap obj to the annotation object
+        anno.pred_objects = AnnotatedObject()
+        anno.pred_objects.label = anno.pred_label
+        anno.pred_objects.heatmaps = heatmaps            
+        logging.info(str(anno))
+        # visualize the annotation (just for debugging)
+        if params.visualize_annotated_images:
+            visualize_annotated_image(anno)
+        # adding the AnnotatedImage with the heatmaps to the database 
+        logging.info('Adding the record to he database')
         key = os.path.basename(image_file).strip()
         value = pickle.dumps(anno, protocol=2)
-        db[key] = value
+        db[image_key] = value
         logging.info('End record')
     # write the database
     logging.info('Writing file ' + outputdb)
