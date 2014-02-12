@@ -21,13 +21,14 @@ class BBox:
         self.confidence = confidence
 
     def __str__(self):
-        xmin = float(self.xmin)
-        ymin = float(self.ymin)
-        xmax = float(self.xmax)
-        ymax = float(self.ymax)
-        confidence = float(self.confidence)
-        return 'bbox: [{0:.2}. {1:.2}. {2:.2}. {3:.2}] conf: {4:.5} .'.format( \
-                  xmin, ymin, xmax, ymax, confidence)
+        if isinstance(self.xmin, float):
+            confidence = float(self.confidence)
+            return 'bbox: [{0:.2} {1:.2} {2:.2} {3:.2}] conf: {4:.5} .'\
+            .format(self.xmin, self.ymin, self.xmax, self.ymax, self.confidence)
+        else:
+            return 'bbox: [{0} {1} {2} {3}] conf: {4:.5} .'\
+            .format(self.xmin, self.ymin, self.xmax, self.ymax, self.confidence)
+            
 
     def area(self):
         return np.abs(self.xmax-self.xmin)*np.abs(self.ymax-self.ymin)
@@ -46,6 +47,16 @@ class BBox:
         self.xmax = (self.xmax - outer_box.xmin) / out_box_width
         self.ymax = (self.ymax - outer_box.ymin) / out_box_height
         return self
+
+    def translate(self, x, y):
+        """
+        Translate the coordinates of the box, that will have 
+        (x, y) as the new origin.
+        """
+        self.xmin -= x
+        self.ymin -= y
+        self.xmax -= x
+        self.ymax -= y
     
     def intersect(self, bbox):
         """

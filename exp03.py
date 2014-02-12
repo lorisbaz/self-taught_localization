@@ -1,11 +1,15 @@
 import cPickle as pickle
+import logging
 import numpy as np
 import os
 import os.path
 import sys
+import scipy.misc
 import skimage.io
 import xml.etree.ElementTree as ET
 from vlg.util.parfun import *
+from PIL import Image
+from PIL import ImageDraw
 
 from annotatedimage import *
 from bbox import *
@@ -61,6 +65,17 @@ def get_filenames(params):
         out.append( (wnids[labels_id[i]-1], images[i]) )
     return out
 
+def visualize_annotated_image(anno):
+    img = convert_jpeg_string_to_image(anno.image_jpeg)
+    img = scipy.misc.toimage(img)
+    draw = ImageDraw.Draw(img)
+    for obj in anno.gt_objects:
+        for bb in obj.bboxes:
+            if obj.label == anno.gt_label:
+                draw.rectangle([bb.xmin, bb.ymin, bb.xmax-1, bb.ymax-1], \
+                               outline='red')
+    del draw
+    img.show()
 
 def pipeline(images, params):
     """
@@ -73,10 +88,10 @@ def pipeline(images, params):
     for image in images:
         image_wnid, image_file = image
         anno = AnnotatedImage()
-        print '***** Elaborating ' + os.path.basename(image_file)
-        img = skimage.io.imread(image_file)
+        logging.info('***** Elaborating ' + os.path.basename(image_file))
+        original_img = skimage.io.imread(image_file)
         # rescale the image (if necessary), and crop it to the central region
-        img = resize_image_max_size(img, params.fix_sz)
+        img = resize_image_max_size(original_img, params.fix_sz)
         img = skimage.img_as_ubyte(img)
         bbox_center_crop = get_center_crop(img)
         img = crop_image_center(img)
@@ -84,14 +99,15 @@ def pipeline(images, params):
         anno.image_name = os.path.basename(image_file)
         anno.crop_description = 'central crop'
         anno.gt_label = image_wnid.strip()
-        print 'Image size: ({0}, {1})'.format(img.shape[0], img.shape[1])
         # read the ground truth XML file
         xmlfile = conf.ilsvrc2012_val_box_gt + '/' \
                     + os.path.basename(image_file).replace('.JPEG', '.xml')
         xmldoc = ET.parse(xmlfile)
         annotation = xmldoc.getroot()
         size_width = int(annotation.find('size').find('width').text)
+        assert size_width == original_img.shape[1]
         size_height = int(annotation.find('size').find('height').text)
+        assert size_height == original_img.shape[0]
         objects = annotation.findall('object')
         anno_objects_dict = {} # dictionary label --> AnnoObject
         for obj in objects:            
@@ -106,20 +122,25 @@ def pipeline(images, params):
                 xmax = int(bbox.find('xmax').text)
                 ymax = int(bbox.find('ymax').text)
                 bb = BBox(xmin, ymin, xmax, ymax)
-                bb.normalize_to_outer_box(bbox_center_crop)
-                bb.intersect(BBox(0, 0, 1, 1))
+                bb.intersect(bbox_center_crop)
+                bb.translate(bbox_center_crop.xmin, bbox_center_crop.ymin)
+                #bb.normalize_to_outer_box(bbox_center_crop)
+                #bb.intersect(BBox(0, 0, 1, 1))
                 anno_objects_dict[label].bboxes.append(bb)
         for key, value in anno_objects_dict.iteritems():
             anno.gt_objects.append(value)
-        print str(anno)
+        logging.info(str(anno))
+        # visualize the annotation (just for debugging)
+        if params.visualize_annotated_images:
+            visualize_annotated_image(anno)
         # pickle the AnnotatedImage, saving to the disk a file
         outputfile = params.output_dir + '/' \
                        + os.path.basename(image_file).replace('.JPEG', '.pkl')
-        print 'Writing file ' + outputfile
+        logging.info('Writing file ' + outputfile)
         fd = open(outputfile, 'wb')
         pickle.dump(anno, fd)
         fd.close()
-        print 'End record'
+        logging.info('End record')
     return 0
 
 
@@ -153,5 +174,5 @@ def run_exp(params):
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:
-            print 'Task {0} didn''t exit properly'.format(i)
-    print 'End of the script'
+            logging.info('Task {0} didn''t exit properly'.format(i))
+    logging.info('End of the script')

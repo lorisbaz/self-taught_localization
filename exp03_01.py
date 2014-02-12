@@ -1,3 +1,4 @@
+from util import *
 import numpy as np
 import os
 import os.path
@@ -10,7 +11,6 @@ from configuration import *
 from imgsegmentation import *
 from heatextractor import *
 from htmlreport import *
-from util import *
 import exp03
 
 if __name__ == "__main__":
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     # number of classes to elaborate
     params.num_classes = 2
     # number of images per class to elaborate
-    params.num_images_per_class = 3
+    params.num_images_per_class = 10
     # default Configuration, image and label files
     params.conf = conf
     # we first resize each image to this size, if bigger
@@ -33,5 +33,7 @@ if __name__ == "__main__":
                         + '/' + params.exp_name
     # parallelize the script on Anthill?
     params.run_on_anthill = False
+    # visualize images (for DEBUGGING)
+    params.visualize_annotated_images = False
     # RUN THE EXPERIMENT
     exp03.run_exp(params)
