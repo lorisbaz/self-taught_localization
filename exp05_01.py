@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # parallelize the script on Anthill?
     params.run_on_anthill = False
     # visualize images (for DEBUGGING)
-    params.visualize_annotated_images = False 
+    params.visualize_annotated_images = True 
     # segmentation masks?
     params.visualize_segmentation_masks = True
     # visualize heatmaps?
