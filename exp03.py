@@ -151,9 +151,10 @@ def run_exp(params):
     # create output directory
     if os.path.exists(params.output_dir) == False:
         os.makedirs(params.output_dir)
-    # load the filenames of the the images and randomly shuffle it
+    # load the filenames of the the images
     images = get_filenames(params)
-    random.shuffle(images)
+    # we organize the images by class, and split the list into chunks
+    images = sorted(images, key=lambda x: x[0])
     image_chunks = split_list(images, params.num_chunks)
     # run the pipeline
     parfun = None
