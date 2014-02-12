@@ -53,7 +53,7 @@ switch dSET_
                 n_img = 5;
             end
             for j = 1:n_img       
-                imageListClass{i}{j,1} = [labelList_name{i} '/' imlist(j).name];
+                imageListClass{i}{j,1} = ['train/' labelList_name{i} '/' imlist(j).name];
             end
             if ~exist([savePath labelList_name{i}], 'file')
                 mkdir([savePath labelList_name{i}]);

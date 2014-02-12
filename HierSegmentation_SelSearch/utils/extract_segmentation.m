@@ -71,7 +71,13 @@ for i=1:length(testIms)
 %         hdf5write([savePath strtok(testIms{i},'.') '.h5'], [strtok(testIms{i},'.') '/leaves_' num2str(idx)], uint16(tree{idx}.leaves), 'WriteMode', 'append');
 %         hdf5write([savePath strtok(testIms{i},'.') '.h5'], [strtok(testIms{i},'.') '/nodes_' num2str(idx)], uint16(tree{idx}.nodes), 'WriteMode', 'append');
 %     end
-    save([savePath strtok(testIms{i},'.') '.mat'],'blobIndIm','tree')
+    [a,remain] = strtok(testIms{i},'/');
+    if isempty(remain)
+        remain = a;
+    else
+        remain = remain(2:end);
+    end
+    save([savePath strtok(remain,'.') '.mat'],'blobIndIm','tree')
 end
 
 % output value
