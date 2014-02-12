@@ -12,6 +12,7 @@ class Heatmap:
         self.vals_ = np.zeros((height, width), np.float64)
         self.counts_ = np.zeros((height, width), np.int32)
         self.segment_map_ = None
+        self.description_ = ''
 
     def add_val_rect(self, val, x, y, width = 1, height = 1, \
                      area_normalization = True):
@@ -79,6 +80,18 @@ class Heatmap:
         Returns a ndarray.float64 containing the values of the heatmap.
         """
         return self.vals_
+
+    def get_description(self):
+        """
+        Returns a string containing info about how the map has been extracted.
+        """
+        return self.description_
+
+    def set_description(self, descr):
+        """
+        Add user-defined description.
+        """
+        self.description_ = descr
 
     def export_to_image(self, colormap = False, factor = 1.0):
         """

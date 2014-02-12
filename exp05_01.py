@@ -19,6 +19,7 @@ if __name__ == "__main__":
     params = exp05.Params()
     # experiment name
     params.exp_name = 'exp05_01'
+    params.exp_name_input = 'exp03_01' # take results from here
     # number of classes to elaborate
     params.num_classes = 20
     # number of images per class to elaborate
@@ -33,9 +34,11 @@ if __name__ == "__main__":
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # normalize the confidence by area?
     params.heatextractor_area_normalization = True
-    # output directory
+    # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
+    params.input_dir = conf.experiments_output_directory \
+                        + '/' + params.exp_name_input 
     # number of output chunks (the number of databases to create)
     params.num_chunks = 1000
     # parallelize the script on Anthill?

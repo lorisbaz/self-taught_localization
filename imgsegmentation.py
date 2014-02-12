@@ -79,7 +79,7 @@ class ImgSegmFromMatFiles(ImgSegm):
 	    # Print
         logging.info('Loading segmentations from disk')
         # Load file
-        segm_mat = io.loadmat(self.directory_ + self.segmname_)
+        segm_mat = io.loadmat(self.directory_ + '/' + self.segmname_)
 	
         # Parse segmentation files
         segm_L1 = segm_mat.get('blobIndIm')

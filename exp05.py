@@ -79,7 +79,7 @@ def visualize_annotated_image(anno):
     del draw
     img.show()
 
-def pipeline(outputdb, params):
+def pipeline(inputdb, outputdb, params):
     """
     Run the pipeline for this experiment. images is a list of
     (wnid, image_filename), or the SAME CLASS (i.e. wnid is a constant).
@@ -99,12 +99,13 @@ def pipeline(outputdb, params):
                 area_normalization = params.heatextractor_area_normalization)
 
     print outputdb
-    db = bsddb.btopen(outputdb, 'c')
-    db_keys = db.keys()
+    db_input = bsddb.btopen(inputdb, 'c')
+    db_output = bsddb.btopen(outputdb, 'c')
+    db_keys = db_input.keys()
     # loop over the images
     for image_key in db_keys:
         # get database entry
-        anno = pickle.loads(db[image_key])
+        anno = pickle.loads(db_input[image_key])
         # get stuff from database entry
         img = anno.get_image()        
         logging.info('***** Elaborating ' + os.path.basename(anno.image_name))  
@@ -114,13 +115,20 @@ def pipeline(outputdb, params):
         # predict label for full image
         rep_vec = net.evaluate(img)
         pred_label = np.argmax(rep_vec)
-        anno.pred_label = net.get_labels()[pred_label]
+        accuracy = np.max(rep_vec)
+        pred_label = net.get_labels()[pred_label]
         # heatmaps extraction (with gt_label)
-        heatmaps = heatext.extract(img, anno.gt_label) 
+        heatmaps = heatext.extract(img, anno.get_gt_label()) 
         # add the heatmap obj to the annotation object
-        anno.pred_objects = AnnotatedObject()
-        anno.pred_objects.label = anno.pred_label
-        anno.pred_objects.heatmaps = heatmaps            
+        anno.pred_objects.append(AnnotatedObject(pred_label, accuracy))
+        pred_object = AnnotatedObject(pred_label, accuracy)
+        for i in range(np.shape(heatmaps)[0]):
+            heatmap_obj = AnnotatedHeatmap()
+            heatmap_obj.heatmap = heatmaps[i].get_values()
+            heatmap_obj.description = heatmaps[i].get_descr()
+            heatmap_obj.type = anno.get_gt_label()
+            pred_object.heatmaps.append(heatmap_obj)
+        anno.pred_objects.append(pred_object)        
         logging.info(str(anno))
         # visualize the annotation (just for debugging)
         if params.visualize_annotated_images:
@@ -129,12 +137,12 @@ def pipeline(outputdb, params):
         logging.info('Adding the record to he database')
         key = os.path.basename(image_file).strip()
         value = pickle.dumps(anno, protocol=2)
-        db[image_key] = value
+        db_output[image_key] = value
         logging.info('End record')
     # write the database
     logging.info('Writing file ' + outputdb)
-    #db.sync()
-    #db.close()
+    db_output.sync()
+    db_output.close()
     return 0
 
 
@@ -143,7 +151,7 @@ def run_exp(params):
     if os.path.exists(params.output_dir) == False:
         os.makedirs(params.output_dir)
     # list the databases chuncks
-    n_chunks = len(os.listdir(params.output_dir + '/'))
+    n_chunks = len(os.listdir(params.input_dir + '/'))
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
@@ -151,8 +159,9 @@ def run_exp(params):
     else:
         parfun = ParFunDummy(pipeline)
     for i in range(n_chunks):
+        inputdb = params.input_dir + '/%05d'%i + '.db'
         outputdb = params.output_dir + '/%05d'%i + '.db'
-        parfun.add_task(outputdb, params)
+        parfun.add_task(inputdb, outputdb, params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:

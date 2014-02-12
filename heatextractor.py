@@ -93,6 +93,12 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                 # update the heatmap
                 heatmap.add_val_segment(confidence, id_segment, \
                                         self.area_normalization_) 
+            
+            heatmap.set_description('Computed with segmentation ' + \
+                                    'obfuscation, map with {0} segments' + \
+                                    ' in the {1} confidence setup. Total' + \
+                                    ' of {2} maps.'.format(num_segments, \
+                                    self.confidence_tech_, len(segm_masks)))
             heatmaps.append(heatmap) # append the heatmap to the list                    
         return heatmaps
         
@@ -173,6 +179,11 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                     heatmap.add_val_rect(confidence, x, y, box_sz, box_sz, \
                                          self.area_normalization_) 
                     #print str(x) + ' ' + str(y) + ' __ '
+
+            heatmap.set_description('Computed with sliding window approach' + \
+                                ', with window size {0} and stride {1}.' + \
+                                ' Total of {2} maps.'.format(box_sz, stride, \
+                                len(self.params_))) 
             heatmap.normalize_counts()
             heatmaps.append(heatmap) # append the heatmap to the list                    
         return heatmaps
@@ -261,6 +272,11 @@ class HeatmapExtractorBox(HeatmapExtractor):
                     heatmap.add_val_rect(confidence, x, y, box_sz, box_sz, \
                                          self.area_normalization_) 
                     #print str(x) + ' ' + str(y) + ' __ '
+
+            heatmap.set_description('Computed with gray box obfuscation,' + \
+                                    ' with window size {0} and stride {1}.' + \
+                                    ' Total of {2} maps.'.format(box_sz, \
+                                    stride, len(self.params_))) 
             heatmap.normalize_counts()
             heatmaps.append(heatmap) # append the heatmap to the list                    
         return heatmaps
