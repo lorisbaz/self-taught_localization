@@ -67,18 +67,6 @@ def get_filenames(params):
         out.append( (wnids[labels_id[i]-1], images[i]) )
     return out
 
-def visualize_annotated_image(anno):
-    img = convert_jpeg_string_to_image(anno.image_jpeg)
-    img = scipy.misc.toimage(img)
-    draw = ImageDraw.Draw(img)
-    for obj in anno.gt_objects:
-        for bb in obj.bboxes:
-            if obj.label == anno.gt_label:
-                draw.rectangle([bb.xmin, bb.ymin, bb.xmax-1, bb.ymax-1], \
-                               outline='red')
-    del draw
-    img.show()
-
 def pipeline(inputdb, outputdb, params):
     """
     Run the pipeline for this experiment. images is a list of
@@ -125,17 +113,13 @@ def pipeline(inputdb, outputdb, params):
         for i in range(np.shape(heatmaps)[0]):
             heatmap_obj = AnnotatedHeatmap()
             heatmap_obj.heatmap = heatmaps[i].get_values()
-            heatmap_obj.description = heatmaps[i].get_descr()
+            heatmap_obj.description = heatmaps[i].get_description()
             heatmap_obj.type = anno.get_gt_label()
             pred_object.heatmaps.append(heatmap_obj)
-        anno.pred_objects.append(pred_object)        
+        anno.pred_objects.append(pred_object)
         logging.info(str(anno))
-        # visualize the annotation (just for debugging)
-        if params.visualize_annotated_images:
-            visualize_annotated_image(anno)
         # adding the AnnotatedImage with the heatmaps to the database 
         logging.info('Adding the record to he database')
-        key = os.path.basename(image_file).strip()
         value = pickle.dumps(anno, protocol=2)
         db_output[image_key] = value
         logging.info('End record')
@@ -144,7 +128,6 @@ def pipeline(inputdb, outputdb, params):
     db_output.sync()
     db_output.close()
     return 0
-
 
 def run_exp(params):
     # create output directory
