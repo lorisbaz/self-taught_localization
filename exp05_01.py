@@ -22,8 +22,6 @@ if __name__ == "__main__":
     params.exp_name_input = 'exp03_01' # take results from here
     # default Configuration, image and label files
     params.conf = conf
-    # we first resize each image to this size, if bigger
-    params.fix_sz = 600
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # normalize the confidence by area?
