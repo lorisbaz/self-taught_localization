@@ -20,6 +20,10 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp06_01'
     params.exp_name_input = 'exp05_01' # take results from here
+    # Bounding box  parameters
+    params.min_bbox_size = 0.05
+    params.grab_cut_rounds = 10
+    params.consider_pr_fg = True
     # default Configuration, image and label files
     params.conf = conf
     # input/output directory
@@ -28,7 +32,7 @@ if __name__ == "__main__":
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = True
+    params.run_on_anthill = False
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp06.run_exp(params)

@@ -15,12 +15,9 @@ from PIL import ImageDraw
 
 from annotatedimage import *
 from bbox import *
+from bboxextractor import *
 from heatmap import *
-from network import *
 from configuration import *
-from imgsegmentation import *
-from heatextractor import *
-from htmlreport import *
 from util import *
 
 class Params:
@@ -34,17 +31,11 @@ def pipeline(inputdb, outputdb, params):
     """
     # Instantiate some objects, and open the database
     conf = params.conf
-    net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
-                       conf.ilsvrc2012_decaf_model, \
-                       conf.ilsvrc2012_classid_wnid_words, \
-                       center_only = True)
-    segmenter = ImgSegmFromMatFiles(conf.ilsvrc2012_segm_results_dir, \
-                                    conf.ilsvrc2012_root_images_dir, \
-                                    subset_par=True)
-    heatext = HeatmapExtractorSegm(net, segmenter, \
-                confidence_tech = params.heatextractor_confidence_tech, \
-                area_normalization = params.heatextractor_area_normalization)
-
+    bbox_extractor = GrabCutBBoxExtractor( \
+                            min_bbox_size = params.min_bbox_size, \
+                            grab_cut_rounds = params.grab_cut_rounds, \
+                            consider_pr_fg = params.consider_pr_fg)
+   
     print outputdb
     db_input = bsddb.btopen(inputdb, 'c')
     db_output = bsddb.btopen(outputdb, 'c')
@@ -55,27 +46,24 @@ def pipeline(inputdb, outputdb, params):
         anno = pickle.loads(db_input[image_key])
         # get stuff from database entry
         img = anno.get_image()        
-        logging.info('***** Elaborating ' + os.path.basename(anno.image_name))  
-        # sync segmentation loader  
-        segmenter.set_segm_name(anno.image_name)
-        anno.segmentation_name = segmenter.segmname_
-        # predict label for full image
-        rep_vec = net.evaluate(img)
-        pred_label = np.argmax(rep_vec)
-        accuracy = np.max(rep_vec)
-        pred_label = net.get_labels()[pred_label]
-        # heatmaps extraction (with gt_label)
-        heatmaps = heatext.extract(img, anno.get_gt_label()) 
-        # add the heatmap obj to the annotation object
-        anno.pred_objects.append(AnnotatedObject(pred_label, accuracy))
-        pred_object = AnnotatedObject(pred_label, accuracy)
-        for i in range(np.shape(heatmaps)[0]):
-            heatmap_obj = AnnotatedHeatmap()
-            heatmap_obj.heatmap = heatmaps[i].get_values()
-            heatmap_obj.description = heatmaps[i].get_description()
-            heatmap_obj.type = anno.get_gt_label()
-            pred_object.heatmaps.append(heatmap_obj)
-        anno.pred_objects.append(pred_object)
+        logging.info('***** Elaborating bounding boxes' + \
+                      os.path.basename(anno.image_name))  
+        # Bbox extraction
+        for i in range(len(anno.pred_objects)):
+            # Compute avg heatmap
+            ann_heatmaps = anno.pred_objects[i].heatmaps
+            if ann_heatmaps!=[]: # full img obj does not have heatmaps
+                heatmaps = []
+                for j in range(len(ann_heatmaps)):
+                    heatmaps.append(ann_heatmaps[j].heatmap)
+                heatmap_avg = Heatmap.sum_heatmaps(heatmaps)
+                heatmap_avg.normalize_counts()
+                # Extract Bounding box using heatmap
+                out_bboxes, out_image_desc = \
+                                bbox_extractor.extract(img, heatmap_avg)
+                # Save bboxes in the output database
+        
+
         logging.info(str(anno))
         # adding the AnnotatedImage with the heatmaps to the database 
         logging.info('Adding the record to he database')
