@@ -131,8 +131,8 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         bboxes = BBoxExtractor.get_bbox_from_connected_components_( \
                               mask, heatmap, self.gc_fg_labels_)
         # 5) normalize the bboxes to one
-        for bbox in bboxes:
-            bbox.normalize_to_outer_box(mask.shape)
+        for bbox in bboxes: 
+            bbox.normalize_to_outer_box(BBox(0,0,mask.shape[0],mask.shape[1]))
         # 6) remove very small bboxes, and normalize the bboxes to one
         out_bboxes = []
         for bbox in bboxes:
