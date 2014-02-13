@@ -6,7 +6,7 @@ class AnnotatedHeatmap:
     """
     Object defining an heatmap with annotations.
     The public fields are:
-    - heatmap: nd-array.
+    - heatmap: Heatmap object.
     - description: string. A textual description of what this heatmap refers to.
     - type: string. the classname that generated this heatmap.
     - spec: implementation-specific data, containing more information regarding

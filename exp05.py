@@ -4,23 +4,23 @@ import logging
 import numpy as np
 import os
 import os.path
-import random
+#import random
 import sys
 import scipy.misc
 import skimage.io
-import xml.etree.ElementTree as ET
+#import xml.etree.ElementTree as ET
 from vlg.util.parfun import *
-from PIL import Image
-from PIL import ImageDraw
+#from PIL import Image
+#from PIL import ImageDraw
 
 from annotatedimage import *
-from bbox import *
+#from bbox import *
 from heatmap import *
 from network import *
 from configuration import *
 from imgsegmentation import *
 from heatextractor import *
-from htmlreport import *
+#from htmlreport import *
 from util import *
 
 class Params:
@@ -71,10 +71,11 @@ def pipeline(inputdb, outputdb, params):
         pred_object = AnnotatedObject(pred_label, accuracy)
         for i in range(np.shape(heatmaps)[0]):
             heatmap_obj = AnnotatedHeatmap()
-            heatmap_obj.heatmap = heatmaps[i].get_values()
+            heatmap_obj.heatmap = heatmaps[i]
             heatmap_obj.description = heatmaps[i].get_description()
             heatmap_obj.type = anno.get_gt_label()
             pred_object.heatmaps.append(heatmap_obj)
+        # note: for the next exp store only the avg heatmap
         anno.pred_objects.append(pred_object)
         logging.info(str(anno))
         # adding the AnnotatedImage with the heatmaps to the database 

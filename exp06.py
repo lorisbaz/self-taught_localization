@@ -4,14 +4,14 @@ import logging
 import numpy as np
 import os
 import os.path
-import random
+#import random
 import sys
 import scipy.misc
 import skimage.io
-import xml.etree.ElementTree as ET
+#import xml.etree.ElementTree as ET
 from vlg.util.parfun import *
-from PIL import Image
-from PIL import ImageDraw
+#from PIL import Image
+#from PIL import ImageDraw
 
 from annotatedimage import *
 from bbox import *
