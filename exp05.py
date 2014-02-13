@@ -71,7 +71,7 @@ def pipeline(inputdb, outputdb, params):
         pred_object = AnnotatedObject(pred_label, accuracy)
         for i in range(np.shape(heatmaps)[0]):
             heatmap_obj = AnnotatedHeatmap()
-            heatmap_obj.heatmap = heatmaps[i]
+            heatmap_obj.heatmap = heatmaps[i].get_values()
             heatmap_obj.description = heatmaps[i].get_description()
             heatmap_obj.type = anno.get_gt_label()
             pred_object.heatmaps.append(heatmap_obj)
