@@ -33,6 +33,8 @@ if __name__ == "__main__":
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
     params.run_on_anthill = True
+    # Set jobname in case the process stop or crush
+    params.job_name = None # set to None if you do not want to resume things
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp05.run_exp(params)

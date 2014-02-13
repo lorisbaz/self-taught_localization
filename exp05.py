@@ -98,7 +98,8 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline, time_requested = 10)
+    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
+                               job_name = params.job_name)    	 
     else:
         parfun = ParFunDummy(pipeline)
     for i in range(n_chunks):

@@ -46,21 +46,20 @@ def pipeline(inputdb, outputdb, params):
         anno = pickle.loads(db_input[image_key])
         # get stuff from database entry
         img = anno.get_image()        
-        logging.info('***** Elaborating bounding boxes' + \
+        logging.info('***** Elaborating bounding boxes ' + \
                       os.path.basename(anno.image_name))  
         # Bbox extraction
         for i in range(len(anno.pred_objects)):
             # Compute avg heatmap
             ann_heatmaps = anno.pred_objects[i].heatmaps
             if ann_heatmaps!=[]: # full img obj does not have heatmaps
-                heatmaps = []
+                heatmaps = [] 
                 for j in range(len(ann_heatmaps)):
                     heatmaps.append(ann_heatmaps[j].heatmap)
-                heatmap_avg = Heatmap.sum_heatmaps(heatmaps)
-                heatmap_avg.normalize_counts()
+                heatmap_avg = np.sum(heatmaps, axis=0)/np.shape(heatmaps)[0]
                 # Extract Bounding box using heatmap
                 out_bboxes, out_image_desc = \
-                                bbox_extractor.extract(img, heatmap_avg)
+                                bbox_extractor.extract(img, [heatmap_avg])
                 # Save bboxes in the output database
         
 
@@ -85,7 +84,8 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline, time_requested = 10)
+    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
+                               job_name = params.job_name)
     else:
         parfun = ParFunDummy(pipeline)
     for i in range(n_chunks):
