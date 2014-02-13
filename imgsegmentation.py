@@ -54,12 +54,11 @@ class ImgSegmFromMatFiles(ImgSegm):
     Load a set of segmentations stored in a certain directory
     """
 
-    def __init__(self, directory, img_root_dir, fix_sz, subset_par=False, num_levels=3):
+    def __init__(self, directory, img_root_dir, subset_par=False, num_levels=3):
         """
         Segmentation files stored in directory
 	    - directory: where segmentation files are stored
 	    - img_root_dir: where images are stored
-	    - fix_sz: size of centered image block
         - subset_par: if True take a subset of segmentations paramters
                       to speed up the obfuscation part
         - num_levels: number of levels for each parameterv
@@ -69,7 +68,6 @@ class ImgSegmFromMatFiles(ImgSegm):
         self.imagename_ = None # index the file_list
         self.segmname_ = None
         self.num_levels_ = num_levels
-        self.fix_sz_ = fix_sz
         self.subset_ = subset_par
 
     def extract(self, image):
@@ -108,7 +106,6 @@ class ImgSegmFromMatFiles(ImgSegm):
             # create the other segmentations
             num_new_segm_Li1 = 0	 
             while(np.shape(nodes)[0]>0):
-            #while(np.max(nodes)>maxid_segm_Li): 
                 js = [] # support to delete nodes
                 segm_mask_Li1 = np.copy(segmentations[-1]) # copy	
                 for j in range(np.shape(nodes)[0]):
@@ -133,18 +130,9 @@ class ImgSegmFromMatFiles(ImgSegm):
                 start = 0
             # keep num_levels segmentations (last flat segmentation removed)
             rule_last = np.shape(segmentations)[0] - 1 	  
-            #segm_all.append(segmentations[0]) # always keep the first layer
             for j in range(start,rule_last + 1, \
                      np.uint16((rule_last-start)/(self.num_levels_ - 1))):
                 segm_all.append(segmentations[j])
-	
-        #pl.subplot(6,6,1)
-        #pl.imshow(image)
-        #for k in range(min(np.shape(segm_all)[0],35)):
-        #    pl.subplot(6,6,k+2)
-        #    pl.imshow(segm_all[k],interpolation='nearest')
-        #    pl.colorbar()
-        #pl.show()
 
         # resize and crop center (like original img)	
         segm_all_rz = np.zeros((np.shape(segm_all)[0], \
@@ -156,7 +144,6 @@ class ImgSegmFromMatFiles(ImgSegm):
             #TMP = np.copy(segm_all[k]/factor) # project in [0,1]
             #TMP = resize_image_max_size(TMP, self.fix_sz_)
             #TMP = np.uint16(crop_image_center(TMP*factor))
-            #TMP = resize_mat_max_size_nn(TMP, )
             # store results
             segm_all_rz[k,:,:] = np.uint16(crop_image_center(segm_all[k]))
  

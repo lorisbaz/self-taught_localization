@@ -27,46 +27,6 @@ class Params:
     def __init__(self):
         pass
 
-def get_filenames(params):
-    """
-    Return a list of (wnid, filename) for all the files
-    with label_id \in {1, ..., num_classe}
-    """
-    conf = params.conf
-    wnids = []
-    fd = open(conf.ilsvrc2012_classid_wnid_words)
-    for line in fd:
-        temp = line.strip().split('\t')
-        wnids.append(temp[1].strip())
-    fd.close()
-    images = []
-    labels_id = []
-    fd = open(conf.ilsvrc2012_val_images)
-    for line in fd:
-        images.append(conf.ilsvrc2012_root_images_dir + '/' + line.strip())
-    fd.close()
-    fd = open(conf.ilsvrc2012_val_labels)
-    for line in fd:
-        labels_id.append(int(line.strip()))
-    fd.close()
-    assert len(images) == len(labels_id)
-    # return only the labels 1..num_classes, and at most num_images_per_class
-    num_images_classes = [0]*1000
-    num_classes = params.num_classes
-    if num_classes <= 0:
-        num_classes = sys.maxint
-    num_images_per_class = params.num_images_per_class
-    if num_images_per_class <= 0:
-        num_images_per_class = sys.maxint
-    out = []
-    for i in range(len(images)):
-        num_images_classes[labels_id[i]-1] += 1
-        if labels_id[i] > num_classes \
-              or num_images_classes[labels_id[i]-1] > num_images_per_class:
-            continue
-        out.append( (wnids[labels_id[i]-1], images[i]) )
-    return out
-
 def pipeline(inputdb, outputdb, params):
     """
     Run the pipeline for this experiment. images is a list of
