@@ -24,6 +24,44 @@ class Params:
     def __init__(self):
         pass
 
+def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
+                          out_image_desc, out_bboxes):
+    """
+    Function useful for visualizing partial results during debuging. 
+    """
+    import matplotlib.pyplot as plt
+    plt.subplot(3,4,1)
+    plt.imshow(img)
+    plt.title('Cropped img')
+    height, width = np.shape(img)[0:2]
+    for i in range(len(out_bboxes)):
+        logging.info(str(out_bboxes[i]))
+        out_bboxes[i].xmin = out_bboxes[i].xmin * width
+        out_bboxes[i].xmax = out_bboxes[i].xmax * width
+        out_bboxes[i].ymin = out_bboxes[i].ymin * height
+        out_bboxes[i].ymax = out_bboxes[i].ymax * height         
+        rect = plt.Rectangle((out_bboxes[i].xmin, out_bboxes[i].ymin), \
+                              out_bboxes[i].xmax - out_bboxes[i].xmin, \
+                              out_bboxes[i].ymax - out_bboxes[i].ymin, \
+                              facecolor="#ff0000", alpha=0.4)
+        plt.gca().add_patch(rect)
+    for i in range(np.shape(heatmaps)[0]):
+        plt.subplot(3,4,i+2)
+        plt.imshow(heatmaps[i])
+    plt.subplot(3,4,np.shape(heatmaps)[0]+2)
+    plt.imshow(heatmap_avg)    
+    plt.title('Avg Heatmap')
+    plt.subplot(3,4,np.shape(heatmaps)[0]+3)
+    plt.imshow(out_image_desc[0][0])
+    plt.title(out_image_desc[0][1])      
+    plt.subplot(3,4,np.shape(heatmaps)[0]+4)
+    plt.imshow(out_image_desc[1][0])
+    plt.title(out_image_desc[1][1])   
+    
+    
+    plt.show()
+
+
 def pipeline(inputdb, outputdb, params):
     """
     Run the pipeline for this experiment. images is a list of
@@ -52,6 +90,8 @@ def pipeline(inputdb, outputdb, params):
         for i in range(len(anno.pred_objects)):
             # Compute avg heatmap
             ann_heatmaps = anno.pred_objects[i].heatmaps
+            label = anno.pred_objects[i].label
+            confidence = anno.pred_objects[i].confidence
             if ann_heatmaps!=[]: # full img obj does not have heatmaps
                 heatmaps = [] 
                 for j in range(len(ann_heatmaps)):
@@ -60,9 +100,15 @@ def pipeline(inputdb, outputdb, params):
                 # Extract Bounding box using heatmap
                 out_bboxes, out_image_desc = \
                                 bbox_extractor.extract(img, [heatmap_avg])
+                # visualize partial results for debug
+                #visualize_heatmap_box(img, heatmaps, heatmap_avg, \
+                #                      out_image_desc, out_bboxes)
                 # Save bboxes in the output database
-        
-
+                pred_object = AnnotatedObject()
+                pred_object.label = label 
+                pred_object.confidence = confidence
+                pred_object.bboxes = out_bboxes
+                anno.pred_objects.append(pred_object)
         logging.info(str(anno))
         # adding the AnnotatedImage with the heatmaps to the database 
         logging.info('Adding the record to he database')
