@@ -1,4 +1,4 @@
-function val = extract_segmentation(testIms, imagePath, savePath, seg_params, resize_big_images)
+function val = extract_segmentation(testIms, imagePath, savePath, seg_params, fix_sz)
 
 % output value
 val = 0;
@@ -9,15 +9,7 @@ for i=1:length(testIms)
     
     % VOCopts.img
     im = imread([imagePath testIms{i}]);
-    [H,W,ch] = size(im);
-    if max(H,W)>resize_big_images && resize_big_images>0
-        if H>W
-            new_im_sz = [resize_big_images, resize_big_images*W/H];
-        else
-            new_im_sz = [resize_big_images*W/H, resize_big_images];
-        end
-        im = imresize(im, new_im_sz);
-    end
+    im = resize_image_max_size(im, fix_sz);
     idx = 1;
     for j=1:length(seg_params.ks)
         k = seg_params.ks(j); % Segmentation threshold k
