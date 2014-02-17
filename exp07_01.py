@@ -21,7 +21,7 @@ if __name__ == "__main__":
     params.visualize_res = False
     # the maximum size of an image in the html files
     params.html_max_img_size = 200
-    params.visual_factor = 10e-2 # normalize output for better visualization
+    params.visual_factor = 2 * 10e-2 # normalize output for better visualization
     # default Configuration, image and label files
     params.conf = conf
     # input/output directory
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = False 
+    params.run_on_anthill = True 
     # Set jobname in case the process stop or crush
     params.job_name = None # set to None if you do not want to resume things
     params.task = None # specify task to debug      
