@@ -14,7 +14,7 @@ from bbox import *
 from heatmap import *
 from configuration import *
 from util import *
-from htmlreport import *
+from htmlreport_pro import *
 
 class Params:
     def __init__(self):
@@ -73,7 +73,7 @@ def pipeline(inputdb, output_html, params):
     """
     # Instantiate some objects, and open the database
     conf = params.conf
-    htmlres = HtmlReport()
+    htmlres = HtmlReportPro()
       
     print output_html
     db_input = bsddb.btopen(inputdb, 'c')
@@ -85,10 +85,8 @@ def pipeline(inputdb, output_html, params):
         # get stuff from database entry
         img = anno.get_image()  
         gtlabel = anno.get_gt_label()
-        desc = '{0}\n{1}'.format(gtlabel, anno.image_name)
-        htmlres.add_image_embedded(img, max_size = params.html_max_img_size, \
-                                   text = desc)              
-        logging.info('***** Elaborating bounding boxes ' + \
+        desc = '{0}-{1}'.format(gtlabel, anno.image_name)
+        logging.info('***** Elaborating HTML creation ' + \
                       os.path.basename(anno.image_name))  
         # Visualize results & Save results to html
         pred_bboxes = []
@@ -114,7 +112,6 @@ def pipeline(inputdb, output_html, params):
                              text = desc)
             # Retrieve predicted bboxes
             pred_bboxes.append(anno.pred_objects[i].bboxes)
-        htmlres.add_newline() 
              
         # Retrieve gt bboxes
         gt_bboxes = []
@@ -125,6 +122,32 @@ def pipeline(inputdb, output_html, params):
         if params.visualize_res and pred_bboxes!=[]:
             visualize_heatmap_box(img, heatmaps, heatmap_avg, \
                                   pred_bboxes, gt_bboxes)
+
+
+
+        # create the HTML
+        htmlres.add_image_embedded(img, max_size = params.html_max_img_size, \
+                               text = desc, bboxes = pred_bboxes, \
+                               isgt = False) # predicted bboxes
+        htmlres.add_image_embedded(img, max_size = params.html_max_img_size, \
+                               text = desc + ' GT', bboxes = gt_bboxes, \
+                               isgt = True) # gt bboxes
+                   
+                    descr = 'Heatmap'
+                    htmlres.add_image_embedded( \
+                                   heatmaps[j]*params.visual_factor, \
+                                   max_size = params.html_max_img_size, \
+                                   text = desc)
+
+                desc = 'AVG heatmap'
+                htmlres.add_image_embedded(heatmap_avg*params.visual_factor, \
+                             max_size = params.html_max_img_size, \
+                             text = desc)
+ 
+
+        
+
+        htmlres.add_newline()
 
         logging.info(str(anno))
 
@@ -142,15 +165,21 @@ def run_exp(params):
     n_chunks = len(os.listdir(params.input_dir + '/'))
     # run the pipeline
     parfun = None
-    if params.run_on_anthill:
+    if (params.run_on_anthill and not(params.task>=0)):
     	parfun = ParFunAnthill(pipeline, time_requested = 10, \
                                job_name = params.job_name)
     else:
         parfun = ParFunDummy(pipeline)
-    for i in range(n_chunks):
+    if not(params.task>=0):        
+        for i in range(n_chunks):
+            inputdb = params.input_dir + '/%05d'%i + '.db'
+            output_html = params.output_dir + '/%05d'%i + '.html'
+            parfun.add_task(inputdb, output_html, params)
+    else: # RUN just the selected task! (debug only)
+        i = params.task
         inputdb = params.input_dir + '/%05d'%i + '.db'
-        output_html = params.output_dir + '/%05d'%i + '.html'
-        parfun.add_task(inputdb, output_html, params)
+        outputdb = params.output_dir + '/%05d'%i + '.db'
+        parfun.add_task(inputdb, outputdb, params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:

@@ -98,3 +98,4 @@ class HtmlReport():
               '<img width="{1}" height="{2}" src="{3}"/>{4}'\
               '</div>'\
               .format(img.shape[1], img.shape[1], img.shape[0], src, text)
+

@@ -97,12 +97,18 @@ def run_exp(params):
     n_chunks = len(os.listdir(params.input_dir + '/'))
     # run the pipeline
     parfun = None
-    if params.run_on_anthill:
+    if (params.run_on_anthill and not(params.task>=0)):
     	parfun = ParFunAnthill(pipeline, time_requested = 10, \
                                job_name = params.job_name)    	 
     else:
         parfun = ParFunDummy(pipeline)
-    for i in range(n_chunks):
+    if not(params.task>=0):
+        for i in range(n_chunks):
+            inputdb = params.input_dir + '/%05d'%i + '.db'
+            outputdb = params.output_dir + '/%05d'%i + '.db'
+            parfun.add_task(inputdb, outputdb, params)
+    else: # RUN just the selected task! (debug only)
+        i = params.task
         inputdb = params.input_dir + '/%05d'%i + '.db'
         outputdb = params.output_dir + '/%05d'%i + '.db'
         parfun.add_task(inputdb, outputdb, params)

@@ -33,6 +33,7 @@ if __name__ == "__main__":
     params.run_on_anthill = False 
     # Set jobname in case the process stop or crush
     params.job_name = None # set to None if you do not want to resume things
+    params.task = None # specify task to debug      
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp07.run_exp(params)
