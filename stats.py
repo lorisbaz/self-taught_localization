@@ -8,6 +8,7 @@ class Stats:
     """
 
     def __init__(self):
+        self.overlap = []
         self.precision = 0
         self.recall = 0
         self.TP = 0
@@ -34,10 +35,12 @@ class Stats:
     @staticmethod
     def average_results(self):
         """
-        Returns a Stats object that is the averaged statistics.
+        Returns a Stats object that is the averaged statistics and the 
+        histogram of overlapped regions.
         """
         stats_avg = Stats()
-        self.hist_overlap = np.zeros(n_bins)
+        hist_overlap = np.zeros(n_bins)
+        # TODO: compute averages and histograms
 
-        return stats_avg
+        return stats_avg, hist_overlap
 

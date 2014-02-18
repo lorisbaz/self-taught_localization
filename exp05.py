@@ -58,7 +58,7 @@ def pipeline(inputdb, outputdb, params):
         logging.info('***** Elaborating ' + os.path.basename(anno.image_name))  
         # sync segmentation loader  
         segmenter.set_segm_name(anno.image_name)
-        anno.segmentation_name = segmenter.segmname_
+        anno.segmentation_name = segmenter.get_segm_name()
         # predict label for full image
         rep_vec = net.evaluate(img)
         pred_label = np.argmax(rep_vec)
@@ -66,17 +66,17 @@ def pipeline(inputdb, outputdb, params):
         pred_label = net.get_labels()[pred_label]
         # heatmaps extraction (with gt_label)
         heatmaps = heatext.extract(img, anno.get_gt_label()) 
-        # add the heatmap obj to the annotation object
-        anno.pred_objects.append(AnnotatedObject(pred_label, accuracy))
-        pred_object = AnnotatedObject(pred_label, accuracy)
+        # add the heatmap obj to the annotation object 
+        pred_tmp_object = {pred_label: AnnotatedObject(pred_label, accuracy)}
+        pred_objects = {'DECAF': pred_tmp_object}
         for i in range(np.shape(heatmaps)[0]):
             heatmap_obj = AnnotatedHeatmap()
             heatmap_obj.heatmap = heatmaps[i].get_values()
             heatmap_obj.description = heatmaps[i].get_description()
             heatmap_obj.type = anno.get_gt_label()
-            pred_object.heatmaps.append(heatmap_obj)
+            pred_objects['DECAF'][pred_label].heatmaps.append(heatmap_obj)
         # note: for the next exp store only the avg heatmap
-        anno.pred_objects.append(pred_object)
+        anno.pred_objects = pred_objects
         logging.info(str(anno))
         # adding the AnnotatedImage with the heatmaps to the database 
         logging.info('Adding the record to he database')

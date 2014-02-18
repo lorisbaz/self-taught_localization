@@ -165,4 +165,8 @@ class ImgSegmFromMatFiles(ImgSegm):
         segmname = segmname.replace(self.img_root_dir_,'')
         segmname = segmname.replace('JPEG','mat') 
         self.segmname_ = segmname
+
+    def get_segm_name(self):
+        return self.segmname_
+
  
