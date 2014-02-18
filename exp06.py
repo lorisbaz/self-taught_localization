@@ -87,12 +87,10 @@ def pipeline(inputdb, outputdb, params):
         logging.info('***** Elaborating bounding boxes ' + \
                       os.path.basename(anno.image_name))  
         # Bbox extraction
-        for i in range(len(anno.pred_objects)):
-            # Compute avg heatmap
-            ann_heatmaps = anno.pred_objects[i].heatmaps
-            label = anno.pred_objects[i].label
-            confidence = anno.pred_objects[i].confidence
-            if ann_heatmaps!=[]: # full img obj does not have heatmaps
+        for classifier in anno.pred_objects.keys():
+            for label in anno.pred_objects[classifier].keys():
+                # Compute avg heatmap
+                ann_heatmaps = anno.pred_objects[classifier][label].heatmaps
                 heatmaps = [] 
                 for j in range(len(ann_heatmaps)):
                     heatmaps.append(ann_heatmaps[j].heatmap)
@@ -104,11 +102,7 @@ def pipeline(inputdb, outputdb, params):
                 #visualize_heatmap_box(img, heatmaps, heatmap_avg, \
                 #                      out_image_desc, out_bboxes)
                 # Save bboxes in the output database
-                pred_object = AnnotatedObject()
-                pred_object.label = label 
-                pred_object.confidence = confidence
-                pred_object.bboxes = out_bboxes
-                anno.pred_objects.append(pred_object)
+                pred_object[classifier][label].bboxes = out_bboxes
         logging.info(str(anno))
         # adding the AnnotatedImage with the heatmaps to the database 
         logging.info('Adding the record to he database')
