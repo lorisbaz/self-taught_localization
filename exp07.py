@@ -14,7 +14,7 @@ from bbox import *
 from heatmap import *
 from configuration import *
 from util import *
-from htmlreport_pro import *
+from htmlreport import *
 
 class Params:
     def __init__(self):
@@ -73,7 +73,7 @@ def pipeline(inputdb, output_html, params):
     """
     # Instantiate some objects, and open the database
     conf = params.conf
-    htmlres = HtmlReportPro()
+    htmlres = HtmlReport()
       
     print output_html
     db_input = bsddb.btopen(inputdb, 'c')
