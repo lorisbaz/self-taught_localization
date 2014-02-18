@@ -143,7 +143,8 @@ def run_exp(params):
         i = params.task
         inputdb = params.input_dir + '/%05d'%i + '.db'
         outputdb = params.output_dir + '/%05d'%i + '.db'
-        parfun.add_task(inputdb, outputdb, params)                                  out = parfun.run()
+        parfun.add_task(inputdb, outputdb, params)
+    out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:
             logging.info('Task {0} didn''t exit properly'.format(i))

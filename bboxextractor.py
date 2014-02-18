@@ -107,6 +107,9 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         assert isinstance(heatmap, np.ndarray)
         assert heatmap.ndim == 2
         out_image_desc = []
+        # Gray imgs have to be converted in 3D gray images
+        if (len(np.shape(img))==2): 
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)  
         # 1) learn a kMeans with 4 gaussians on the heatmap values,
         #    returning the four thresholds
         thresholds = self.get_thresholds_from_kmeans_(heatmap)
