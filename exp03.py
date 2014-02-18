@@ -70,10 +70,13 @@ def visualize_annotated_image(anno):
     img = convert_jpeg_string_to_image(anno.image_jpeg)
     img = scipy.misc.toimage(img)
     draw = ImageDraw.Draw(img)
-    for obj in anno.gt_objects:
+    for label, obj in anno.gt_objects.iteritems():
         for bb in obj.bboxes:
             if obj.label == anno.get_gt_label():
-                draw.rectangle([bb.xmin, bb.ymin, bb.xmax-1, bb.ymax-1], \
+                draw.rectangle([bb.xmin*anno.image_width, \
+                                bb.ymin*anno.image_height, \
+                                bb.xmax*anno.image_width-1, \
+                                bb.ymax*anno.image_height-1], \
                                outline='red')
     del draw
     img.show()
@@ -101,7 +104,8 @@ def pipeline(images, outputdb, params):
         anno.set_image(img)
         anno.image_name = os.path.basename(image_file)
         anno.crop_description = 'central crop'
-        anno.gt_objects.append(AnnotatedObject(image_wnid.strip(), 1.0))
+        gt_label = image_wnid.strip()
+        anno.gt_objects[gt_label] = AnnotatedObject(gt_label, 1.0)
         # read the ground truth XML file
         xmlfile = conf.ilsvrc2012_val_box_gt + '/' \
                     + os.path.basename(image_file).replace('.JPEG', '.xml')
@@ -112,12 +116,15 @@ def pipeline(images, outputdb, params):
         size_height = int(annotation.find('size').find('height').text)
         assert size_height == original_img.shape[0]
         objects = annotation.findall('object')
-        anno_objects_dict = {} # dictionary label --> AnnoObject
+        #anno_objects_dict = {} # dictionary label --> AnnoObject
         for obj in objects:
             label = obj.find('name').text.strip()
-            if label not in anno_objects_dict:
-                anno_objects_dict[label] = AnnotatedObject()
-                anno_objects_dict[label].label = label
+            if label not in anno.gt_objects:
+                # Note: this situation should never happen, and this code is
+                # here for future usages. We add the AnnotatedObject, but set
+                # the confidence to zero, so to differentiate this object anno
+                # from the full-image object annotation (which has conf=1.0).
+                anno.gt_objects[label] = AnnotatedObject(label, 0.0)
             bboxes = obj.findall('bndbox')
             for bbox in bboxes:
                 xmin = int(bbox.find('xmin').text)
@@ -125,11 +132,11 @@ def pipeline(images, outputdb, params):
                 xmax = int(bbox.find('xmax').text)
                 ymax = int(bbox.find('ymax').text)
                 bb = BBox(xmin, ymin, xmax, ymax)
-                bb.intersect(bbox_center_crop)
-                bb.translate(bbox_center_crop.xmin, bbox_center_crop.ymin)
-                anno_objects_dict[label].bboxes.append(bb)
-        for key, value in anno_objects_dict.iteritems():
-            anno.gt_objects.append(value)
+                bb.normalize_to_outer_box(bbox_center_crop)
+                bb.intersect(BBox(0.0, 0.0, 1.0, 1.0))
+                anno.gt_objects[label].bboxes.append(bb)
+        # make sure that anno.gt_objects has exactly one element
+        assert len(anno.gt_objects) == 1
         logging.info(str(anno))
         # visualize the annotation (just for debugging)
         if params.visualize_annotated_images:
@@ -159,7 +166,8 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline, time_requested = 10)
+    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
+                               job_name = 'Job_{0}'.format(params.exp_name))
     else:
         parfun = ParFunDummy(pipeline)
     for i in range(len(image_chunks)):

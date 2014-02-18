@@ -24,11 +24,12 @@ class AnnotatedObject:
     The public fields are:
     - label: string (i.e. 'n0001000')
     - confidence: float.  The confidence value associated with this object
-           (Normally it refers to the full-image confidence)
+           Normally it refers to the full-image confidence. If the confidence
+           is not available, this field is None.
     - bboxes: list of BBox objects (if any)
     - heatmaps: list of AnnotatedHeatmap objects
     """
-    def __init__(self, label='', confidence=0.0):
+    def __init__(self, label='', confidence=None):
         self.label = label
         self.confidence = confidence
         self.bboxes = []
@@ -51,9 +52,9 @@ class AnnotatedImage:
     - image_name: string
                   The unique file identifier of the image
                   (i.e. 'val/ILSVRC2012_val_00000001.JPEG')
-    - gt_objects: array of AnnotatedObject objects
-    - pred_objects: array of AnnotatedObject objects
-    - crop_description: string, containing a description regarding how the image 
+    - gt_objects: dictionary  {'label'} -> AnnotatedObject
+    - pred_objects: dictionary {'name'} -> ({'label'} -> AnnotatedObject)
+    - crop_description: string, containing a description regarding how the image
                         has been generated from its original version
     - segmentation_name: string, denoting the unique name of the segmentation
                          mask used for this image.
@@ -63,8 +64,8 @@ class AnnotatedImage:
         self.image_width = 0
         self.image_height = 0
         self.image_name = ''
-        self.gt_objects = []
-        self.pred_objects = []
+        self.gt_objects = {}
+        self.pred_objects = {}
         self.crop_description = ''
         self.segmentation_name = ''
 
@@ -73,10 +74,10 @@ class AnnotatedImage:
                                          self.image_height, \
                                          self.image_width)
         out += 'gt_objects:\n'
-        for obj in self.gt_objects:
+        for label, obj in self.gt_objects.iteritems():
             out += '  ' + str(obj)
         return out
-        
+
     def set_image(self, img):
         """
         Set the image, given a ndarray-image
@@ -96,13 +97,13 @@ class AnnotatedImage:
 
     def get_gt_label(self):
         """
-        Return the top-scoring (full image) gt label, 
-        by looking at the AnnotatedObjects with no bboxes.
+        Return the top-scoring (full image) gt label.
         """
         label = ''
         max_conf = sys.float_info.min
-        for obj in self.gt_objects:
-            if len(obj.bboxes)==0 and obj.confidence>max_conf:
+        for key, obj in self.gt_objects.iteritems():
+            assert key == obj.label
+            if (obj.confidence != None) and (obj.confidence > max_conf):
                 label = obj.label
                 max_conf = obj.confidence
         return label
