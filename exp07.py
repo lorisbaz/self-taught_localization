@@ -89,30 +89,32 @@ def pipeline(inputdb, output_html, params):
         logging.info('***** Elaborating HTML creation ' + \
                       os.path.basename(anno.image_name))  
         # Visualize GT, results & Save to html
-        gt_bboxes = []
-        for i in range(len(anno.gt_objects)):
-            ann_gt = anno.gt_objects[i]
+        #gt_bboxes = []
+        for label in anno.gt_objects.keys():
+            ann_gt = anno.gt_objects[label]
             if ann_gt.bboxes!=[]:
                 desc = 'GT-{0}-{1}'.format(ann_gt.label, anno.image_name)
                 np_bbox = np.zeros((4,len(ann_gt.bboxes)))
                 for j in range(len(ann_gt.bboxes)):
-                    np_bbox[0,j] = ann_gt.bboxes[j].xmin
-                    np_bbox[1,j] = ann_gt.bboxes[j].ymin
-                    np_bbox[2,j] = ann_gt.bboxes[j].xmax-ann_gt.bboxes[j].xmin
-                    np_bbox[3,j] = ann_gt.bboxes[j].ymax-ann_gt.bboxes[j].ymin
+                    np_bbox[0,j] = ann_gt.bboxes[j].xmin * width
+                    np_bbox[1,j] = ann_gt.bboxes[j].ymin * height
+                    np_bbox[2,j] = (ann_gt.bboxes[j].xmax - \
+                                    ann_gt.bboxes[j].xmin) * width
+                    np_bbox[3,j] = (ann_gt.bboxes[j].ymax - \
+                                    ann_gt.bboxes[j].ymin) * height
                 htmlres.add_image_embedded(img, \
                             max_size = params.html_max_img_size, \
                             text = desc, bboxes = np_bbox, \
                             isgt = True) # gt bboxes
-            gt_bboxes.append(ann_gt.bboxes)
+            #gt_bboxes.append(ann_gt.bboxes)
 
-        pred_bboxes = []
-        for i in range(len(anno.pred_objects)):
-            # Load and visualize heatmaps
-            ann_pred = anno.pred_objects[i]
-            # Draw img and bboxes associated to the current avg heatmap 
-            desc = '{0}-{1}'.format(ann_pred.label, anno.image_name)
-            if ann_pred.bboxes!=[]:
+        #pred_bboxes = []
+        for classifier in anno.pred_objects.keys():
+            for label in anno.pred_objects[classifier].keys():
+                # Load and visualize heatmaps
+                ann_pred = anno.pred_objects[classifier][label]
+                # Draw img and bboxes associated to the current avg heatmap 
+                desc = '{0}-{1}'.format(ann_pred.label, anno.image_name)
                 np_bbox = np.zeros((4,len(ann_pred.bboxes)))
                 for j in range(len(ann_pred.bboxes)):
                     np_bbox[0,j] = ann_pred.bboxes[j].xmin * width
@@ -125,7 +127,6 @@ def pipeline(inputdb, output_html, params):
                             max_size = params.html_max_img_size, \
                             text = desc, bboxes = np_bbox, \
                             isgt = False) # predicted bboxes     
-            if ann_pred.heatmaps!=[]: # full img obj does not have heatmaps
                 heatmaps = [] 
                 for j in range(len(ann_pred.heatmaps)):
                     heatmaps.append(ann_pred.heatmaps[j].heatmap)
@@ -140,14 +141,12 @@ def pipeline(inputdb, output_html, params):
                 htmlres.add_image_embedded(heatmap_avg*params.visual_factor, \
                              max_size = params.html_max_img_size, \
                              text = desc)
-                pred_bboxes.append(ann_pred.bboxes)
+                #pred_bboxes.append(ann_pred.bboxes)
                 htmlres.add_newline()
              
         # visualize partial results for debug
-        if params.visualize_res and pred_bboxes!=[]:
-            visualize_heatmap_box(img, heatmaps, heatmap_avg, \
-                                  pred_bboxes, gt_bboxes)
-       
+        #    visualize_heatmap_box(img, heatmaps, heatmap_avg, \
+        #                          pred_bboxes, gt_bboxes)
         htmlres.add_newline()
         logging.info(str(anno))
 

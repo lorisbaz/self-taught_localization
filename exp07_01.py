@@ -17,8 +17,6 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp07_01'
     params.exp_name_input = 'exp06_01' # take results from here
-    # Display results?
-    params.visualize_res = False
     # the maximum size of an image in the html files
     params.html_max_img_size = 200
     params.visual_factor = 2 * 10e-2 # normalize output for better visualization
