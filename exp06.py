@@ -102,7 +102,7 @@ def pipeline(inputdb, outputdb, params):
                 #visualize_heatmap_box(img, heatmaps, heatmap_avg, \
                 #                      out_image_desc, out_bboxes)
                 # Save bboxes in the output database
-                pred_object[classifier][label].bboxes = out_bboxes
+                anno.pred_objects[classifier][label].bboxes = out_bboxes
         logging.info(str(anno))
         # adding the AnnotatedImage with the heatmaps to the database 
         logging.info('Adding the record to he database')
