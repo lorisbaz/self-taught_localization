@@ -25,33 +25,27 @@ class Stats:
 
     def compute_stats(pred_bboxes, gt_bboxes, IoU_threshold = 0.5):
         """
-        Compute the statistics given a dictionary of BBox objects of the 
+        Compute the statistics given a list of BBox objects of the 
         predictions and the ground truth. IoU_threshols is the Intersection 
         over Union threshold given by the PASCAL VOC evaluationa criteria. 
         Note: IoU is the same as Jaccard similarity.
         """
-        # Flat pred_bboxes & gt_bboxes
-        pred_bboxes_flat, pred_labels_flat = \
-                                    self.flat_anno_bboxes_(pred_bboxes)
-        gt_bboxes_flat, gt_labels_flat = \
-                                    self.flat_anno_bboxes_(gt_bboxes)
-
         # Sort predictions by accuracy 
         pred_confidence = []
-        for i in len(pred_bboxes_flat):
-            pred_confidence.append(pred_bboxes_flat[i].confidence)
+        for i in len(pred_bboxes):
+            pred_confidence.append(pred_bboxes[i].confidence)
         idx_sort = np.argsort(pred_confidence)
 
         # Compute overlap (IoU) -> code translated from PASCAL VOC
-        self.overlap = np.zeros(len(pred_bboxes_flat))
-        gt_det = np.zeros(len(gt_bboxes_flat), 'bool')
-        self.FP = np.zeros(len(pred_bboxes_flat))  
-        self.TP = np.zeros(len(pred_bboxes_flat)) 
-        self.overlap = np.zeros(len(pred_bboxes_flat)) 
+        self.overlap = np.zeros(len(pred_bboxes))
+        gt_det = np.zeros(len(gt_bboxes), 'bool')
+        self.FP = np.zeros(len(pred_bboxes))  
+        self.TP = np.zeros(len(pred_bboxes)) 
+        self.overlap = np.zeros(len(pred_bboxes)) 
         for i in idx_sort:
             ovmax = float("-inf")
-            for j in len(gt_bboxes_flat):  
-                ov = pred_bboxes_flat[i].jaccard_similarity(gt_bboxes_flat[j])
+            for j in len(gt_bboxes):  
+                ov = pred_bboxes[i].jaccard_similarity(gt_bboxes[j])
                 if ov>ovmax:
                     ovmax = ov
                     jamx = j
@@ -66,7 +60,7 @@ class Stats:
             else:
                 self.FP[i] = 1 # false positive
         # Store the tot num positive for the actual image 
-        self.NPOS = len(gt_bboxes_flat)       
+        self.NPOS = len(gt_bboxes) 
 
     def flat_anno_bboxes_(bboxes):
         bboxes_flat = []
