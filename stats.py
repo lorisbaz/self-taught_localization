@@ -18,12 +18,14 @@ class Stats:
         self.average_prec = 0.0
 
     def __str__(self):
-        return 'Stats {0} - Precision: {1}, Recall: {2}, TP: {3}, FP: {4}, ' \
-               'FN: {5}, Detection rate: {6}' \
-               .format(self.image_id, self.precision, self.recall, self.TP, \
-               self.FP, self.FN, self.detection_rate)
+        return 'Stats - Overlap: {0}, TP: {1}, FP: {2}, N pos: {3}, ' \
+               'Precision: {4}, Recall: {5}, Detection rate: {6},' \
+               'AVG precision: {7}'\
+               .format(self.overlap, self.TP, self.FP, self.NPOS, \
+                       self.precision, self.recall, self.detection_rate, \
+                       self.average_prec)
 
-    def compute_stats(pred_bboxes, gt_bboxes, IoU_threshold = 0.5):
+    def compute_stats(self, pred_bboxes, gt_bboxes, IoU_threshold = 0.5):
         """
         Compute the statistics given a list of BBox objects of the 
         predictions and the ground truth. IoU_threshols is the Intersection 
@@ -32,9 +34,9 @@ class Stats:
         """
         # Sort predictions by accuracy 
         pred_confidence = []
-        for i in len(pred_bboxes):
+        for i in range(len(pred_bboxes)):
             pred_confidence.append(pred_bboxes[i].confidence)
-        idx_sort = np.argsort(pred_confidence)
+        idx_sort = np.argsort(pred_confidence)[::-1]
 
         # Compute overlap (IoU) -> code translated from PASCAL VOC
         self.overlap = np.zeros(len(pred_bboxes))
@@ -44,14 +46,15 @@ class Stats:
         self.overlap = np.zeros(len(pred_bboxes)) 
         for i in idx_sort:
             ovmax = float("-inf")
-            for j in len(gt_bboxes):  
+            for j in range(len(gt_bboxes)):
                 ov = pred_bboxes[i].jaccard_similarity(gt_bboxes[j])
+                print '{0}'.format(ov)
                 if ov>ovmax:
                     ovmax = ov
-                    jamx = j
+                    jmax = j
             # check if it is FP or TP        
             self.overlap[i] = ovmax
-            if not(ovmax>=IoU_threshold):
+            if ovmax>=IoU_threshold:
                 if not(gt_det[jmax]):
                     self.TP[i] = 1 # true positive
                     gt_det[jmax] = True # association done!
@@ -62,7 +65,7 @@ class Stats:
         # Store the tot num positive for the actual image 
         self.NPOS = len(gt_bboxes) 
 
-    def flat_anno_bboxes_(bboxes):
+    def flat_anno_bboxes_(self, bboxes):
         bboxes_flat = []
         labels_flat = []
         for label in bboxes.keys():

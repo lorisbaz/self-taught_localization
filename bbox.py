@@ -57,22 +57,36 @@ class BBox:
         self.ymin -= y
         self.xmax -= x
         self.ymax -= y
-    
+        return self
+         
     def intersect(self, bbox):
         """
         Intersection with the given bbox.
         Note: confidence is not modified.
         It returns self.
         """
-        self.xmin = max(self.xmin, bbox.xmin)
-        self.ymin = max(self.ymin, bbox.ymin)
-        self.xmax = min(self.xmax, bbox.xmax)
-        self.ymax = min(self.ymax, bbox.ymax)
+        # check if there is intersection
+        self_width = self.xmax - self.xmin
+        self_height = self.ymax - self.ymin
+        bbox_width = bbox.xmax - bbox.xmin
+        bbox_height = bbox.ymax - bbox.ymin
+        if (abs(self.xmin - bbox.xmin) * 2 < (self_width + bbox_width)) and \
+           (abs(self.ymin - bbox.ymin) * 2 < (self_height + bbox_height)):
+            self.xmin = max(self.xmin, bbox.xmin)
+            self.ymin = max(self.ymin, bbox.ymin)
+            self.xmax = min(self.xmax, bbox.xmax)
+            self.ymax = min(self.ymax, bbox.ymax)
+        else:
+            self.xmin = 0.0
+            self.ymin = 0.0
+            self.xmax = 0.0
+            self.ymax = 0.0
         return self
 
     def jaccard_similarity(self, bbox):
         """
-        Calculates the Jaccard similarity (the similarity used in the PASCAL VOC)
+        Calculates the Jaccard similarity (the similarity used in the 
+        PASCAL VOC)
         """
         area_intersection = bbox.copy().intersect(self).area()
         area_union = self.area() + bbox.area() - area_intersection

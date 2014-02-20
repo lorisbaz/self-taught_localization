@@ -43,10 +43,21 @@ class BBoxTest(unittest.TestCase):
         self.assertAlmostEqual(self.bint.ymin, 30, places=5)
         self.assertAlmostEqual(self.bint.xmax, 80, places=5)
         self.assertAlmostEqual(self.bint.ymax, 50, places=5)
-
+        # intersect 2 bbox (that do not have intesection)
+        self.bflt.intersect(bbox.BBox(0.6, 0.8, 0.7, 0.9))
+        self.assertAlmostEqual(self.bflt.xmin, 0.0, places=5)
+        self.assertAlmostEqual(self.bflt.ymin, 0.0, places=5)
+        self.assertAlmostEqual(self.bflt.xmax, 0.0, places=5)
+        self.assertAlmostEqual(self.bflt.ymax, 0.0, places=5)
+         
     def test_jaccard_similarity(self):
         s = self.bint.jaccard_similarity(bbox.BBox(70, 40, 120, 65))
         self.assertEqual(s, 300 / float(40*20 + 50*25 - 300))
+
+        s = self.bflt.jaccard_similarity(bbox.BBox(0.6, 0.8, 0.7, 0.9))
+        self.assertEqual(s, 0.0)
+
+ 
 
     def test_copy(self):
         bflt_copy = self.bflt.copy()
