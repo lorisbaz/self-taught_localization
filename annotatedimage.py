@@ -68,6 +68,7 @@ class AnnotatedImage:
         self.pred_objects = {}
         self.crop_description = ''
         self.segmentation_name = ''
+        self.stats = {}
 
     def __str__(self):
         out = '{0}:[{1} x {2}]\n'.format(self.image_name, \
