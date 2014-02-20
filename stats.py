@@ -19,7 +19,7 @@ class Stats:
 
     def __str__(self):
         return 'Stats - Overlap: {0}, TP: {1}, FP: {2}, N pos: {3}, ' \
-               'Precision: {4}, Recall: {5}, Detection rate: {6},' \
+               'Precision: {4}, Recall: {5}, Detection rate: {6}, ' \
                'AVG precision: {7}'\
                .format(self.overlap, self.TP, self.FP, self.NPOS, \
                        self.precision, self.recall, self.detection_rate, \
@@ -48,7 +48,7 @@ class Stats:
             ovmax = float("-inf")
             for j in range(len(gt_bboxes)):
                 ov = pred_bboxes[i].jaccard_similarity(gt_bboxes[j])
-                print '{0}'.format(ov)
+                #print '{0}'.format(ov)
                 if ov>ovmax:
                     ovmax = ov
                     jmax = j
@@ -77,7 +77,7 @@ class Stats:
         return bboxes_flat, labels_flat
 
     @staticmethod
-    def aggregate_results(self, stats_list, n_bins):
+    def aggregate_results(stats_list, n_bins=10):
         """
         Returns a Stats object that contains the aggregated statistics and the 
         histogram of overlapped regions.
@@ -85,7 +85,7 @@ class Stats:
         hist_overlap = np.zeros(n_bins)
         stats_aggr = Stats() # aggregate stats
         # Aggregate data
-        for i in range(len(stats_vec)):
+        for i in range(len(stats_list)):
             stats_aggr.TP.extend(stats_list[i].TP)
             stats_aggr.FP.extend(stats_list[i].FP) 
             stats_aggr.overlap.extend(stats_list[i].overlap)
@@ -93,11 +93,11 @@ class Stats:
         # Cumulative precision/recall (PASCAL stuff)    
         stats_aggr.precision = np.cumsum(stats_aggr.TP)/float(stats_aggr.NPOS)
         stats_aggr.recall = np.cumsum(stats_aggr.TP)/(np.cumsum(stats_aggr.TP)\
-                                    - np.cumsum(stats_aggr.FP)) 
+                                     + np.cumsum(stats_aggr.FP)) 
         # Compute the average precision        
         stats_aggr.average_prec = 0.0
         for t in np.linspace(0,1,11):
-            ps = stats_aggr.precision(stats_aggr.recall>=t)
+            ps = stats_aggr.precision[stats_aggr.recall>=t]
             if np.shape(ps)[0]==0:
                 p = 0
             else:
@@ -106,8 +106,8 @@ class Stats:
         # Compute the detection rate
         stats_aggr.detection_rate = np.sum(stats_aggr.TP)/float(stats_aggr.NPOS)
         # Create the histogram of overlap
-        hist_overlap = np.histogram(stats_aggr.overlap, n_bins)
+        hist_overlap = np.histogram(stats_aggr.overlap, \
+                                bins = n_bins, range = (0,1))
         
-        return stats_avg, hist_overlap
-
+        return stats_aggr, hist_overlap[0]
 
