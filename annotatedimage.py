@@ -109,6 +109,7 @@ class AnnotatedImage:
                 max_conf = obj.confidence
         return label
 
-
+    def set_stats(self):
+        self.stats = {}
 
 

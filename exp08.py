@@ -36,31 +36,25 @@ def pipeline(inputdb, outputdb, params):
     for image_key in db_keys:
         # get database entry
         anno = pickle.loads(db_input[image_key])
+        anno.set_stats()
         # get stuff from database entry
-        gtlabel = anno.get_gt_label()
         logging.info('***** Elaborating statistics ' + \
                       os.path.basename(anno.image_name))        
-        # Extract statistics for each GT label
-        for label in anno.gt_objects.keys():
-            ann_gt = anno.gt_objects[label]
-            if ann_gt.bboxes!=[]: # when equal [] it is full image
-                # ... for each classifier we have 
-                for classifier in anno.pred_objects.keys():
-                    anno.stats[classifier] = {}
-                    for label_p in anno.pred_objects[classifier].keys():
-                        ann_pred = anno.pred_objects[classifier][label_p]
-                        # Extract stats 
-                        stat_obj = Stats()
-                        stat_obj.compute_stats(ann_pred.bboxes, \
-                                               ann_gt.bboxes, \
-                                               params.IoU_threshold)
-                        # We assume to have one prediction for each GT!
-                        anno.stats[classifier][label] =  stat_obj
+        # Flat Gt and Pred objects to BBoxes
+        gt_bboxes, gt_lab = Stats.flat_anno_bboxes(anno.gt_objects)
+        for classifier in anno.pred_objects.keys():
+            pred_bboxes, pred_lab = Stats.flat_anno_bboxes( \
+                                    anno.pred_objects[classifier])
+            # Extract stats 
+            stat_obj = Stats()
+            stat_obj.compute_stats(pred_bboxes, gt_bboxes, \
+                                   params.IoU_threshold)
+            anno.stats[classifier] = stat_obj
         # adding stats to the database
         value = pickle.dumps(anno, protocol=2)
         db_output[image_key] = value                 
+        logging.info(str(anno.stats[classifier]))
         logging.info('End record')
-    logging.info(str(anno))
     # write the database
     logging.info('Writing file ' + outputdb)
     db_output.sync()

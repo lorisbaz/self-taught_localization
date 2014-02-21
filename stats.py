@@ -64,14 +64,15 @@ class Stats:
                 self.FP[i] = 1 # false positive
         # Store the tot num positive for the actual image 
         self.NPOS = len(gt_bboxes) 
-
-    def flat_anno_bboxes_(self, bboxes):
+    
+    @staticmethod
+    def flat_anno_bboxes(bboxes):
         bboxes_flat = []
         labels_flat = []
         for label in bboxes.keys():
             bboxes_flat.extend(bboxes[label].bboxes)
             rep_lab = []
-            for i in len(bboxes[label].bboxes):
+            for i in range(len(bboxes[label].bboxes)):
                 rep_lab.append(label)
             labels_flat.extend(rep_lab)
         return bboxes_flat, labels_flat
@@ -109,5 +110,5 @@ class Stats:
         hist_overlap = np.histogram(stats_aggr.overlap, \
                                 bins = n_bins, range = (0,1))
         
-        return stats_aggr, hist_overlap[0]
+        return stats_aggr, hist_overlap
 
