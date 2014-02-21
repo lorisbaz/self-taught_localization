@@ -20,6 +20,10 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp05_01'
     params.exp_name_input = 'exp03_01' # take results from here
+    # Select segmentations
+    params.subset_par = True # k = 100 if true. k = {50,100} otherwise
+    params.start_lv = 2 # ignore levels < start_lv (small segments)
+    params.num_lv = 4 # number of considered levels
     # default Configuration, image and label files
     params.conf = conf
     # method for calculating the confidence

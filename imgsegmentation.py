@@ -54,7 +54,8 @@ class ImgSegmFromMatFiles(ImgSegm):
     Load a set of segmentations stored in a certain directory
     """
 
-    def __init__(self, directory, img_root_dir, subset_par=False, num_levels=3):
+    def __init__(self, directory, img_root_dir, subset_par=False, \
+                 start_lv=1 , num_levels=3):
         """
         Segmentation files stored in directory
 	    - directory: where segmentation files are stored
@@ -69,6 +70,7 @@ class ImgSegmFromMatFiles(ImgSegm):
         self.segmname_ = None
         self.num_levels_ = num_levels
         self.subset_ = subset_par
+        self.start_lv_ = start_lv
 
     def extract(self, image):
         """
@@ -123,15 +125,12 @@ class ImgSegmFromMatFiles(ImgSegm):
                 maxid_segm_Li = n_segm_Li + num_new_segm_Li1
                 # store segmentation 
                 segmentations.append(segm_mask_Li1) 
-            
-            if self.subset_:
-                start = 1 # start from second-level segmentation
-            else:
-                start = 0
+    
             # keep num_levels segmentations (last flat segmentation removed)
             rule_last = np.shape(segmentations)[0] - 1 	  
-            for j in range(start,rule_last + 1, \
-                     np.uint16((rule_last-start)/(self.num_levels_ - 1))):
+            for j in range(self.start_lv_,rule_last + 1, \
+                     np.uint16((rule_last-self.start_lv_)/\
+                     (self.num_levels_ - 1))):
                 segm_all.append(segmentations[j])
 
         # resize and crop center (like original img)	

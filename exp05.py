@@ -40,7 +40,8 @@ def pipeline(inputdb, outputdb, params):
                        center_only = True)
     segmenter = ImgSegmFromMatFiles(conf.ilsvrc2012_segm_results_dir, \
                                     conf.ilsvrc2012_root_images_dir, \
-                                    subset_par=True)
+                                    params.subset_par, params.start_lv, \
+                                    params.num_lv)
     heatext = HeatmapExtractorSegm(net, segmenter, \
                 confidence_tech = params.heatextractor_confidence_tech, \
                 area_normalization = params.heatextractor_area_normalization)
