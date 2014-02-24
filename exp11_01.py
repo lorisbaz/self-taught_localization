@@ -20,7 +20,8 @@ if __name__ == "__main__":
     params.exp_name = 'exp11_01'
     params.exp_name_input = 'exp03_01' # take results from here
     # Gray box params (bbox size, stride)
-    params.gray_par = [(50,10), (80,10), (100,10), (150,10)]
+    params.gray_par = [(50, 25), (75, 25), (100, 25), (125, 25), \
+                       (150, 25), (175, 25), (200, 25)]
     # default Configuration, image and label files
     params.conf = conf
     # method for calculating the confidence

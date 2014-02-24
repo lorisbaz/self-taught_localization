@@ -242,7 +242,7 @@ class HeatmapExtractorBox(HeatmapExtractor):
             xs = np.int32(xs)
             ys = np.linspace(0, image.shape[0]-box_sz, \
                              (image.shape[0]-box_sz)/float(stride)+1)
-            ys = np.int32(ys)
+            ys = np.int32(ys) 
             # obfuscation & heatmap for each box
             for x in xs:
                 for y in ys:
