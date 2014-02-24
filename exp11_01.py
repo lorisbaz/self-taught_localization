@@ -17,7 +17,7 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp11.Params()
     # experiment name
-    params.exp_name = 'exp111_01'
+    params.exp_name = 'exp11_01'
     params.exp_name_input = 'exp03_01' # take results from here
     # Gray box params (bbox size, stride)
     params.gray_par = [(50,10), (80,10), (100,10), (150,10)]
