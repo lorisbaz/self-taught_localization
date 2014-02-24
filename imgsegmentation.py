@@ -128,9 +128,13 @@ class ImgSegmFromMatFiles(ImgSegm):
     
             # keep num_levels segmentations (last flat segmentation removed)
             rule_last = np.shape(segmentations)[0] - 1 	  
-            for j in range(self.start_lv_,rule_last + 1, \
-                     np.uint16((rule_last-self.start_lv_)/\
-                     (self.num_levels_ - 1))):
+            tmp_start_lv = self.start_lv_
+            stept = np.uint16((rule_last-tmp_start_lv)/(self.num_levels_ - 1)) 
+            if stept == 0: # not enough segmentations
+                tmp_start_lv = 0 
+                stept = np.uint16((rule_last-tmp_start_lv)/ \
+                                    (self.num_levels_ - 1)) 
+            for j in range(tmp_start_lv,rule_last + 1, stept):
                 segm_all.append(segmentations[j])
 
         # resize and crop center (like original img)	
