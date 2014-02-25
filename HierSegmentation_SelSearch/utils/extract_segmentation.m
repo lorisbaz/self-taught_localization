@@ -1,5 +1,6 @@
 function val = extract_segmentation(testIms, imagePath, savePath, seg_params, fix_sz)
 
+
 % output value
 val = 0;
 
@@ -10,7 +11,7 @@ for i=1:length(testIms)
     % VOCopts.img
     im = imread([imagePath testIms{i}]);
     im = resize_image_max_size(im, fix_sz);
-    idx = 1;
+    idx = 1; idx2 = 1;
     for j=1:length(seg_params.ks)
         k = seg_params.ks(j); % Segmentation threshold k
         minSize = k; % We set minSize = k
@@ -29,12 +30,20 @@ for i=1:length(testIms)
                 tree{idx} = ...
                     RecreateBlobHierarchyLevelsTree(segmentation, ...
                                                     hierarchy{1});
+                hBlobs{idx} = RecreateBlobHierarchyIndIm(blobIndIm{idx}, ...
+                                                blobBoxes, hierarchy{1});
+                
             else
                 for h = 1:length(hierarchy)
                     % recreate the tree to be saved
-                    tree{h,idx} = ...
+                    tree{idx2} = ...
                         RecreateBlobHierarchyLevelsTree(segmentation, ...
                                                         hierarchy{h});                
+                                                    
+                    hBlobs{idx2} = RecreateBlobHierarchyIndIm(blobIndIm{idx}, ...
+                                            blobBoxes, hierarchy{h});
+                                        
+                    idx2 = idx2 + 1;
 %                 % visualization
 %                 subplot(5,5,1)
 %                 imagesc(im), axis image
@@ -52,24 +61,14 @@ for i=1:length(testIms)
             idx = idx + 1;
         end
     end
-    
-%     % save tree and blobIndIm    
-%     for idx = 1:size(tree,2)
-%         if idx == 1
-%             hdf5write([savePath strtok(testIms{i},'.') '.h5'], [strtok(testIms{i},'.') '/Segm_' num2str(idx)], uint16(blobIndIm{idx}))
-%         else
-%             hdf5write([savePath strtok(testIms{i},'.') '.h5'], [strtok(testIms{i},'.') '/Segm_' num2str(idx)], uint16(blobIndIm{idx}), 'WriteMode', 'append')
-%         end
-%         hdf5write([savePath strtok(testIms{i},'.') '.h5'], [strtok(testIms{i},'.') '/leaves_' num2str(idx)], uint16(tree{idx}.leaves), 'WriteMode', 'append');
-%         hdf5write([savePath strtok(testIms{i},'.') '.h5'], [strtok(testIms{i},'.') '/nodes_' num2str(idx)], uint16(tree{idx}.nodes), 'WriteMode', 'append');
-%     end
+   
     [a,remain] = strtok(testIms{i},'/');
     if isempty(remain)
         remain = a;
     else
         remain = remain(2:end);
     end
-    save([savePath strtok(remain,'.') '.mat'],'blobIndIm','tree')
+    save([savePath strtok(remain,'.') '_ext.mat'],'blobIndIm','tree','hBlobs')
 end
 
 % output value
