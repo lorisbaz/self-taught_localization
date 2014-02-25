@@ -14,7 +14,7 @@ from htmlreport import *
 import exp06
 
 if __name__ == "__main__":
-    # load configurations and parameters  
+    # load configurations and parameters
     conf = Configuration()
     params = exp06.Params()
     # experiment name
@@ -30,11 +30,13 @@ if __name__ == "__main__":
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     params.input_dir = conf.experiments_output_directory \
-                        + '/' + params.exp_name_input 
+                        + '/' + params.exp_name_input
+    # max size of the HTML images
+    params.html_max_img_size = 300
     # parallelize the script on Anthill?
     params.run_on_anthill = False
-    # specify task to debug 
-    params.task = None 
+    # specify task to debug
+    params.task = 120
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp06.run_exp(params)

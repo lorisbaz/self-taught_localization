@@ -77,20 +77,20 @@ class HtmlReport():
                             isgt = False) # predicted bboxes
                 # Add the heatmaps
                 heatmaps = []
+                visual_factor = 2 * 10e-2
                 for j in range(len(ann_pred.heatmaps)):
                     heatmaps.append(ann_pred.heatmaps[j].heatmap)
                     desc = 'Heatmap'
                     self.add_image_embedded( \
-                                   heatmaps[j]*params.visual_factor, \
+                                   heatmaps[j]*visual_factor, \
                                    max_size = img_max_size, \
                                    text = desc)
                 # Add also the Average heatmap
                 heatmap_avg = np.sum(heatmaps, axis=0)/np.shape(heatmaps)[0]
                 desc = 'AVG heatmap'
-                self.add_image_embedded(heatmap_avg*params.visual_factor, \
+                self.add_image_embedded(heatmap_avg*visual_factor, \
                              max_size = img_max_size, \
                              text = desc)
-        self.add_newline()
 
 
     def add_image_embedded(self, img_o, proportion = 1.0, max_size = -1, \
@@ -103,7 +103,7 @@ class HtmlReport():
                    If max_size > 0.0, 'proportion' is ignored and the image
                    is resized having the maximum edge of size 'max_size'.
         'text' is some text (or Html code) put under the image.
-        'bboxes' is a list of BBox objects 
+        'bboxes' is a list of BBox objects
         'isgt': TODO LORIS. what is this? :)
         """
         # resize the image, and convert it to jpeg

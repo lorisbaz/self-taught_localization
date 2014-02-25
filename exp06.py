@@ -18,6 +18,7 @@ from bbox import *
 from bboxextractor import *
 from heatmap import *
 from configuration import *
+from htmlreport import *
 from util import *
 
 class Params:
@@ -27,7 +28,7 @@ class Params:
 def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
                           out_image_desc, out_bboxes):
     """
-    Function useful for visualizing partial results during debuging. 
+    Function useful for visualizing partial results during debuging.
     """
     import matplotlib.pyplot as plt
     plt.subplot(3,4,1)
@@ -39,7 +40,7 @@ def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
         out_bboxes[i].xmin = out_bboxes[i].xmin * width
         out_bboxes[i].xmax = out_bboxes[i].xmax * width
         out_bboxes[i].ymin = out_bboxes[i].ymin * height
-        out_bboxes[i].ymax = out_bboxes[i].ymax * height         
+        out_bboxes[i].ymax = out_bboxes[i].ymax * height
         rect = plt.Rectangle((out_bboxes[i].xmin, out_bboxes[i].ymin), \
                               out_bboxes[i].xmax - out_bboxes[i].xmin, \
                               out_bboxes[i].ymax - out_bboxes[i].ymin, \
@@ -49,16 +50,16 @@ def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
         plt.subplot(3,4,i+2)
         plt.imshow(heatmaps[i])
     plt.subplot(3,4,np.shape(heatmaps)[0]+2)
-    plt.imshow(heatmap_avg)    
+    plt.imshow(heatmap_avg)
     plt.title('Avg Heatmap')
     plt.subplot(3,4,np.shape(heatmaps)[0]+3)
     plt.imshow(out_image_desc[0][0])
-    plt.title(out_image_desc[0][1])      
+    plt.title(out_image_desc[0][1])
     plt.subplot(3,4,np.shape(heatmaps)[0]+4)
     plt.imshow(out_image_desc[1][0])
-    plt.title(out_image_desc[1][1])   
-    
-    
+    plt.title(out_image_desc[1][1])
+
+
     plt.show()
 
 
@@ -73,9 +74,11 @@ def pipeline(inputdb, outputdb, outputhtml, params):
                             min_bbox_size = params.min_bbox_size, \
                             grab_cut_rounds = params.grab_cut_rounds, \
                             consider_pr_fg = params.consider_pr_fg)
-   
+
     htmlres = HtmlReport()
+    logging.info('Opening ' + inputdb)
     db_input = bsddb.btopen(inputdb, 'c')
+    logging.info('Opening ' + outputdb)
     db_output = bsddb.btopen(outputdb, 'c')
     db_keys = db_input.keys()
     # loop over the images
@@ -83,7 +86,7 @@ def pipeline(inputdb, outputdb, outputhtml, params):
         # get database entry
         anno = pickle.loads(db_input[image_key])
         # get stuff from database entry
-        img = anno.get_image()        
+        img = anno.get_image()
         logging.info('***** Elaborating bounding boxes ' + \
                       os.path.basename(anno.image_name))
         assert len(anno.pred_objects) == 1  # for the visualization
@@ -94,7 +97,7 @@ def pipeline(inputdb, outputdb, outputhtml, params):
             for label in anno.pred_objects[classifier].keys():
                 # Compute avg heatmap
                 ann_heatmaps = anno.pred_objects[classifier][label].heatmaps
-                heatmaps = [] 
+                heatmaps = []
                 for j in range(len(ann_heatmaps)):
                     heatmaps.append(ann_heatmaps[j].heatmap)
                 heatmap_avg = np.sum(heatmaps, axis=0)/np.shape(heatmaps)[0]
@@ -108,13 +111,15 @@ def pipeline(inputdb, outputdb, outputhtml, params):
                 anno.pred_objects[classifier][label].bboxes = out_bboxes
         logging.info(str(anno))
         # visualize the annotation to a HTML row
-        htmlres.add_annotated_image_embedded(anno)
+        htmlres.add_annotated_image_embedded(anno, \
+                        img_max_size=params.html_max_img_size)
         # visualize the debugging images
         for img, desc in out_image_desc:
-            htmlres.add_image_embedded(img,\
+            htmlres.add_image_embedded(img, \
                                        max_size = params.html_max_img_size, \
-                                       text = desc, bboxes)
-        # adding the AnnotatedImage with the heatmaps to the database 
+                                       text = desc)
+        htmlres.add_newline()
+        # adding the AnnotatedImage with the heatmaps to the database
         logging.info('Adding the record to he database')
         value = pickle.dumps(anno, protocol=2)
         db_output[image_key] = value
@@ -123,6 +128,8 @@ def pipeline(inputdb, outputdb, outputhtml, params):
     logging.info('Writing file ' + outputdb)
     db_output.sync()
     db_output.close()
+    # write the HTML
+    htmlres.save(outputhtml)
     return 0
 
 def run_exp(params):
