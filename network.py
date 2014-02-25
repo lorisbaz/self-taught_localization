@@ -1,14 +1,19 @@
 import numpy as np
 from skimage import io
+import skimage.transform
 import os
 try:
+    import decaf.scripts.imagenet
     from decaf.scripts.imagenet import DecafNet
-except: 
+    import decaf.util.transform
+except:
     print "Warning: Decaf not loaded. \n"
 try:
     import caffe.imagenet
 except:
     print "Warning: Caffe not loaded. \n"
+
+import util
 
 
 class Network:
@@ -38,7 +43,12 @@ class Network:
         Returns the unique label id \in {0, ..., num_labels-1}
         """
         raise NotImplementedError()
-    
+
+    def get_input_dim(self):
+        """
+        Returns the input size of the network (scalar value)
+        """
+
     def get_label_id(self, label):
         """
         Returns the unique label id \in {0, ..., num_labels-1}
@@ -85,11 +95,16 @@ class NetworkDecaf(Network):
             self.dict_label_id_[dict_desc_label[desc]] = i
             self.labels_.append(dict_desc_label[desc])
         # Load the mean vector from file
-        self.net_.mean_img = np.mean(np.mean(self.net_._data_mean,axis=1),axis=0) # mean of 3 channels
-        #self.net_.mean_img = self.net_.mean_img[::-1]   # it is in BGR convert in RGB
-        
+        # mean of 3 channels
+        self.net_.mean_img =np.mean(np.mean(self.net_._data_mean,axis=1),axis=0)
+        # it is in BGR convert in RGB
+        #self.net_.mean_img = self.net_.mean_img[::-1]
+
     def get_mean_img(self):
         return self.net_.mean_img
+
+    def get_input_dim(self):
+        return decaf.scripts.imagenet.INPUT_DIM
 
     def get_label_id(self, label):
         return self.dict_label_id_[label]
@@ -101,7 +116,29 @@ class NetworkDecaf(Network):
         return self.labels_
 
     def evaluate(self, img, layer_name = 'softmax'):
-        scores = self.net_.classify(img, center_only = self.center_only_)
+        # for now only center_only is supported
+        assert self.center_only_ == True
+        # first, extract the 227x227 center
+        dim = decaf.scripts.imagenet.INPUT_DIM
+        image = util.crop_image_center(decaf.util.transform.as_rgb(img))
+        image = skimage.transform.resize(image, (dim, dim))
+        # convert to [0,255] float32
+        image = image.astype(np.float32) * 255.
+        assert np.max(image) <= 255
+        # Flip the image if necessary, maintaining the c_contiguous order
+        if decaf.scripts.imagenet._JEFFNET_FLIP:
+            image = image[::-1, :].copy()
+        # subtract the mean, cropping the 256x256 mean image
+        xoff = (self.net_._data_mean.shape[1] - dim)/2
+        yoff = (self.net_._data_mean.shape[0] - dim)/2
+        image -= self.net_._data_mean[yoff+yoff+dim, xoff:xoff+dim]
+        # make sure the data in contiguous in memory
+        images = np.ascontiguousarray(image[np.newaxis], dtype=np.float32)
+        print images.shape
+        # classify
+        predictions = self.net_.classify_direct(images)
+        scores = predictions.mean(0)
+        # look at the particular layer
         if layer_name == 'softmax':
             return scores
         elif layer_name == 'fc7_relu':
@@ -131,6 +168,9 @@ class NetworkCaffe(Network):
         # *** TODO ***
         # center_only should be True, but PyCaffe has a bug
         # which makes the software crash :-/
+        # When solving this problem, make sure that the center_crop
+        # is not creating borders, i.e. the crop
+        # has lenght min(img_width, img_height)
         self.net_ = caffe.imagenet.ImageNetClassifier( \
                             model_spec_filename, model_filename, \
                             center_only)
@@ -163,7 +203,10 @@ class NetworkCaffe(Network):
 
     def get_mean_img(self):
         return self.net_.mean_img
-    
+
+    def get_input_dim(self):
+        raise NotImplementedError()
+
     def get_label_id(self, label):
         return self.dict_label_id_[label]
 

@@ -15,6 +15,9 @@ class NetworkDecafTest(unittest.TestCase):
     def tearDown(self):
         self.net = None
 
+    def test_get_input_dim(self):
+        self.assertEqual(self.net.get_input_dim(), 227)
+
     def test_get_label_id(self):
         self.assertEqual(self.net.get_label_id('n04201297'), 0)
         self.assertEqual(self.net.get_label_id('n03063599'), 1)
@@ -34,19 +37,19 @@ class NetworkDecafTest(unittest.TestCase):
     def test_evaluate(self):
         img = np.asarray(io.imread('ILSVRC2012_val_00000001_n01751748.JPEG'))
         scores = self.net.evaluate(img, layer_name = 'softmax')
-        self.assertAlmostEqual(scores[0], 6.9254136e-09, places=5)
-        self.assertAlmostEqual(scores[999], 1.2282071e-08, places=5)
-        self.assertAlmostEqual(max(scores), 0.36385602, places=5)
+        self.assertAlmostEqual(scores[0], 8.4301e-09, places=5)
+        self.assertAlmostEqual(scores[999], 2.26509e-08, places=5)
+        self.assertAlmostEqual(max(scores), 0.301472, places=5)
         scores = self.net.evaluate(img, layer_name = 'fc6_relu')
         self.assertEqual(scores.shape[0], 1)
         self.assertEqual(scores.shape[1], 4096)
         self.assertAlmostEqual(scores[0,0], 0.0)
-        self.assertAlmostEqual(scores[0,3], 6.447751, places=4)
-        self.assertAlmostEqual(scores[0,564], 7.011354, places=4)
-        self.assertAlmostEqual(scores[0,3530], 18.45673, places=4)
+        self.assertAlmostEqual(scores[0,3], 9.88611, places=4)
+        self.assertAlmostEqual(scores[0,564], 3.55161, places=4)
+        self.assertAlmostEqual(scores[0,3530], 15.6157, places=4)
 
 #=============================================================================
-
+@unittest.skip('caffe skip')
 class NetworkCaffeTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()
