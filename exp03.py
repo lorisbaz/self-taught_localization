@@ -81,14 +81,14 @@ def visualize_annotated_image(anno):
     del draw
     img.show()
 
-def pipeline(images, outputdb, params):
+def pipeline(images, outputdb, outputhtml, params):
     """
     Run the pipeline for this experiment. images is a list of
     (wnid, image_filename), or the SAME CLASS (i.e. wnid is a constant).
     """
     # Instantiate some objects, and open the database
     conf = params.conf
-    print outputdb
+    htmlres = HtmlReport()
     db = bsddb.btopen(outputdb, 'c')
     # loop over the images
     for image in images:
@@ -134,13 +134,17 @@ def pipeline(images, outputdb, params):
                 bb = BBox(xmin, ymin, xmax, ymax)
                 bb.normalize_to_outer_box(bbox_center_crop)
                 bb.intersect(BBox(0.0, 0.0, 1.0, 1.0))
-                anno.gt_objects[label].bboxes.append(bb)
+                # it can happen that the gt bbox is outside the center bbox
+                if bb.area() > 0.0:
+                    anno.gt_objects[label].bboxes.append(bb)
         # make sure that anno.gt_objects has exactly one element
         assert len(anno.gt_objects) == 1
         logging.info(str(anno))
         # visualize the annotation (just for debugging)
         if params.visualize_annotated_images:
             visualize_annotated_image(anno)
+        # visualize the annotation to a HTML row
+        htmlres.add_annotated_image_embedded(anno)
         # adding the AnnotatedImage to the database
         logging.info('Adding the record to the database')
         key = os.path.basename(image_file).strip()
@@ -151,6 +155,8 @@ def pipeline(images, outputdb, params):
     logging.info('Writing file ' + outputdb)
     db.sync()
     db.close()
+    # write the HTML
+    htmlres.save(outputhtml)
     return 0
 
 
@@ -166,8 +172,8 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
-                               job_name = 'Job_{0}'.format(params.exp_name))
+    	parfun = ParFunAnthill(pipeline, time_requested = 2, \
+                            job_name = 'Job_{0}'.format(params.exp_name))
     else:
         parfun = ParFunDummy(pipeline)
     if params.task < 0:
@@ -177,8 +183,10 @@ def run_exp(params):
         idx_start = params.task
         idx_end = params.task+1
     for i in range(idx_start, idx_end):
-        outputdb = params.output_dir + '/%05d'%i + '.db'
-        parfun.add_task(image_chunks[i], outputdb, params)
+        outputfile = params.output_dir + '/%05d'%i
+        outputdb = outputfile + '.db'
+        outputhtml = outputfile + '.html'
+        parfun.add_task(image_chunks[i], outputdb, outputhtml, params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:
