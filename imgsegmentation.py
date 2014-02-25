@@ -235,4 +235,6 @@ class ImgSegmFromMatFiles_List(ImgSegm):
     def get_segm_name(self):
         return self.segmname_
 
- 
+    # TODOO: implement resize (if needed) 
+    def resize_segment(self, orig_size, new_size):
+        raise NotImplementedError()    
