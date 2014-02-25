@@ -84,7 +84,7 @@ class Configuration:
             self.experiments_output_directory = \
                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'
        	    self.ilsvrc2012_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' 
+	       self.experiments_output_directory + '/segment_ext_ILSVRC2012' 
 	elif os.uname()[1] == 'alessandro-Linux':
             ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root

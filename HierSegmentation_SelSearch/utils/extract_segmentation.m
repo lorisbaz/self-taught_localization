@@ -68,7 +68,7 @@ for i=1:length(testIms)
     else
         remain = remain(2:end);
     end
-    save([savePath strtok(remain,'.') '_ext.mat'],'blobIndIm','tree','hBlobs')
+    save([savePath strtok(remain,'.') '.mat'],'blobIndIm','tree','hBlobs')
 end
 
 % output value

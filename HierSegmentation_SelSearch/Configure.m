@@ -9,7 +9,7 @@ switch (hostname)
         trainPath = [imagePath 'train/'];
         valPath = [imagePath 'val/'];
         testPath = [imagePath 'test/'];
-        savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ILSVRC2012/';
+        savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ext_ILSVRC2012/';
         selectivePath = '/home/anthill/vlg/SelectiveSearchCodeIJCV/';        
         addpath(toolboxPath)
         
