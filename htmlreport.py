@@ -28,6 +28,71 @@ class HtmlReport():
             '</body>'\
             '</html>'
 
+    def add_annotated_image_embedded(self, anno, img_max_size = -1):
+        """
+        Displays in a row all the information contained in the given
+        AnnotatedImage object: GT information, PRED information, etc..
+        img_max_size sets the maximum size for all the AnnotatedImage
+        elements (the image, the heatmaps, etc..)
+        """
+        # get stuff from database entry
+        img = anno.get_image()
+        height, width = np.shape(img)[0:2]
+        gtlabel = anno.get_gt_label()
+        # Visualize GT information
+        for label in anno.gt_objects.keys():
+            ann_gt = anno.gt_objects[label]
+            if ann_gt.bboxes != []:
+                desc = 'GT-{0}-{1}'.format(ann_gt.label, anno.image_name)
+                np_bbox = np.zeros((4,len(ann_gt.bboxes)))
+                for j in range(len(ann_gt.bboxes)):
+                    np_bbox[0,j] = ann_gt.bboxes[j].xmin * width
+                    np_bbox[1,j] = ann_gt.bboxes[j].ymin * height
+                    np_bbox[2,j] = (ann_gt.bboxes[j].xmax - \
+                                    ann_gt.bboxes[j].xmin) * width
+                    np_bbox[3,j] = (ann_gt.bboxes[j].ymax - \
+                                    ann_gt.bboxes[j].ymin) * height
+                self.add_image_embedded(img, \
+                            max_size = img_max_size, \
+                            text = desc, bboxes = np_bbox, \
+                            isgt = True) # gt bboxes
+        # visualize the PRED information
+        for classifier in anno.pred_objects.keys():
+            for label in anno.pred_objects[classifier].keys():
+                # Load and visualize heatmaps
+                ann_pred = anno.pred_objects[classifier][label]
+                # Draw img and bboxes associated to the current avg heatmap
+                desc = '{0}-{1}'.format(ann_pred.label, anno.image_name)
+                np_bbox = np.zeros((4,len(ann_pred.bboxes)))
+                for j in range(len(ann_pred.bboxes)):
+                    np_bbox[0,j] = ann_pred.bboxes[j].xmin * width
+                    np_bbox[1,j] = ann_pred.bboxes[j].ymin * height
+                    np_bbox[2,j] = (ann_pred.bboxes[j].xmax - \
+                                    ann_pred.bboxes[j].xmin) * width
+                    np_bbox[3,j] = (ann_pred.bboxes[j].ymax - \
+                                    ann_pred.bboxes[j].ymin) * height
+                self.add_image_embedded(img,\
+                            max_size = img_max_size, \
+                            text = desc, bboxes = np_bbox, \
+                            isgt = False) # predicted bboxes
+                # Add the heatmaps
+                heatmaps = []
+                visual_factor = 2 * 10e-2
+                for j in range(len(ann_pred.heatmaps)):
+                    heatmaps.append(ann_pred.heatmaps[j].heatmap)
+                    desc = 'Heatmap'
+                    self.add_image_embedded( \
+                                   heatmaps[j]*visual_factor, \
+                                   max_size = img_max_size, \
+                                   text = desc)
+                # Add also the Average heatmap
+                heatmap_avg = np.sum(heatmaps, axis=0)/np.shape(heatmaps)[0]
+                desc = 'AVG heatmap'
+                self.add_image_embedded(heatmap_avg*visual_factor, \
+                             max_size = img_max_size, \
+                             text = desc)
+
+
     def add_image_embedded(self, img_o, proportion = 1.0, max_size = -1, \
                            text = '', bboxes = [], isgt = False):
         """
@@ -38,6 +103,8 @@ class HtmlReport():
                    If max_size > 0.0, 'proportion' is ignored and the image
                    is resized having the maximum edge of size 'max_size'.
         'text' is some text (or Html code) put under the image.
+        'bboxes' is a list of BBox objects
+        'isgt': TODO LORIS. what is this? :)
         """
         # resize the image, and convert it to jpeg
         img = self.resize_image_(img_o, proportion, max_size)
@@ -50,7 +117,7 @@ class HtmlReport():
             bboxes = self.resize_bboxes_(img_o, img, bboxes)
             self.add_body_options_(bboxes, text, isgt)
         else:
-            self.add_image_support_(img, src, text) 
+            self.add_image_support_(img, src, text)
 
     def add_image(self, img_filename, proportion = 1.0, max_size = -1, \
                   text = ''):
@@ -98,7 +165,7 @@ class HtmlReport():
             great_size = np.max(img.shape)
             proportion = max_size / float(great_size)
         width = int(img.shape[1] * float(proportion))
-        height = int(img.shape[0] * float(proportion))    
+        height = int(img.shape[0] * float(proportion))
         return skimage.transform.resize(img, (height, width))
 
     def resize_bboxes_(self, img_o, img, bboxes):
@@ -108,7 +175,7 @@ class HtmlReport():
             bboxes[0,i] = bboxes[0,i]*proportion_w
             bboxes[1,i] = bboxes[1,i]*proportion_h
             bboxes[2,i] = bboxes[2,i]*proportion_w
-            bboxes[3,i] = bboxes[3,i]*proportion_h              
+            bboxes[3,i] = bboxes[3,i]*proportion_h
         return bboxes
 
     def add_image_support_bboxes_(self, img, src, text):
@@ -166,7 +233,7 @@ class HtmlReport():
                 bboxes_str += str(bboxes_flat[i]) + ', '
             else:
                 bboxes_str += str(bboxes_flat[i])
-        bboxes_str += ']' 
+        bboxes_str += ']'
         # add values to bodyopt
         self.bodyopt_+= 'drawEverything({0},\'{1}\',\'{2}\');' \
                         .format(bboxes_str, text, color)

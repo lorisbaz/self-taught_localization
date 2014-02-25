@@ -90,13 +90,22 @@ class BBoxExtractor:
 
 class GrabCutBBoxExtractor(BBoxExtractor):
     def __init__(self, min_bbox_size=0.05, grab_cut_rounds=10, \
-                       consider_pr_fg=True):
+                       consider_pr_fg=True, grab_cut_init = 'kmeans'):
+        """
+        min_bbox_size: the minimum (normalized) size of the outputted bboxes
+        grab_cut_rounds: number of rounds for the grabcut algorithm
+        consider_pr_fg: whether or not to consider as foreground also the pixels
+                        labeled as "weak foreground" by the grabcut algo.
+        grab_cut_init: string, indicating which method initializes the initial mask
+                       for the grabcut. either 'kmeans', or 'gmm'
+        """
         self.min_bbox_size_ = min_bbox_size
         self.gc_rounds_ = grab_cut_rounds
         if consider_pr_fg:
             self.gc_fg_labels_ = [cv2.GC_FGD, cv2.GC_PR_FGD]
         else:
             self.gc_fg_labels_ = [cv2.GC_FGD]
+        self.grab_cut_init = grab_cut_init
 
     def extract(self, img, heatmaps):
         assert isinstance(img, np.ndarray)
@@ -108,15 +117,20 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         assert heatmap.ndim == 2
         out_image_desc = []
         # Gray imgs have to be converted in 3D gray images
-        if (len(np.shape(img))==2): 
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)  
+        if (len(np.shape(img))==2):
+            img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
         # 1) learn a kMeans with 4 gaussians on the heatmap values,
         #    returning the four thresholds
-        thresholds = self.get_thresholds_from_kmeans_(heatmap)
+        if self.grab_cut_init == "kmeans":
+            thresholds = self.get_thresholds_from_kmeans_(heatmap)
+        elif self.grab_cut_init == "gmm":
+            thresholds = self.get_thresholds_from_gmm_(heatmap)
+        else:
+            raise ValueError('parameter grab_cut_init not valid')
         # 2) quantize the heatmap into four segmentation labels:
         #    cv2.GC_BGD, cv2.GC_PR_BGD, cv2.GC_PR_FGD, cv2.GC_FGD
         mask = self.get_grabcut_init_mask_(heatmap, thresholds)
-        mask_image = np.multiply(mask.copy(), 80)
+        mask_image = self.get_image_from_mask_(img, mask)
         out_image_desc.append( (mask_image, 'initial k-means mask') )
         # 3) run GrabCut
         gc_img = cv2.resize(img.copy(), (mask.shape[1], mask.shape[0])).copy()
@@ -128,14 +142,16 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         gc_mask = mask.copy()
         cv2.grabCut(gc_img, gc_mask, gc_rect, gc_bgdModel, gc_fgdModel, \
                     self.gc_rounds_, mode=cv2.GC_INIT_WITH_MASK)
-        mask_image = np.multiply(gc_mask.copy(), 80)
+        assert gc_mask.shape[0] == mask.shape[0]
+        assert gc_mask.shape[1] == mask.shape[1]
+        mask_image = self.get_image_from_mask_(img, gc_mask)
         out_image_desc.append( (mask_image, 'grab-cut mask') )
         # 4) extractor the bbox, as the outer rectangles of the final segments
         bboxes = BBoxExtractor.get_bbox_from_connected_components_( \
-                              mask, heatmap, self.gc_fg_labels_)
+                              gc_mask, heatmap, self.gc_fg_labels_)
         # 5) normalize the bboxes to one
-        for bbox in bboxes: 
-            bbox.normalize_to_outer_box(BBox(0,0,mask.shape[0],mask.shape[1]))
+        for bbox in bboxes:
+            bbox.normalize_to_outer_box(BBox(0,0,mask.shape[1],mask.shape[0]))
         # 6) remove very small bboxes, and normalize the bboxes to one
         out_bboxes = []
         for bbox in bboxes:
@@ -143,11 +159,53 @@ class GrabCutBBoxExtractor(BBoxExtractor):
                 out_bboxes.append(bbox)
         return out_bboxes, out_image_desc
 
+
+    def get_image_from_mask_(self, img, mask):
+        out = cv2.resize(img.copy(), (mask.shape[1], mask.shape[0])).copy()
+        for y in range(mask.shape[0]):
+            for x in range(mask.shape[1]):
+                if mask[y,x] == cv2.GC_BGD:
+                    out[y,x,:] *= 0
+                elif mask[y,x] == cv2.GC_FGD:
+                    out[y,x,0] = 0
+                    out[y,x,1] = 255
+                    out[y,x,2] = 0
+                elif mask[y,x] == cv2.GC_PR_BGD:
+                    out[y,x,0] = 0
+                    out[y,x,1] = 0
+                    out[y,x,2] = 255
+                elif mask[y,x] == cv2.GC_PR_FGD:
+                    out[y,x,0] = 255
+                    out[y,x,1] = 0
+                    out[y,x,2] = 0
+                else:
+                    assert 0
+        return out
+
     def get_thresholds_from_kmeans_(self, heatmap):
         """
         Learn a kMeans with 4 clusters, and return the thresholds that separate
         the clusters: [m01, m12, m23]
         """
+        g = sklearn.cluster.KMeans(n_clusters = 4)
+        data = heatmap.reshape((heatmap.size, 1))
+        g.fit(data)
+        assert g.cluster_centers_.shape[0] == 4
+        assert g.cluster_centers_.shape[1] == 1
+        centers = np.sort(g.cluster_centers_.copy(), axis=None)
+        assert centers[0] < centers[1] < centers[2] < centers[3]
+        m01 = (centers[0]+centers[1]) / 2.0
+        m12 = (centers[1]+centers[2]) / 2.0
+        m23 = (centers[2]+centers[3]) / 2.0
+        return [m01, m12, m23]
+
+    def get_thresholds_from_gmm_(self, heatmap):
+        """
+        Learn a GMM with 4 gaussians, and return the thresholds that separate
+        the posterior values: [m01, m12, m23]
+        """
+        # TODooooooooooooooooooooooooooooooooooooooooo
+        raise NotImplementError()
         g = sklearn.cluster.KMeans(n_clusters = 4)
         data = heatmap.reshape((heatmap.size, 1))
         g.fit(data)

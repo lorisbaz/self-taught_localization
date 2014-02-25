@@ -49,7 +49,15 @@ class BBoxTest(unittest.TestCase):
         self.assertAlmostEqual(self.bflt.ymin, 0.0, places=5)
         self.assertAlmostEqual(self.bflt.xmax, 0.0, places=5)
         self.assertAlmostEqual(self.bflt.ymax, 0.0, places=5)
-         
+
+    def test_intersect2(self):
+        bflt = bbox.BBox(0.96, 0.49, 1.2, 0.64)
+        bflt.intersect(bbox.BBox(0.0, 0.0, 1.0, 1.0))
+        self.assertAlmostEqual(bflt.xmin, 0.96, places=5)
+        self.assertAlmostEqual(bflt.ymin, 0.49, places=5)
+        self.assertAlmostEqual(bflt.xmax, 1.0, places=5)
+        self.assertAlmostEqual(bflt.ymax, 0.64, places=5)
+
     def test_jaccard_similarity(self):
         s = self.bint.jaccard_similarity(bbox.BBox(70, 40, 120, 65))
         self.assertEqual(s, 300 / float(40*20 + 50*25 - 300))
@@ -57,14 +65,12 @@ class BBoxTest(unittest.TestCase):
         s = self.bflt.jaccard_similarity(bbox.BBox(0.6, 0.8, 0.7, 0.9))
         self.assertEqual(s, 0.0)
 
- 
-
     def test_copy(self):
         bflt_copy = self.bflt.copy()
         bflt_copy.xmin = -1
         self.assertNotEqual(self.bflt.xmin, bflt_copy.xmin)
-        
-        
+
+
 
 #=============================================================================
 
