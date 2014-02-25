@@ -20,7 +20,7 @@ if __name__ == "__main__":
     params.exp_name = 'exp10_01'
     params.exp_name_input = 'exp03_01' # take results from here
     # Gray box params (bbox size, stride)
-    params.gray_par = [(32, 25), (48, 25), (64, 25), (80, 25), (96, 25)]
+    params.gray_par = [(32, 10), (48, 10), (64, 10), (80, 10), (96, 10)]
     # default Configuration, image and label files
     params.conf = conf
     # method for calculating the confidence
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = False
+    params.run_on_anthill = True
     # Set jobname in case the process stop or crush
     params.job_name = None # set to None if you do not want to resume things
     params.task = None # specify task to debug

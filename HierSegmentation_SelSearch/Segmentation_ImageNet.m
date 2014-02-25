@@ -24,7 +24,7 @@ seg_params.sigma = 0.8;
 
 % Comment the following three lines for the 'quality' version
 seg_params.colorTypes = seg_params.colorTypes(1:2); % 'Fast' uses HSV and Lab
-seg_params.simFunctionHandles = seg_params.simFunctionHandles(1); % only the one of the paper
+seg_params.simFunctionHandles = seg_params.simFunctionHandles(1:2); % only the one of the paper
 seg_params.ks = seg_params.ks(1:2);
 
 fprintf('---Parameters setup---\n')
@@ -34,7 +34,7 @@ fprintf([' * sigma: ', num2str(seg_params.sigma), '\n'])
 
 % Configure the paths, the addpaths, etc.
 Configure;
-        
+    
 % create the output directories
 if ~exist(savePath, 'file')
   mkdir(savePath);

@@ -53,7 +53,7 @@ while (length(hBlobs)>maxid_segm_Li)
             
             coverage(n(1)) = 1;
             coverage(n(2)) = 1;      
-            imagesc(real_hierarchy{L})
+            %imagesc(real_hierarchy{L})
             
         end
         
