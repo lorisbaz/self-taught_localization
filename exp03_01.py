@@ -35,5 +35,7 @@ if __name__ == "__main__":
     params.run_on_anthill = True
     # visualize images (for DEBUGGING)
     params.visualize_annotated_images = False
+    # specify task to debug (-1 is no-debug)
+    params.task = -1;
     # RUN THE EXPERIMENT
     exp03.run_exp(params)

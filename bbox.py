@@ -28,14 +28,14 @@ class BBox:
         else:
             return 'bbox: [{0} {1} {2} {3}] conf: {4:.5} .'\
             .format(self.xmin, self.ymin, self.xmax, self.ymax, self.confidence)
-            
+
 
     def area(self):
         return np.abs(self.xmax-self.xmin)*np.abs(self.ymax-self.ymin)
 
     def normalize_to_outer_box(self, outer_box):
         """
-        Normalize the rectangle defining the bbox to have 
+        Normalize the rectangle defining the bbox to have
         0.0 <= width/height/area <= 1.0, relative to the given BBox.
         Note: confidence is not modified.
         It returns self.
@@ -50,7 +50,7 @@ class BBox:
 
     def translate(self, x, y):
         """
-        Translate the coordinates of the box, that will have 
+        Translate the coordinates of the box, that will have
         (x, y) as the new origin.
         """
         self.xmin -= x
@@ -58,25 +58,18 @@ class BBox:
         self.xmax -= x
         self.ymax -= y
         return self
-         
+
     def intersect(self, bbox):
         """
         Intersection with the given bbox.
         Note: confidence is not modified.
         It returns self.
         """
-        # check if there is intersection
-        self_width = self.xmax - self.xmin
-        self_height = self.ymax - self.ymin
-        bbox_width = bbox.xmax - bbox.xmin
-        bbox_height = bbox.ymax - bbox.ymin
-        if (abs(self.xmin - bbox.xmin) * 2 < (self_width + bbox_width)) and \
-           (abs(self.ymin - bbox.ymin) * 2 < (self_height + bbox_height)):
-            self.xmin = max(self.xmin, bbox.xmin)
-            self.ymin = max(self.ymin, bbox.ymin)
-            self.xmax = min(self.xmax, bbox.xmax)
-            self.ymax = min(self.ymax, bbox.ymax)
-        else:
+        self.xmin = max(self.xmin, bbox.xmin)
+        self.ymin = max(self.ymin, bbox.ymin)
+        self.xmax = min(self.xmax, bbox.xmax)
+        self.ymax = min(self.ymax, bbox.ymax)
+        if (self.xmin > self.xmax) or (self.ymin > self.ymax):
             self.xmin = 0.0
             self.ymin = 0.0
             self.xmax = 0.0
@@ -85,7 +78,7 @@ class BBox:
 
     def jaccard_similarity(self, bbox):
         """
-        Calculates the Jaccard similarity (the similarity used in the 
+        Calculates the Jaccard similarity (the similarity used in the
         PASCAL VOC)
         """
         area_intersection = bbox.copy().intersect(self).area()
@@ -96,5 +89,5 @@ class BBox:
         return copy.deepcopy(self)
 
 
-    
+
 

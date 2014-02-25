@@ -99,7 +99,7 @@ def pipeline(images, outputdb, params):
         # rescale the image (if necessary), and crop it to the central region
         img = resize_image_max_size(original_img, params.fix_sz)
         img = skimage.img_as_ubyte(img)
-        bbox_center_crop = get_center_crop(img)
+        bbox_center_crop = get_center_crop(original_img)
         img = crop_image_center(img)
         anno.set_image(img)
         anno.image_name = os.path.basename(image_file)
@@ -170,7 +170,13 @@ def run_exp(params):
                                job_name = 'Job_{0}'.format(params.exp_name))
     else:
         parfun = ParFunDummy(pipeline)
-    for i in range(len(image_chunks)):
+    if params.task < 0:
+        idx_start = 0
+        idx_end = len(image_chunks)
+    else:
+        idx_start = params.task
+        idx_end = params.task+1
+    for i in range(idx_start, idx_end):
         outputdb = params.output_dir + '/%05d'%i + '.db'
         parfun.add_task(image_chunks[i], outputdb, params)
     out = parfun.run()
