@@ -38,6 +38,8 @@ class HtmlReport():
                    If max_size > 0.0, 'proportion' is ignored and the image
                    is resized having the maximum edge of size 'max_size'.
         'text' is some text (or Html code) put under the image.
+        'bboxes' is a list of BBox objects 
+        'isgt': TODO LORIS. what is this? :)
         """
         # resize the image, and convert it to jpeg
         img = self.resize_image_(img_o, proportion, max_size)
