@@ -201,7 +201,7 @@ class HtmlReport():
          '   var ctx=c.getContext("2d");' \
          '   img = new Image;' \
          '   img.src = c.title;' \
-         '   ctx.drawImage(img,0,0,c.height,c.width);' \
+         '   ctx.drawImage(img,0,0,c.width,c.height);' \
          '   for(var i=0; i<bboxes.length; i++){' \
          '       if ((i+1)%4==0) {' \
          '           ctx.lineWidth="1";' \
