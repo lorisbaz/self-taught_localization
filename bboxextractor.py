@@ -90,7 +90,15 @@ class BBoxExtractor:
 
 class GrabCutBBoxExtractor(BBoxExtractor):
     def __init__(self, min_bbox_size=0.05, grab_cut_rounds=10, \
-                       consider_pr_fg=True):
+                       consider_pr_fg=True, grab_cut_init = 'kmeans'):
+        """
+        min_bbox_size: the minimum (normalized) size of the outputted bboxes
+        grab_cut_rounds: number of rounds for the grabcut algorithm
+        consider_pr_fg: whether or not to consider as foreground also the pixels
+                        labeled as "weak foreground" by the grabcut algo.
+        grab_cut_init: string, indicating which method initializes the initial mask
+                       for the grabcut. either 'kmeans', or 'gmm'
+        """
         self.min_bbox_size_ = min_bbox_size
         self.gc_rounds_ = grab_cut_rounds
         if consider_pr_fg:
@@ -112,7 +120,10 @@ class GrabCutBBoxExtractor(BBoxExtractor):
             img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)  
         # 1) learn a kMeans with 4 gaussians on the heatmap values,
         #    returning the four thresholds
-        thresholds = self.get_thresholds_from_kmeans_(heatmap)
+        if grab_cut_init = "kmeans":
+            thresholds = self.get_thresholds_from_kmeans_(heatmap)
+        elif grab_cut_init == "gmm":
+            thresholds = self.get_thresholds_from_gmm_(heatmap)
         # 2) quantize the heatmap into four segmentation labels:
         #    cv2.GC_BGD, cv2.GC_PR_BGD, cv2.GC_PR_FGD, cv2.GC_FGD
         mask = self.get_grabcut_init_mask_(heatmap, thresholds)
@@ -135,7 +146,7 @@ class GrabCutBBoxExtractor(BBoxExtractor):
                               mask, heatmap, self.gc_fg_labels_)
         # 5) normalize the bboxes to one
         for bbox in bboxes: 
-            bbox.normalize_to_outer_box(BBox(0,0,mask.shape[0],mask.shape[1]))
+            bbox.normalize_to_outer_box(BBox(0,0,mask.shape[1],mask.shape[0]))
         # 6) remove very small bboxes, and normalize the bboxes to one
         out_bboxes = []
         for bbox in bboxes:
@@ -148,6 +159,25 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         Learn a kMeans with 4 clusters, and return the thresholds that separate
         the clusters: [m01, m12, m23]
         """
+        g = sklearn.cluster.KMeans(n_clusters = 4)
+        data = heatmap.reshape((heatmap.size, 1))
+        g.fit(data)
+        assert g.cluster_centers_.shape[0] == 4
+        assert g.cluster_centers_.shape[1] == 1
+        centers = np.sort(g.cluster_centers_.copy(), axis=None)
+        assert centers[0] < centers[1] < centers[2] < centers[3]
+        m01 = (centers[0]+centers[1]) / 2.0
+        m12 = (centers[1]+centers[2]) / 2.0
+        m23 = (centers[2]+centers[3]) / 2.0
+        return [m01, m12, m23]
+
+    def get_thresholds_from_gmm_(self, heatmap):
+        """
+        Learn a GMM with 4 gaussians, and return the thresholds that separate
+        the posterior values: [m01, m12, m23]
+        """
+        # TODooooooooooooooooooooooooooooooooooooooooo
+        raise Error()
         g = sklearn.cluster.KMeans(n_clusters = 4)
         data = heatmap.reshape((heatmap.size, 1))
         g.fit(data)

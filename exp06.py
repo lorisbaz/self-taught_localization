@@ -62,7 +62,7 @@ def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
     plt.show()
 
 
-def pipeline(inputdb, outputdb, params):
+def pipeline(inputdb, outputdb, outputhtml, params):
     """
     Run the pipeline for this experiment. images is a list of
     (wnid, image_filename), or the SAME CLASS (i.e. wnid is a constant).
@@ -74,7 +74,7 @@ def pipeline(inputdb, outputdb, params):
                             grab_cut_rounds = params.grab_cut_rounds, \
                             consider_pr_fg = params.consider_pr_fg)
    
-    print outputdb
+    htmlres = HtmlReport()
     db_input = bsddb.btopen(inputdb, 'c')
     db_output = bsddb.btopen(outputdb, 'c')
     db_keys = db_input.keys()
@@ -85,9 +85,12 @@ def pipeline(inputdb, outputdb, params):
         # get stuff from database entry
         img = anno.get_image()        
         logging.info('***** Elaborating bounding boxes ' + \
-                      os.path.basename(anno.image_name))  
+                      os.path.basename(anno.image_name))
+        assert len(anno.pred_objects) == 1  # for the visualization
         # Bbox extraction
+        out_image_desc = []
         for classifier in anno.pred_objects.keys():
+            assert len(anno.pred_objects[classifier]) == 1
             for label in anno.pred_objects[classifier].keys():
                 # Compute avg heatmap
                 ann_heatmaps = anno.pred_objects[classifier][label].heatmaps
@@ -104,6 +107,13 @@ def pipeline(inputdb, outputdb, params):
                 # Save bboxes in the output database
                 anno.pred_objects[classifier][label].bboxes = out_bboxes
         logging.info(str(anno))
+        # visualize the annotation to a HTML row
+        htmlres.add_annotated_image_embedded(anno)
+        # visualize the debugging images
+        for img, desc in out_image_desc:
+            htmlres.add_image_embedded(img,\
+                                       max_size = params.html_max_img_size, \
+                                       text = desc, bboxes)
         # adding the AnnotatedImage with the heatmaps to the database 
         logging.info('Adding the record to he database')
         value = pickle.dumps(anno, protocol=2)
@@ -125,19 +135,21 @@ def run_exp(params):
     parfun = None
     if (params.run_on_anthill and not(params.task>=0)):
     	parfun = ParFunAnthill(pipeline, time_requested = 10, \
-                               job_name = params.job_name)
+                               job_name = 'Job_{0}'.format(params.exp_name))
     else:
         parfun = ParFunDummy(pipeline)
-    if not(params.task>=0):    
-        for i in range(n_chunks):
-            inputdb = params.input_dir + '/%05d'%i + '.db'
-            outputdb = params.output_dir + '/%05d'%i + '.db'
-            parfun.add_task(inputdb, outputdb, params)
-    else: # RUN just the selected task! (debug only)
-        i = params.task
+    if params.task < 0:
+        idx_start = 0
+        idx_end = len(image_chunks)
+    else:
+        idx_start = params.task
+        idx_end = params.task+1
+    for i in range(idx_start, idx_end):
         inputdb = params.input_dir + '/%05d'%i + '.db'
-        outputdb = params.output_dir + '/%05d'%i + '.db'
-        parfun.add_task(inputdb, outputdb, params)
+        outputfile = params.output_dir + '/%05d'%i
+        outputdb = outputfile + '.db'
+        outputhtml = outputfile + '.html'
+        parfun.add_task(inputdb, outputdb, outputhtml, params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:
