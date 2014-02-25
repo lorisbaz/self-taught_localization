@@ -93,6 +93,16 @@ class Heatmap:
         """
         self.description_ = descr
 
+    def resize(self, width_new, height_new):
+        """
+        Resize the heatmap
+        """
+        self.vals_ = np.float64(skimage.transform.resize(self.vals_, \
+                                (height_new, width_new)))
+        self.counts_ = np.uint32(skimage.transform.resize(self.counts_, \
+                                (height_new, width_new)))
+        return self
+
     def export_to_image(self, colormap = False, factor = 1.0):
         """
         Returns a ndarray, which consists of a visualization of the values.

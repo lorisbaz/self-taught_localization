@@ -4,23 +4,16 @@ import logging
 import numpy as np
 import os
 import os.path
-#import random
 import sys
 import scipy.misc
 import skimage.io
-#import xml.etree.ElementTree as ET
 from vlg.util.parfun import *
-#from PIL import Image
-#from PIL import ImageDraw
 
 from annotatedimage import *
-#from bbox import *
 from heatmap import *
 from network import *
 from configuration import *
-from imgsegmentation import *
 from heatextractor import *
-#from htmlreport import *
 from util import *
 
 class Params:
@@ -38,11 +31,7 @@ def pipeline(inputdb, outputdb, params):
                        conf.ilsvrc2012_decaf_model, \
                        conf.ilsvrc2012_classid_wnid_words, \
                        center_only = True)
-    segmenter = ImgSegmFromMatFiles(conf.ilsvrc2012_segm_results_dir, \
-                                    conf.ilsvrc2012_root_images_dir, \
-                                    params.subset_par, params.start_lv, \
-                                    params.num_lv)
-    heatext = HeatmapExtractorSegm(net, segmenter, \
+    heatext = HeatmapExtractorBox(net, params.gray_par, \
                 confidence_tech = params.heatextractor_confidence_tech, \
                 area_normalization = params.heatextractor_area_normalization)
 
@@ -57,9 +46,6 @@ def pipeline(inputdb, outputdb, params):
         # get stuff from database entry
         img = anno.get_image()        
         logging.info('***** Elaborating ' + os.path.basename(anno.image_name))  
-        # sync segmentation loader  
-        segmenter.set_segm_name(anno.image_name)
-        anno.segmentation_name = segmenter.get_segm_name()
         # predict label for full image
         rep_vec = net.evaluate(img)
         pred_label = np.argmax(rep_vec)

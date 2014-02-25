@@ -29,14 +29,14 @@ if __name__ == "__main__":
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # normalize the confidence by area?
-    params.heatextractor_area_normalization = True
+    params.heatextractor_area_normalization = False
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = False
+    params.run_on_anthill = True
     # Set jobname in case the process stop or crush
     params.job_name = None # set to None if you do not want to resume things
     params.task = None # specify task to debug

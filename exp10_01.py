@@ -8,22 +8,19 @@ from vlg.util.parfun import *
 from heatmap import *
 from network import *
 from configuration import *
-from imgsegmentation import *
 from heatextractor import *
 from htmlreport import *
-import exp05
+import exp10
 
 if __name__ == "__main__":
     # load configurations and parameters  
     conf = Configuration()
-    params = exp05.Params()
+    params = exp10.Params()
     # experiment name
-    params.exp_name = 'exp05_01'
+    params.exp_name = 'exp10_01'
     params.exp_name_input = 'exp03_01' # take results from here
-    # Select segmentations
-    params.subset_par = True # k = 100 if true. k = {50,100} otherwise
-    params.start_lv = 2 # ignore levels < start_lv (small segments)
-    params.num_lv = 4 # number of considered levels
+    # Gray box params (bbox size, stride)
+    params.gray_par = [(32, 25), (48, 25), (64, 25), (80, 25), (96, 25)]
     # default Configuration, image and label files
     params.conf = conf
     # method for calculating the confidence
@@ -42,5 +39,5 @@ if __name__ == "__main__":
     params.task = None # specify task to debug
     logging.info('Started')
     # RUN THE EXPERIMENT
-    exp05.run_exp(params)
+    exp10.run_exp(params)
 

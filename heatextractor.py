@@ -68,7 +68,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
                 if id_segment % (max_segments / 10) == 0:
                     logging.info('segment {0} / {1}'.format(id_segment, \
                                  max_segments))
-                image_obf = np.array(image) # copy array            
+                image_obf = np.copy(image) # copy array            
                 # obfuscation 
                 if np.shape(image.shape)[0]>2: # RGB images
                     image_obf[segm_mask==id_segment,0] = \
@@ -225,30 +225,33 @@ class HeatmapExtractorBox(HeatmapExtractor):
         lab_id = self.network_.get_label_id(label)    
         # Init the list of heatmaps
         heatmaps = []
+        # resize image with the same size of the CNN input
+        image_resz = skimage.transform.resize(image, (256, 256)) 
         # Classify the full image without obfuscation
         if (self.confidence_tech_ == 'full_obf') or \
            (self.confidence_tech_ == 'full_obf_positive'):
-            caffe_rep_full = self.network_.evaluate(image)
+            caffe_rep_full = self.network_.evaluate(image_resz)
         # Cycle over boxes        
         for param in self.params_: # for box parameter
             box_sz, stride = param
             logging.info('box mask {0} / {1} '\
                           .format(np.shape(heatmaps)[0]+1, \
     				      len(self.params_)))
-            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
-            # generate indexes
-            xs = np.linspace(0, image.shape[1]-box_sz, \
-                             (image.shape[1]-box_sz)/float(stride)+1)
+            # init heatmap
+            heatmap = Heatmap(image_resz.shape[1], image_resz.shape[0]) 
+            # generate indexes (resized img)
+            xs = np.linspace(0, image_resz.shape[1]-box_sz, \
+                             (image_resz.shape[1]-box_sz)/float(stride)+1)
             xs = np.int32(xs)
-            ys = np.linspace(0, image.shape[0]-box_sz, \
-                             (image.shape[0]-box_sz)/float(stride)+1)
-            ys = np.int32(ys)
+            ys = np.linspace(0, image_resz.shape[0]-box_sz, \
+                             (image_resz.shape[0]-box_sz)/float(stride)+1)
+            ys = np.int32(ys) 
             # obfuscation & heatmap for each box
             for x in xs:
                 for y in ys:
-                    image_obf = np.array(image) # copy array            
+                    image_obf = np.copy(image_resz) # copy array            
                     # obfuscation 
-                    if np.shape(image.shape)[0]>2: # RGB images
+                    if np.shape(image_resz.shape)[0]>2: # RGB images
                         image_obf[y:y+box_sz,x:x+box_sz,0] = \
                                                  self.network_.get_mean_img()[0]
                         image_obf[y:y+box_sz,x:x+box_sz,1] = \
@@ -279,5 +282,8 @@ class HeatmapExtractorBox(HeatmapExtractor):
                                     ' Total of {2} maps.'.format(box_sz, \
                                     stride, len(self.params_))) 
             heatmap.normalize_counts()
+            # resize heatmap to the original size of the image
+            heatmap = heatmap.resize(image.shape[1], image.shape[0])
+
             heatmaps.append(heatmap) # append the heatmap to the list                    
         return heatmaps

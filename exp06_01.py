@@ -21,7 +21,7 @@ if __name__ == "__main__":
     params.exp_name = 'exp06_01'
     params.exp_name_input = 'exp05_01' # take results from here
     # Bounding box  parameters
-    params.min_bbox_size = 0.01
+    params.min_bbox_size = 0.02
     params.grab_cut_rounds = 30
     params.consider_pr_fg = True
     # default Configuration, image and label files

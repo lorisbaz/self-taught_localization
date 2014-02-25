@@ -17,7 +17,7 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp03.Params()
     # experiment name
-    params.exp_name = 'exp03_01'
+    params.exp_name = 'exp03_03'
     # number of classes to elaborate
     params.num_classes = 200
     # number of images per class to elaborate
