@@ -383,9 +383,6 @@ class HeatmapExtractorBox(HeatmapExtractor):
                                     ' Total of {2} maps.'.format(box_sz, \
                                     stride, len(self.params_))) 
             heatmap.normalize_counts()
-            # resize heatmap to the original size of the image
-            # TODO LORIS. from aleb: is it necessary? if so, why here?
-            #heatmap = heatmap.resize(image.shape[1], image.shape[0])
             # append the heatmap to the list
             heatmaps.append(heatmap) 
         return heatmaps
