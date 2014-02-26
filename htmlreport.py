@@ -4,6 +4,7 @@ import os
 import skimage
 import skimage.io
 import skimage.transform
+import sys
 import tempfile
 
 import util
@@ -77,7 +78,10 @@ class HtmlReport():
                             isgt = False) # predicted bboxes
                 # Add the heatmaps
                 heatmaps = []
-                visual_factor = 2 * 10e-2
+                max_value = sys.float_info.min
+                for heat in ann_pred.heatmaps:
+                    max_value = max(max_value, heat.heatmap.max())
+                visual_factor = 1.0 / max_value
                 for j in range(len(ann_pred.heatmaps)):
                     heatmaps.append(ann_pred.heatmaps[j].heatmap)
                     desc = 'Heatmap'
@@ -201,7 +205,7 @@ class HtmlReport():
          '   var ctx=c.getContext("2d");' \
          '   img = new Image;' \
          '   img.src = c.title;' \
-         '   ctx.drawImage(img,0,0,c.height,c.width);' \
+         '   ctx.drawImage(img,0,0,c.width,c.height);' \
          '   for(var i=0; i<bboxes.length; i++){' \
          '       if ((i+1)%4==0) {' \
          '           ctx.lineWidth="1";' \

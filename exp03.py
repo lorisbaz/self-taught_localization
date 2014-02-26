@@ -96,14 +96,20 @@ def pipeline(images, outputdb, outputhtml, params):
         anno = AnnotatedImage()
         logging.info('***** Elaborating ' + os.path.basename(image_file))
         original_img = skimage.io.imread(image_file)
-        # rescale the image (if necessary), and crop it to the central region
+        # rescale the image
         img = resize_image_max_size(original_img, params.fix_sz)
         img = skimage.img_as_ubyte(img)
-        bbox_center_crop = get_center_crop(original_img)
-        img = crop_image_center(img)
+        # crop the image (if requested)
+        if params.image_transformation == 'centered_crop':
+            bbox_center_crop = get_center_crop(original_img)
+            img = crop_image_center(img)
+        elif params.image_transformation == 'original':
+            bbox_center_crop = BBox(0, 0, img.shape[1], img.shape[0])
+        else:
+            raise ValueError('params.image_transformation not valid')
         anno.set_image(img)
         anno.image_name = os.path.basename(image_file)
-        anno.crop_description = 'central crop'
+        anno.crop_description = params.image_transformation
         gt_label = image_wnid.strip()
         anno.gt_objects[gt_label] = AnnotatedObject(gt_label, 1.0)
         # read the ground truth XML file
@@ -176,13 +182,11 @@ def run_exp(params):
                             job_name = 'Job_{0}'.format(params.exp_name))
     else:
         parfun = ParFunDummy(pipeline)
-    if params.task < 0:
-        idx_start = 0
-        idx_end = len(image_chunks)
+    if len(params.task) == 0:
+        idx_to_process = range(len(image_chunks))
     else:
-        idx_start = params.task
-        idx_end = params.task+1
-    for i in range(idx_start, idx_end):
+        idx_to_process = params.task
+    for i in idx_to_process:
         outputfile = params.output_dir + '/%05d'%i
         outputdb = outputfile + '.db'
         outputhtml = outputfile + '.html'

@@ -17,7 +17,7 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp03.Params()
     # experiment name
-    params.exp_name = 'exp03_03'
+    params.exp_name = 'exp03_04'
     # number of classes to elaborate
     params.num_classes = 200
     # number of images per class to elaborate
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # we first resize each image to this size, if bigger
     params.fix_sz = 600
     # image transformation. it could be 'centered_crop', or 'original'
-    params.image_transformation = 'centered_crop'
+    params.image_transformation = 'original'
     # output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
@@ -38,6 +38,6 @@ if __name__ == "__main__":
     # visualize images (for DEBUGGING)
     params.visualize_annotated_images = False
     # specify task to debug ([] process everything)
-    params.task = [];
+    params.task = []
     # RUN THE EXPERIMENT
     exp03.run_exp(params)
