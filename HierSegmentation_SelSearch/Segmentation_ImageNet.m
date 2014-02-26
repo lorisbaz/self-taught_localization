@@ -12,6 +12,8 @@ fix_sz = 600; % resize images that are bigger that resize_big_images
                           % set it to 0 if you want to disable it
                           
 seg_params.colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
+seg_params.central_crop = 1;
+
 
 % Here you specify which similarity functions to use in merging
 seg_params.simFunctionHandles = {@SSSimColourTextureSizeFillOrig, ...
