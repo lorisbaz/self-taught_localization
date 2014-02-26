@@ -4,6 +4,7 @@ import os
 import skimage
 import skimage.io
 import skimage.transform
+import sys
 import tempfile
 
 import util
@@ -77,7 +78,10 @@ class HtmlReport():
                             isgt = False) # predicted bboxes
                 # Add the heatmaps
                 heatmaps = []
-                visual_factor = 2 * 10e-2
+                max_value = sys.float_info.min
+                for heat in ann_pred.heatmaps:
+                    max_value = max(max_value, heat.heatmap.max())
+                visual_factor = 1.0 / max_value
                 for j in range(len(ann_pred.heatmaps)):
                     heatmaps.append(ann_pred.heatmaps[j].heatmap)
                     desc = 'Heatmap'
