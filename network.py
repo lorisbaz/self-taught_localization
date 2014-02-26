@@ -134,7 +134,6 @@ class NetworkDecaf(Network):
         image -= self.net_._data_mean[yoff+yoff+dim, xoff:xoff+dim]
         # make sure the data in contiguous in memory
         images = np.ascontiguousarray(image[np.newaxis], dtype=np.float32)
-        print images.shape
         # classify
         predictions = self.net_.classify_direct(images)
         scores = predictions.mean(0)

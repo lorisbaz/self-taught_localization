@@ -226,7 +226,8 @@ class HeatmapExtractorBox(HeatmapExtractor):
         # Init the list of heatmaps
         heatmaps = []
         # resize image with the same size of the CNN input
-        image_resz = skimage.transform.resize(image, (256, 256)) 
+        image_resz = skimage.transform.resize(image, \
+             (self.network_.get_input_dim(), self.network_.get_input_dim())) 
         # Classify the full image without obfuscation
         if (self.confidence_tech_ == 'full_obf') or \
            (self.confidence_tech_ == 'full_obf_positive'):
@@ -283,7 +284,8 @@ class HeatmapExtractorBox(HeatmapExtractor):
                                     stride, len(self.params_))) 
             heatmap.normalize_counts()
             # resize heatmap to the original size of the image
-            heatmap = heatmap.resize(image.shape[1], image.shape[0])
-
-            heatmaps.append(heatmap) # append the heatmap to the list                    
+            # TODO LORIS. from aleb: is it necessary? if so, why here?
+            #heatmap = heatmap.resize(image.shape[1], image.shape[0])
+            # append the heatmap to the list
+            heatmaps.append(heatmap) 
         return heatmaps
