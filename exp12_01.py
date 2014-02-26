@@ -27,6 +27,9 @@ if __name__ == "__main__":
     params.conf = conf
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
+    # image transformation. it could be 'centered_crop', or 'original'
+    params.image_transformation = 'centered_crop'
+         
     # normalize the confidence by area?
     params.heatextractor_area_normalization = True
     # input/output directory
