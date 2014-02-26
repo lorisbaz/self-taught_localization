@@ -82,7 +82,8 @@ def pipeline(inputdb, outputdb, outputhtml, params):
     for key, value in db_output.iteritems():
         anno = pickle.loads(value)
         # visualize the annotation to a HTML row
-        htmlres.add_annotated_image_embedded(anno)        
+        htmlres.add_annotated_image_embedded(anno)
+        htmlres.add_newline()
     htmlres.save(outputhtml)
     return 0
 
@@ -95,8 +96,10 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
-                               job_name = 'J_{0}'.format(params.exp_name))
+        jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
+        #jobname = 'J_{0}'.format(params.exp_name)
+    	parfun = ParFunAnthill(pipeline, time_requested = 22, \
+            job_name = jobname)
     else:
         parfun = ParFunDummy(pipeline)
     if len(params.task) == 0:

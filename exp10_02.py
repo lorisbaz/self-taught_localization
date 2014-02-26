@@ -38,7 +38,7 @@ if __name__ == "__main__":
     # run the extraction?
     params.run_extraction = True
     # specify task to debug
-    params.task = []
+    params.task = range(55)
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp10.run_exp(params)
