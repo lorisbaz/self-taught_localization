@@ -110,7 +110,7 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                                     ' of {2} maps.'.format(num_segments, \
                                     self.confidence_tech_, len(segm_masks)))
             heatmap.normalize_counts() # not required, segments no overlap
-            heatmaps.append(heatmap) # append the heatmap to the list                    
+            heatmaps.append(heatmap) # append the heatmap to the list 
         return heatmaps
 
 
