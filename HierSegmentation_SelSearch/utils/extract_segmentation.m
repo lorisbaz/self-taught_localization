@@ -11,6 +11,9 @@ for i=1:length(testIms)
     % VOCopts.img
     im = imread([imagePath testIms{i}]);
     im = resize_image_max_size(im, fix_sz);
+    if seg_params.central_crop
+        im = crop_image_center(im);
+    end
     idx = 1; idx2 = 1;
     for j=1:length(seg_params.ks)
         k = seg_params.ks(j); % Segmentation threshold k

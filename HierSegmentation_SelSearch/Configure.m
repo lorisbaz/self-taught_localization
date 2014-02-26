@@ -9,7 +9,11 @@ switch (hostname)
         trainPath = [imagePath 'train/'];
         valPath = [imagePath 'val/'];
         testPath = [imagePath 'test/'];
-        savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ext_ILSVRC2012/';
+        if seg_params.central_crop == 0
+            savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ext_ILSVRC2012/';
+        else
+            savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_cropped_ILSVRC2012/';
+        end
         selectivePath = '/home/anthill/vlg/SelectiveSearchCodeIJCV/';        
         addpath(toolboxPath)
         
@@ -30,7 +34,11 @@ switch (hostname)
         trainPath = [imagePath 'train/'];
         valPath = [imagePath 'val/'];
         testPath = [imagePath 'test/'];
-        savePath  = '/home/lbazzani/CODE/DATA/ILSVRC2012/segmentation/';
+        if seg_params.central_crop == 0
+            savePath  = '/home/lbazzani/CODE/DATA/ILSVRC2012/segmentation/segment_ext_ILSVRC2012/';
+        else
+            savePath  = '/home/lbazzani/CODE/DATA/ILSVRC2012/segmentation/segment_cropped_ILSVRC2012/';
+        end
         selectivePath = '/home/lbazzani/CODE/3rd_part_libs/SelectiveSearchCodeIJCV/';
 
         run_on_anthill = 0;
