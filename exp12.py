@@ -98,13 +98,11 @@ def run_exp(params):
                                job_name = params.job_name)    	 
     else:
         parfun = ParFunDummy(pipeline)
-    if not(params.task>=0):
-        for i in range(n_chunks):
-            inputdb = params.input_dir + '/%05d'%i + '.db'
-            outputdb = params.output_dir + '/%05d'%i + '.db'
-            parfun.add_task(inputdb, outputdb, params)
-    else: # RUN just the selected task! (debug only)
-        i = params.task
+    if len(params.task) == 0:
+        idx_to_process = range(n_chunks)
+    else:
+        idx_to_process = params.task
+    for i in idx_to_process:
         inputdb = params.input_dir + '/%05d'%i + '.db'
         outputdb = params.output_dir + '/%05d'%i + '.db'
         parfun.add_task(inputdb, outputdb, params)

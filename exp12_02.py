@@ -19,7 +19,7 @@ if __name__ == "__main__":
     params = exp12.Params()
     # experiment name
     params.exp_name = 'exp12_01'
-    params.exp_name_input = 'exp03_04' # take results from here
+    params.exp_name_input = 'exp03_03' # take results from here
     # Select segmentations
     params.min_sz_segm = 30 # smallest size of the segment sqrt(Area)
     params.subset_par = False #
@@ -28,8 +28,8 @@ if __name__ == "__main__":
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # load the correct segmentation masks dependigly of the exp
-    params.segm_type_load = 'warped' # warp to net size
-    conf.ilsvrc2012_segm_results_dir += '_ext'
+    params.segm_type_load = 'original' # it is actually centered
+    conf.ilsvrc2012_segm_results_dir += '_ext_centered' 
     # normalize the confidence by area?
     params.heatextractor_area_normalization = True
     # input/output directory
