@@ -1,7 +1,7 @@
 import logging
 # Log format (Note: this has to be here, because other import suppress it)
 logging.basicConfig(level=logging.INFO, \
-              format='[%(asctime)s %(funcName)s %(levelno)s] %(message)s', \
+              format='[%(asctime)s %(filename)s:%(lineno)d] %(message)s', \
               datefmt='%m/%d/%Y %H:%M:%S')
 import numpy as np
 import os
