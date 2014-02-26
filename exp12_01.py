@@ -19,7 +19,7 @@ if __name__ == "__main__":
     params = exp12.Params()
     # experiment name
     params.exp_name = 'exp12_01'
-    params.exp_name_input = 'exp03_01' # take results from here
+    params.exp_name_input = 'exp03_04' # take results from here
     # Select segmentations
     params.min_sz_segm = 30 # smallest size of the segment sqrt(Area)
     params.subset_par = False #
@@ -27,9 +27,14 @@ if __name__ == "__main__":
     params.conf = conf
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
-    # image transformation. it could be 'centered_crop', or 'original'
-    params.image_transformation = 'centered_crop'
-         
+    # load the correct segmentation masks dependigly of the exp
+    if params.exp_name_input == 'exp03_03':
+        params.segm_type_load = 'original' # it is actually centered
+        conf.ilsvrc2012_segm_results_dir += '_ext_centered' 
+    else:
+        params.segm_type_load = 'warped' # warp to net size
+        #params.segm_type_load = 'original' 
+        conf.ilsvrc2012_segm_results_dir += '_ext'
     # normalize the confidence by area?
     params.heatextractor_area_normalization = True
     # input/output directory
@@ -41,7 +46,7 @@ if __name__ == "__main__":
     params.run_on_anthill = False
     # Set jobname in case the process stop or crush
     params.job_name = None # set to None if you do not want to resume things
-    params.task = 50 # specify task to debug
+    params.task = 0 # specify task to debug
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp12.run_exp(params)

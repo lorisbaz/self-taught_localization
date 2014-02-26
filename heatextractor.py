@@ -2,6 +2,7 @@ import numpy as np
 from heatmap import *
 from imgsegmentation import *
 import logging
+from bbox import *
 
 class HeatmapExtractor:
     """class for HeatmapExtractor"""
@@ -25,7 +26,7 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
     algorithm. NOTE: works only with saved mat segmentation masks.
     """
     def __init__(self, network, segment, confidence_tech = 'full_obf', \
-                 area_normalization = True):
+                 area_normalization = True, image_transform = 'original'):
         """
         segment is of type ImgSegm.
         confidence_tech is the type of extracted confidence which can be:
@@ -39,6 +40,7 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
         self.segment_ = segment
         self.area_normalization_ = area_normalization
         self.confidence_tech_ = confidence_tech
+        self.image_trans_ = image_transform
         
     def extract(self, image, label = ''):
         """
@@ -49,6 +51,11 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
         lab_id = self.network_.get_label_id(label)    
         # Init the list of heatmaps
         heatmaps = []
+        if (self.image_trans_=='warped'):
+            # resize image with the same size of the CNN input
+            image = skimage.transform.resize(image, \
+                (self.network_.get_input_dim(), self.network_.get_input_dim()))
+            image = skimage.img_as_ubyte(image)
         # Classify the full image without obfuscation
         if (self.confidence_tech_ == 'full_obf') or \
             (self.confidence_tech_ == 'full_obf_positive'):
@@ -71,18 +78,18 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                 #                 max_segments))
                 image_obf = np.copy(image) # copy array            
                 # obfuscation
-                box = segment_i['rect']
+                box = segment_i['bbox'] 
                 mask = segment_i['mask']
-                image_crop = np.copy(image_obf[box[1]-1:box[1]+box[3],\
-                                               box[2]-1:box[2]+box[4],:])
+                image_crop = np.copy(image_obf[box.ymin:box.ymax,\
+                                               box.xmin:box.xmax,:])
                 if np.shape(image.shape)[0]>2: # RGB images
                     image_crop[mask==1,0] = self.network_.get_mean_img()[0]
                     image_crop[mask==1,1] = self.network_.get_mean_img()[1]
                     image_crop[mask==1,2] = self.network_.get_mean_img()[2]   
                 else: # GRAY images
                     image_crop[mask==1] = np.mean(self.network_.get_mean_img())
-                image_obf[box[1]-1:box[1]+box[3], \
-                          box[2]-1:box[2]+bbox[4],:] = np.copy(image_crop)
+                image_obf[box.ymin:box.ymax, \
+                          box.xmin:box.xmax,:] = np.copy(image_crop)
                 # predict CNN reponse for obfuscation
                 caffe_rep_obf = self.network_.evaluate(image_obf)
                 # Given the class of the image, select the confidence
@@ -94,8 +101,8 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                     confidence = max(caffe_rep_full[lab_id] - \
                                      caffe_rep_obf[lab_id], 0.0)
                 # update the heatmap
-                heatmap.add_val_segment(confidence, id_segment, \
-                                        self.area_normalization_) 
+                heatmap.add_val_segment_mask(confidence, box, mask, \
+                                             self.area_normalization_) 
             
             heatmap.set_description('Computed with segmentation ' + \
                                     'obfuscation, map with {0} segments' + \
@@ -319,7 +326,8 @@ class HeatmapExtractorBox(HeatmapExtractor):
         heatmaps = []
         # resize image with the same size of the CNN input
         image_resz = skimage.transform.resize(image, \
-             (self.network_.get_input_dim(), self.network_.get_input_dim())) 
+             (self.network_.get_input_dim(), self.network_.get_input_dim()))
+        image_resz = skimage.img_as_ubyte(image_resz) 
         # Classify the full image without obfuscation
         if (self.confidence_tech_ == 'full_obf') or \
            (self.confidence_tech_ == 'full_obf_positive'):

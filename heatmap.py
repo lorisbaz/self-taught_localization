@@ -1,6 +1,7 @@
 import numpy as np
 import pylab as plt
 import skimage.io
+from bbox import *
 
 class Heatmap:
     """class for Heatmap"""
@@ -64,6 +65,30 @@ class Heatmap:
         for (x, y) in self.segment_map_[segment_id]:
             self.vals_[y, x] += val / float(normalization_factor)
             self.counts_[y, x] += 1
+
+    def add_val_segment_mask(self, val, box, mask, \
+                             area_normalization = True):
+        """
+        Add val on the region in box with binary mask, using the
+        current segmentation map.
+        """
+        # extract crop
+        vals_crop = np.copy(self.vals_[box.ymin:box.ymax,\
+                                       box.xmin:box.xmax])
+        counts_crop = np.copy(self.counts_[box.ymin:box.ymax,\
+                                           box.xmin:box.xmax])                                         
+        normalization_factor = 1.0
+        if area_normalization:
+            normalization_factor = float(np.sum(mask)) \
+				                   / float(np.prod(np.shape(self.vals_)))
+        # add values
+        vals_crop[mask==1] += val / float(normalization_factor)
+        counts_crop[mask==1] += 1
+        # restore crop
+        self.vals_[box.ymin:box.ymax,\
+                   box.xmin:box.xmax] = vals_crop
+        self.counts_[box.ymin:box.ymax,\
+                     box.xmin:box.xmax] = counts_crop 
 
     def normalize_counts(self):
         """

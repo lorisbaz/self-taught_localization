@@ -34,10 +34,12 @@ def pipeline(inputdb, outputdb, params):
                        center_only = True)
     segmenter = ImgSegmFromMatFiles_List(conf.ilsvrc2012_segm_results_dir, \
                                          conf.ilsvrc2012_root_images_dir, \
+                                         params.segm_type_load, \
                                          params.min_sz_segm, params.subset_par)
     heatext = HeatmapExtractorSegm_List(net, segmenter, \
                 confidence_tech = params.heatextractor_confidence_tech, \
-                area_normalization = params.heatextractor_area_normalization)
+                area_normalization = params.heatextractor_area_normalization,\
+                image_transform = params.segm_type_load)
 
     print outputdb
     db_input = bsddb.btopen(inputdb, 'c')

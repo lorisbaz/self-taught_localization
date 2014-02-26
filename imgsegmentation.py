@@ -4,6 +4,7 @@ from scipy import io
 from util import *
 import skimage.io
 import logging
+from bbox import *
 
 class ImgSegm:
     """class for ImageSegmentation"""
@@ -179,12 +180,13 @@ class ImgSegmFromMatFiles_List(ImgSegm):
     of segmentation blobs (not segmentation maps anymore)
     """
 
-    def __init__(self, directory, img_root_dir, min_sz_segm=30, \
-                        subset_par=False):
+    def __init__(self, directory, img_root_dir, segm_type_load='original',\
+                    min_sz_segm=30, subset_par=False):
         """
         Segmentation files stored in directory
 	    - directory: where segmentation files are stored
 	    - img_root_dir: where images are stored
+        - segm_type_load: either 'original' or 'warped'
         - min_sz_segm: min size of the bbox sorrounding the segment
         - subset_par: if True take a subset of segmentations paramters
                       to speed up the obfuscation part
@@ -193,6 +195,7 @@ class ImgSegmFromMatFiles_List(ImgSegm):
         self.img_root_dir_ = img_root_dir
         self.imagename_ = None # index the file_list
         self.segmname_ = None
+        self.segm_type_ = segm_type_load
         self.min_sz_segm_ = min_sz_segm
         self.subset_ = subset_par
 
@@ -202,6 +205,8 @@ class ImgSegmFromMatFiles_List(ImgSegm):
         """    
 	    # Print
         logging.info('Loading segmentations from disk')
+        # sizes
+        warped_sz = np.shape(image)[0:2]
         # Load file
         segm_mat = io.loadmat(self.directory_ + '/' + self.segmname_)
         # Parse segmentation files:  [0,s][i][0][X] X = 'mask', 'rect', 'size' 
@@ -210,15 +215,24 @@ class ImgSegmFromMatFiles_List(ImgSegm):
         segm_all_list = []
         for s in range(np.shape(segm_blobs)[1]): # for each segm mask
             segm_mask = segm_blobs[0,s]
+            orig_sz = tuple(segm_mask[-1][0]['rect'][0][0][0][2:4])
             segm_all = []
-            for i in range(len(segm_mask)): # for each segment
+            for i in range(len(segm_mask)-1): # for each segment (last = full)
                 # usual crazy/tricky indexing of the loadmat
                 if np.sqrt(segm_mask[i][0]['size'][0][0][0]) \
                             >= self.min_sz_segm_:
-                    segm_now = {'rect': segm_mask[i][0]['rect'][0][0][0], \
+                    tmp = segm_mask[i][0]['rect'][0][0][0]
+                    # note: rect is [ymin,xmin,ymax,xmax]
+                    bbox = BBox(tmp[1]-1, tmp[0]-1, tmp[3], tmp[2]) 
+                    segm_now = {'bbox': bbox, \
                                 'mask': segm_mask[i][0]['mask'][0][0]}
+                    if self.segm_type_=='warped':
+                        segm_now = self.warp_segment_(segm_now, \
+                                                    orig_sz, warped_sz) 
                     segm_all.append(segm_now)
             segm_all_list.append(segm_all)
+        if self.subset_: # keep only 4 segmentation maps
+            segm_all_list = segm_all_list[::2]
         return segm_all_list
 
     def set_segm_name(self, imagename):
@@ -234,7 +248,17 @@ class ImgSegmFromMatFiles_List(ImgSegm):
 
     def get_segm_name(self):
         return self.segmname_
-
-    # TODOO: implement resize (if needed) 
-    def resize_segment(self, orig_size, new_size):
-        raise NotImplementedError()    
+    
+    def warp_segment_(self, segm, orig_sz, warped_sz):
+        """
+        Resizes the segment to be consistent with the image warping (if any)
+        """
+        prop = (warped_sz[0]/float(orig_sz[0]), warped_sz[1]/float(orig_sz[1]))
+        segm['bbox'] = BBox(np.floor(segm['bbox'].xmin * prop[1]), \
+                            np.floor(segm['bbox'].ymin * prop[0]), \
+                            np.floor(segm['bbox'].xmax * prop[1]), \
+                            np.floor(segm['bbox'].ymax * prop[0]))
+        segm['mask'] = np.ceil(skimage.transform.resize(segm['mask'], \
+                               (segm['bbox'].ymax-segm['bbox'].ymin-1, \
+                               segm['bbox'].xmax-segm['bbox'].xmin-1)))
+        return segm
