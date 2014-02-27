@@ -49,7 +49,7 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertAlmostEqual(scores[0,3530], 15.6157, places=4)
 
 #=============================================================================
-@unittest.skip('caffe skip')
+#@unittest.skip('caffe skip')
 class NetworkCaffeTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()
