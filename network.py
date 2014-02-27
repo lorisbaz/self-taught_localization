@@ -204,7 +204,7 @@ class NetworkCaffe(Network):
         return self.net_.mean_img
 
     def get_input_dim(self):
-        raise NotImplementedError()
+       return caffe.imagenet.CROPPED_DIM 
 
     def get_label_id(self, label):
         return self.dict_label_id_[label]
