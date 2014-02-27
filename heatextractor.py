@@ -81,7 +81,7 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                 box = segment_i['bbox'] 
                 mask = segment_i['mask']
                 image_crop = np.copy(image_obf[box.ymin:box.ymax,\
-                                               box.xmin:box.xmax,:])
+                                               box.xmin:box.xmax])
                 if np.shape(image.shape)[0]>2: # RGB images
                     image_crop[mask==1,0] = self.network_.get_mean_img()[0]
                     image_crop[mask==1,1] = self.network_.get_mean_img()[1]
@@ -89,7 +89,7 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                 else: # GRAY images
                     image_crop[mask==1] = np.mean(self.network_.get_mean_img())
                 image_obf[box.ymin:box.ymax, \
-                          box.xmin:box.xmax,:] = np.copy(image_crop)
+                          box.xmin:box.xmax] = np.copy(image_crop)
                 # predict CNN reponse for obfuscation
                 caffe_rep_obf = self.network_.evaluate(image_obf)
                 # Given the class of the image, select the confidence

@@ -93,7 +93,7 @@ def run_exp(params):
     n_chunks = len(os.listdir(params.input_dir + '/'))
     # run the pipeline
     parfun = None
-    if (params.run_on_anthill and not(params.task>=0)):
+    if params.run_on_anthill:
     	parfun = ParFunAnthill(pipeline, time_requested = 10, \
                                job_name = params.job_name)    	 
     else:
