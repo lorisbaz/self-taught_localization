@@ -68,13 +68,13 @@ class Configuration:
             self.ilsvrc2012_decaf_model = \
                 ilsvrc2012_root +'/decaf_model_131205/imagenet.decafnet.epoch90'
             self.ilsvrc2012_caffe_model_spec = \
-                '/home/anthill/vlg/caffe_131211/caffe/examples'\
-                '/imagenet_deploy.prototxt'
+                '/home/anthill/vlg/caffe/examples'\
+                '/imagenet_deploy_GRAYOBFUSCATION.prototxt'
             self.ilsvrc2012_caffe_model = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/caffe_reference_imagenet_model'
             self.ilsvrc2012_caffe_avg_image = \
-                '/home/anthill/vlg/caffe_131211/caffe/python/caffe/imagenet'\
+                '/home/anthill/vlg/caffe/python/caffe/imagenet'\
                 '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/anthill/vlg/caffe_131211/caffe/examples/synset_words.txt'

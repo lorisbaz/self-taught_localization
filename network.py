@@ -136,7 +136,7 @@ class NetworkDecaf(Network):
         images = np.ascontiguousarray(image[np.newaxis], dtype=np.float32)
         # classify
         predictions = self.net_.classify_direct(images)
-        scores = predictions.mean(0)
+        scores = predictions.mean(0)        
         # look at the particular layer
         if layer_name == 'softmax':
             return scores
@@ -163,13 +163,9 @@ class NetworkCaffe(Network):
     def __init__(self, model_spec_filename, model_filename,\
                  wnid_words_filename, mean_img_filename, \
                  caffe_mode = 'cpu', center_only = False):
+        # for now, we support only the single full-image evaluation
+        assert center_only == True
         # load Caffe model
-        # *** TODO ***
-        # center_only should be True, but PyCaffe has a bug
-        # which makes the software crash :-/
-        # When solving this problem, make sure that the center_crop
-        # is not creating borders, i.e. the crop
-        # has lenght min(img_width, img_height)
         self.net_ = caffe.imagenet.ImageNetClassifier( \
                             model_spec_filename, model_filename, \
                             center_only)
@@ -196,15 +192,18 @@ class NetworkCaffe(Network):
             line_number += 1
         fd.close()
         # Load the mean vector from file
-        self.net_.mean_img = np.load(os.path.join(os.path.dirname(__file__), mean_img_filename))
-        self.net_.mean_img = np.mean(np.mean(self.net_.mean_img,axis=1),axis=0) # mean of 3 channels
-        self.net_.mean_img = self.net_.mean_img[::-1]   # it is in BGR convert in RGB
+        self.net_.mean_img = np.load(\
+                   os.path.join(os.path.dirname(__file__), mean_img_filename))
+        # mean of 3 channels
+        self.net_.mean_img = np.mean(np.mean(self.net_.mean_img,axis=1),axis=0) 
+        # it is in BGR convert in RGB
+        self.net_.mean_img = self.net_.mean_img[::-1] 
 
     def get_mean_img(self):
         return self.net_.mean_img
 
     def get_input_dim(self):
-        raise NotImplementedError()
+        return caffe.imagenet.CROPPED_DIM
 
     def get_label_id(self, label):
         return self.dict_label_id_[label]
@@ -216,7 +215,29 @@ class NetworkCaffe(Network):
         return self.labels_
 
     def evaluate(self, img, layer_name = 'softmax'):
-        if layer_name == 'softmax':
-            return self.net_.predict(img)
-        else:
-            raise ValueError('layer_name not supported')
+        # if the image in in grayscale, we make it to 3-channels
+        if img.ndim == 2:
+            img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
+        elif img.shape[2] == 4:
+            img = img[:, :, :3]
+        # first, extract the 227x227 center, and convert it to BGR
+        dim = self.get_input_dim()
+        image = util.crop_image_center(decaf.util.transform.as_rgb(img))
+        image_reshape = skimage.transform.resize(image, (dim, dim))
+        image_reshape = (image_reshape * 255)[:, :, ::-1]
+        # subtract the mean, cropping the 256x256 mean image
+        xoff = (caffe.imagenet.IMAGENET_MEAN.shape[1] - dim)/2
+        yoff = (caffe.imagenet.IMAGENET_MEAN.shape[0] - dim)/2
+        image_reshape -= caffe.imagenet\
+                            .IMAGENET_MEAN[yoff+yoff+dim, xoff:xoff+dim]
+        # oversample code
+        image = image_reshape.swapaxes(1, 2).swapaxes(0, 1)
+        input_blob = [np.ascontiguousarray(image[np.newaxis], dtype=np.float32)]
+        # forward pass to the network
+        num = 1
+        num_output=1000
+        output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
+        self.net_.caffenet.Forward(input_blob, output_blobs)
+        scores = output_blobs[0].mean(0).flatten()
+        assert layer_name == 'softmax', 'layer_name not supported'
+        return scores

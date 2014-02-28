@@ -49,14 +49,15 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertAlmostEqual(scores[0,3530], 15.6157, places=4)
 
 #=============================================================================
-@unittest.skip('caffe skip')
+
 class NetworkCaffeTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()
         self.net = NetworkCaffe(self.conf.ilsvrc2012_caffe_model_spec,\
                                 self.conf.ilsvrc2012_caffe_model,\
                                 self.conf.ilsvrc2012_caffe_wnids_words,\
-                                self.conf.ilsvrc2012_caffe_avg_image)
+                                self.conf.ilsvrc2012_caffe_avg_image,
+                                center_only = True)
 
     def tearDown(self):
         self.net = None
@@ -83,9 +84,9 @@ class NetworkCaffeTest(unittest.TestCase):
     def test_evaluate(self):
         img = np.asarray(io.imread('ILSVRC2012_val_00000001_n01751748.JPEG'))
         scores = self.net.evaluate(img, layer_name = 'softmax')
-        self.assertAlmostEqual(scores[0], 1.11658719e-05, places=5)
-        self.assertAlmostEqual(scores[999], 2.23165166e-08, places=5)
-        self.assertAlmostEqual(max(scores), 0.361389, places=5)
+        self.assertAlmostEqual(scores[0], 5.41017e-06, places=5)
+        self.assertAlmostEqual(scores[999], 8.32369e-09, places=5)
+        self.assertAlmostEqual(max(scores), 0.640054, places=5)
 
 #=============================================================================
 
