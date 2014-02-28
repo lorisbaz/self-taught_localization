@@ -7,6 +7,7 @@ import os.path
 import sys
 import scipy.misc
 import skimage.io
+import glob
 from vlg.util.parfun import *
 
 from annotatedimage import *
@@ -116,7 +117,7 @@ def run_exp(params):
         filetxtout.close()
         filetxt.close() 
     # list the databases chuncks
-    n_chunks = len(os.listdir(params.input_dir + '/'))
+    n_chunks = len(glob.glob(params.input_dir + '/*.db'))
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
