@@ -229,7 +229,8 @@ class ImgSegmFromMatFiles_List(ImgSegm):
                     if self.segm_type_=='warped':
                         segm_now = self.warp_segment_(segm_now, \
                                                     orig_sz, warped_sz) 
-                    segm_all.append(segm_now)
+                    if segm_now['mask']!=[]:
+                        segm_all.append(segm_now)
             segm_all_list.append(segm_all)
         if self.subset_: # keep only 4 segmentation maps
             segm_all_list = segm_all_list[::2]
@@ -258,7 +259,12 @@ class ImgSegmFromMatFiles_List(ImgSegm):
                             np.floor(segm['bbox'].ymin * prop[0]), \
                             np.floor(segm['bbox'].xmax * prop[1]), \
                             np.floor(segm['bbox'].ymax * prop[0]))
-        segm['mask'] = np.ceil(skimage.transform.resize(segm['mask'], \
+        # might happen that the size is 0 when the segments are very thin
+        if segm['bbox'].ymax-segm['bbox'].ymin-1>0 and \
+                            segm['bbox'].xmax-segm['bbox'].xmin-1>0: 
+            segm['mask'] = np.ceil(skimage.transform.resize(segm['mask'], \
                                (segm['bbox'].ymax-segm['bbox'].ymin-1, \
                                segm['bbox'].xmax-segm['bbox'].xmin-1)))
+        else:
+            segm['mask'] = []
         return segm

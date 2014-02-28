@@ -11,25 +11,30 @@ from configuration import *
 from imgsegmentation import *
 from heatextractor import *
 from htmlreport import *
-import exp12
+import exp13
 
 if __name__ == "__main__":
     # load configurations and parameters  
     conf = Configuration()
-    params = exp12.Params()
+    params = exp13.Params()
     # experiment name
-    params.exp_name = 'exp12_01'
-    params.exp_name_input = 'exp03_04' # take results from here
+    params.exp_name = 'exp13_02'
+    params.exp_name_input = 'exp03_03' # take results from here
     # Select segmentations
     params.min_sz_segm = 30 # smallest size of the segment sqrt(Area)
     params.subset_par = False #
+    # Num elements in batch (for decaf/caffe eval)
+    params.batch_sz = 1
     # default Configuration, image and label files
     params.conf = conf
+    # select network: 'CAFFE' or 'DECAF'
+    params.classifier = 'CAFFE'
+    params.center_only = True
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # load the correct segmentation masks dependigly of the exp
-    params.segm_type_load = 'warped' # warp to net size
-    conf.ilsvrc2012_segm_results_dir += '_ext'
+    params.segm_type_load = 'original' # it is actually centered
+    conf.ilsvrc2012_segm_results_dir += '_ext_centered'  
     # normalize the confidence by area?
     params.heatextractor_area_normalization = True
     # input/output directory
@@ -38,11 +43,11 @@ if __name__ == "__main__":
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = True
+    params.run_on_anthill = False
     # Set jobname in case the process stop or crush
     params.job_name = None # set to None if you do not want to resume things
-    params.task = [28,50,51] # specify tasks to debug
+    params.task = [0] # specify tasks to debug
     logging.info('Started')
     # RUN THE EXPERIMENT
-    exp12.run_exp(params)
+    exp13.run_exp(params)
 
