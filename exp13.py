@@ -28,11 +28,17 @@ def pipeline(inputdb, outputdb, params):
     """
     # Instantiate some objects, and open the database
     conf = params.conf
-    net = NetworkCaffe(conf.ilsvrc2012_caffe_model_spec, \
-                       conf.ilsvrc2012_caffe_model, \
-                       conf.ilsvrc2012_caffe_wnids_words, \
-                       conf.ilsvrc2012_caffe_avg_image, \
-                       center_only = True)
+    if params.classifier=='CAFFE':
+        net = NetworkCaffe(conf.ilsvrc2012_caffe_model_spec, \
+                           conf.ilsvrc2012_caffe_model, \
+                           conf.ilsvrc2012_caffe_wnids_words, \
+                           conf.ilsvrc2012_caffe_avg_image, \
+                           center_only = params.center_only)
+    elif params.classifier=='DECAF':
+        net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
+                           conf.ilsvrc2012_decaf_model, \
+                           conf.ilsvrc2012_classid_wnid_words, \
+                           center_only = params.center_only)
     segmenter = ImgSegmFromMatFiles_List(conf.ilsvrc2012_segm_results_dir, \
                                          conf.ilsvrc2012_root_images_dir, \
                                          params.segm_type_load, \
@@ -43,7 +49,7 @@ def pipeline(inputdb, outputdb, params):
                 image_transform = params.segm_type_load)
 
     print outputdb
-    db_input = bsddb.btopen(inputdb, 'c')
+    db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')
     db_keys = db_input.keys()
     # loop over the images
@@ -65,13 +71,14 @@ def pipeline(inputdb, outputdb, params):
         heatmaps = heatext.extract(img, anno.get_gt_label()) 
         # add the heatmap obj to the annotation object 
         pred_tmp_object = {pred_label: AnnotatedObject(pred_label, accuracy)}
-        pred_objects = {'CAFFE': pred_tmp_object}
+        pred_objects = {params.classifier: pred_tmp_object}
         for i in range(np.shape(heatmaps)[0]):
             heatmap_obj = AnnotatedHeatmap()
             heatmap_obj.heatmap = heatmaps[i].get_values()
             heatmap_obj.description = heatmaps[i].get_description()
             heatmap_obj.type = anno.get_gt_label()
-            pred_objects['CAFFE'][pred_label].heatmaps.append(heatmap_obj)
+            pred_objects[params.classifier][pred_label].\
+                                        heatmaps.append(heatmap_obj)
         # note: for the next exp store only the avg heatmap
         anno.pred_objects = pred_objects
         logging.info(str(anno))
@@ -92,19 +99,22 @@ def run_exp(params):
         os.makedirs(params.output_dir)
     # change the protobuf file (for batch mode)
     filetxt = open(params.conf.ilsvrc2012_caffe_model_spec)
-    params.conf.ilsvrc2012_caffe_model_spec = 'imagenet_deploy_tmp.prototxt' 
-    filetxtout = open(params.conf.ilsvrc2012_caffe_model_spec, 'w')
-    l = 0
-    for line in filetxt.readlines():
-        #print line
-        if l == 1: # second line contains num_dim
-            line_out = 'input_dim: ' + str(params.batch_sz) + '\n'
-        else:
-            line_out = line
-        filetxtout.write(line_out)        
-        l += 1        
-    filetxtout.close()
-    filetxt.close() 
+    # save new file locally
+    if params.classifier=='CAFFE':
+        params.conf.ilsvrc2012_caffe_model_spec = \
+                                            'imagenet_deploy_tmp.prototxt'
+        filetxtout = open(params.conf.ilsvrc2012_caffe_model_spec, 'w')
+        l = 0
+        for line in filetxt.readlines():
+            #print line
+            if l == 1: # second line contains num_dim
+                line_out = 'input_dim: ' + str(params.batch_sz) + '\n'
+            else:
+                line_out = line
+            filetxtout.write(line_out)        
+            l += 1        
+        filetxtout.close()
+        filetxt.close() 
     # list the databases chuncks
     n_chunks = len(os.listdir(params.input_dir + '/'))
     # run the pipeline

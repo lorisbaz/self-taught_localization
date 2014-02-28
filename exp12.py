@@ -42,7 +42,7 @@ def pipeline(inputdb, outputdb, params):
                 image_transform = params.segm_type_load)
 
     print outputdb
-    db_input = bsddb.btopen(inputdb, 'c')
+    db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')
     db_keys = db_input.keys()
     # loop over the images

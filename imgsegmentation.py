@@ -260,8 +260,8 @@ class ImgSegmFromMatFiles_List(ImgSegm):
                             np.floor(segm['bbox'].xmax * prop[1]), \
                             np.floor(segm['bbox'].ymax * prop[0]))
         # might happen that the size is 0 when the segments are very thin
-        if segm['bbox'].ymax-segm['bbox'].ymin-1!=0 and \
-                            segm['bbox'].xmax-segm['bbox'].xmin-1!=0: 
+        if segm['bbox'].ymax-segm['bbox'].ymin-1>0 and \
+                            segm['bbox'].xmax-segm['bbox'].xmin-1>0: 
             segm['mask'] = np.ceil(skimage.transform.resize(segm['mask'], \
                                (segm['bbox'].ymax-segm['bbox'].ymin-1, \
                                segm['bbox'].xmax-segm['bbox'].xmin-1)))

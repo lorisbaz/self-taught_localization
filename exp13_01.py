@@ -27,6 +27,9 @@ if __name__ == "__main__":
     params.batch_sz = 1
     # default Configuration, image and label files
     params.conf = conf
+    # select network: 'CAFFE' or 'DECAF'
+    params.classifier = 'CAFFE'
+    params.center_only = True
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # load the correct segmentation masks dependigly of the exp
