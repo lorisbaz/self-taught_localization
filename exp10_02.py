@@ -24,6 +24,8 @@ if __name__ == "__main__":
     params.gray_par = [(32, 10), (48, 10), (64, 10), (80, 10), (96, 10)]
     # default Configuration, image and label files
     params.conf = conf
+    # select network: 'CAFFE' or 'DECAF'
+    params.classifier = 'DECAF'
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # normalize the confidence by area?

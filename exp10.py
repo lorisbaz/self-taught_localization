@@ -22,59 +22,76 @@ class Params:
     def __init__(self):
         pass
 
+def pipeline_extraction(inputdb, outputdb, params, conf):
+    # create and load the network
+    if params.classifier=='CAFFE':
+        net = NetworkCaffe(conf.ilsvrc2012_caffe_model_spec, \
+                           conf.ilsvrc2012_caffe_model, \
+                           conf.ilsvrc2012_caffe_wnids_words, \
+                           conf.ilsvrc2012_caffe_avg_image, \
+                           center_only = True)
+    elif params.classifier=='DECAF':
+        net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
+                           conf.ilsvrc2012_decaf_model, \
+                           conf.ilsvrc2012_classid_wnid_words, \
+                           center_only = True)
+    # create the HeatmapExtractorBox object
+    heatext = HeatmapExtractorBox(net, params.gray_par, \
+                confidence_tech = params.heatextractor_confidence_tech, \
+                area_normalization = params.heatextractor_area_normalization)
+    # open the input/output databases
+    db_input = bsddb.btopen(inputdb, 'c')
+    db_output = bsddb.btopen(outputdb, 'c')
+    db_keys = db_input.keys()
+    # loop over the images
+    for image_key in db_keys:
+        # get database entry
+        anno = pickle.loads(db_input[image_key])
+        # get stuff from database entry
+        img = anno.get_image()        
+        logging.info('***** Elaborating ' + os.path.basename(anno.image_name))
+        # predict label for full image
+        rep_vec = net.evaluate(img)
+        pred_label = np.argmax(rep_vec)
+        accuracy = np.max(rep_vec)
+        pred_label = net.get_labels()[pred_label]
+        # heatmaps extraction (with gt_label)
+        heatmaps = heatext.extract(img, anno.get_gt_label()) 
+        # add the heatmap obj to the annotation object 
+        pred_tmp_object = {pred_label: AnnotatedObject(pred_label, accuracy)}
+        pred_objects = {params.classifier: pred_tmp_object}
+        for i in range(np.shape(heatmaps)[0]):
+            heatmap_obj = AnnotatedHeatmap()
+            heatmap_obj.heatmap = heatmaps[i].get_values()
+            heatmap_obj.description = heatmaps[i].get_description()
+            heatmap_obj.type = anno.get_gt_label()
+            pred_objects[params.classifier][pred_label].heatmaps\
+                     .append(heatmap_obj)
+        # note: for the next exp store only the avg heatmap
+        anno.pred_objects = pred_objects
+        logging.info(str(anno))
+        # adding the AnnotatedImage with the heatmaps to the database 
+        logging.info('Adding the record to he database')
+        value = pickle.dumps(anno, protocol=2)
+        db_output[image_key] = value
+        logging.info('End record')
+    # write the database
+    logging.info('Writing file ' + outputdb)
+    db_output.sync()
+    db_output.close()
+
+
 def pipeline(inputdb, outputdb, outputhtml, params):
     """
     Run the pipeline for this experiment. images is a list of
     (wnid, image_filename), or the SAME CLASS (i.e. wnid is a constant).
     """
+    # Log uname
+    logging.info('uname: ' + str(os.uname()))
     # Instantiate some objects, and open the database
     conf = params.conf
     if params.run_extraction:
-        net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
-                           conf.ilsvrc2012_decaf_model, \
-                           conf.ilsvrc2012_classid_wnid_words, \
-                           center_only = True)
-        heatext = HeatmapExtractorBox(net, params.gray_par, \
-                    confidence_tech = params.heatextractor_confidence_tech, \
-                    area_normalization = params.heatextractor_area_normalization)
-        db_input = bsddb.btopen(inputdb, 'c')
-        db_output = bsddb.btopen(outputdb, 'c')
-        db_keys = db_input.keys()
-        # loop over the images
-        for image_key in db_keys:
-            # get database entry
-            anno = pickle.loads(db_input[image_key])
-            # get stuff from database entry
-            img = anno.get_image()        
-            logging.info('***** Elaborating ' + os.path.basename(anno.image_name))  
-            # predict label for full image
-            rep_vec = net.evaluate(img)
-            pred_label = np.argmax(rep_vec)
-            accuracy = np.max(rep_vec)
-            pred_label = net.get_labels()[pred_label]
-            # heatmaps extraction (with gt_label)
-            heatmaps = heatext.extract(img, anno.get_gt_label()) 
-            # add the heatmap obj to the annotation object 
-            pred_tmp_object = {pred_label: AnnotatedObject(pred_label, accuracy)}
-            pred_objects = {'DECAF': pred_tmp_object}
-            for i in range(np.shape(heatmaps)[0]):
-                heatmap_obj = AnnotatedHeatmap()
-                heatmap_obj.heatmap = heatmaps[i].get_values()
-                heatmap_obj.description = heatmaps[i].get_description()
-                heatmap_obj.type = anno.get_gt_label()
-                pred_objects['DECAF'][pred_label].heatmaps.append(heatmap_obj)
-            # note: for the next exp store only the avg heatmap
-            anno.pred_objects = pred_objects
-            logging.info(str(anno))
-            # adding the AnnotatedImage with the heatmaps to the database 
-            logging.info('Adding the record to he database')
-            value = pickle.dumps(anno, protocol=2)
-            db_output[image_key] = value
-            logging.info('End record')
-        # write the database
-        logging.info('Writing file ' + outputdb)
-        db_output.sync()
-        db_output.close()
+        pipeline_extraction(inputdb, outputdb, params, conf)
     # write the HTML
     logging.info('Composing ' + outputhtml)
     htmlres = HtmlReport()
@@ -97,9 +114,8 @@ def run_exp(params):
     parfun = None
     if params.run_on_anthill:
         jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
-        #jobname = 'J_{0}'.format(params.exp_name)
-    	parfun = ParFunAnthill(pipeline, time_requested = 22, \
-            job_name = jobname)
+    	parfun = ParFunAnthill(pipeline, time_requested=22, \
+            job_name=jobname, hostname_requested='!bokken-0-0&*')
     else:
         parfun = ParFunDummy(pipeline)
     if len(params.task) == 0:

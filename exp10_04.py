@@ -17,7 +17,7 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp10.Params()
     # experiment name
-    params.exp_name = 'exp10_03'
+    params.exp_name = 'exp10_04'
     # take results from here
     params.exp_name_input = 'exp03_04'
     # Gray box params (bbox size, stride)
@@ -25,7 +25,7 @@ if __name__ == "__main__":
     # default Configuration, image and label files
     params.conf = conf
     # select network: 'CAFFE' or 'DECAF'
-    params.classifier = 'DECAF'
+    params.classifier = 'CAFFE'
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # normalize the confidence by area?
