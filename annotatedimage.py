@@ -58,6 +58,7 @@ class AnnotatedImage:
                         has been generated from its original version
     - segmentation_name: string, denoting the unique name of the segmentation
                          mask used for this image.
+    - stats: dictionary {'name'} -> Stats
     """
     def __init__(self):
         self.image_jpeg = ''

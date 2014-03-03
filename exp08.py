@@ -1,5 +1,6 @@
 import cPickle as pickle
 import bsddb
+import glob
 import logging
 import numpy as np
 import os
@@ -65,27 +66,57 @@ def run_exp(params):
     # create output directory
     if os.path.exists(params.output_dir) == False:
         os.makedirs(params.output_dir)
+    imgs_output_dir = params.output_dir + '/imgs'
+    if os.path.exists(imgs_output_dir) == False:
+        os.makedirs(imgs_output_dir)
     # list the databases chuncks
-    n_chunks = len(os.listdir(params.input_dir + '/'))
+    n_chunks = len(glob.glob(params.input_dir + '/*.db'))
     # run the pipeline
     parfun = None
-    if (params.run_on_anthill and not(params.task>=0)):
-    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
-                               job_name = params.job_name)
+    if params.run_on_anthill:
+        jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
+    	parfun = ParFunAnthill(pipeline, time_requested=1, \
+            job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline)
-    if not(params.task>=0):        
-        for i in range(n_chunks):
-            inputdb = params.input_dir + '/%05d'%i + '.db'
-            outputdb = params.output_dir + '/%05d'%i + '.db'
-            parfun.add_task(inputdb, outputdb, params)
-    else: # RUN just the selected task! (debug only)
-        i = params.task
+    if params.task==None or len(params.task)==0:
+        idx_to_process = range(n_chunks)
+    else:
+        idx_to_process = params.task
+    for i in idx_to_process:
         inputdb = params.input_dir + '/%05d'%i + '.db'
-        outputdb = params.output_dir + '/%05d'%i + '.db'
+        outputfile = params.output_dir + '/%05d'%i
+        outputdb = outputfile + '.db'
         parfun.add_task(inputdb, outputdb, params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:
             logging.info('Task {0} didn''t exit properly'.format(i))
+    # collect the results, and save them under the directory 'imgs'
+    logging.info('** Collecting stats **') 
+    stats_list = []
+    for i in idx_to_process:
+        output = params.output_dir + '/%05d'%i + '.db'
+        db_output = bsddb.btopen(outputdb, 'c')
+        db_keys = db_output.keys()
+        # loop over the images
+        for image_key in db_keys:
+            # get database entry
+            anno = pickle.loads(db_output[image_key])
+            # get stuff from database entry
+            logging.info('Loading statistics ' + \
+                          os.path.basename(anno.image_name))
+            # append stats
+            assert len(anno.stats) == 1
+            classifier = anno.stats.keys()[0]
+            stats_list.append(anno.stats[classifier])
+    # Aggregate results 
+    logging.info('** Aggregating stats **') 
+    n_bins = 32
+    stats_aggr, hist_overlap = Stats.aggregate_results(stats_list, n_bins)
+    plt.bar((hist_overlap[1][0:-1]+hist_overlap[1][1:])/2, hist_overlap[0], \
+            width = 1/float(n_bins))
+    plt.savefig(imgs_output_dir + '/hist_overlap.png')
+    plt.savefig(imgs_output_dir + '/hist_overlap.pdf')
+    # exit
     logging.info('End of the script')
