@@ -80,20 +80,31 @@ class Stats:
         return bboxes_flat, labels_flat
 
     @staticmethod
-    def aggregate_results(stats_list, n_bins=10):
+    def aggregate_results(stats_list, n_bins=10, topN = float("inf")):
         """
         Returns a Stats object that contains the aggregated statistics and the 
         histogram of overlapped regions.
         """
         hist_overlap = np.zeros(n_bins)
         stats_aggr = Stats() # aggregate stats
-        # Aggregate data
+        # Aggregate data (selecting topN for each stats obj)
         for i in range(len(stats_list)):
-            stats_aggr.confidence.extend(stats_list[i].confidence)
-            stats_aggr.TP.extend(stats_list[i].TP)
-            stats_aggr.FP.extend(stats_list[i].FP) 
-            stats_aggr.overlap.extend(stats_list[i].overlap)
-            stats_aggr.NPOS += stats_list[i].NPOS
+            # select topN
+            stats_now = Stats()
+            idx_sort = np.argsort(stats_list[i].confidence)[::-1]
+            if len(idx_sort)>topN:
+                idx_sort = idx_sort[0:topN]
+            stats_now.confidence = np.array(stats_list[i].confidence)[idx_sort]
+            stats_now.TP = np.array(stats_list[i].TP)[idx_sort]
+            stats_now.FP = np.array(stats_list[i].FP)[idx_sort]
+            stats_now.overlap = np.array(stats_list[i].overlap)[idx_sort]
+            stats_now.NPOS = stats_list[i].NPOS
+            # aggregate 
+            stats_aggr.confidence.extend(stats_now.confidence)
+            stats_aggr.TP.extend(stats_now.TP)
+            stats_aggr.FP.extend(stats_now.FP) 
+            stats_aggr.overlap.extend(stats_now.overlap)
+            stats_aggr.NPOS += stats_now.NPOS
         # Sort by confidence
         idx_sort = np.argsort(stats_aggr.confidence)[::-1]             
         stats_aggr.confidence = np.array(stats_aggr.confidence)[idx_sort]
