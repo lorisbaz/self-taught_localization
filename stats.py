@@ -8,6 +8,7 @@ class Stats:
     """
 
     def __init__(self):
+        self.confidence = []
         self.overlap = []
         self.TP = []
         self.FP = []
@@ -20,10 +21,10 @@ class Stats:
     def __str__(self):
         return 'Stats - Overlap: {0}, TP: {1}, FP: {2}, N pos: {3}, ' \
                'Precision: {4}, Recall: {5}, Detection rate: {6}, ' \
-               'AVG precision: {7}'\
+               'Confidence: {7}, AVG precision: {8}'\
                .format(self.overlap, self.TP, self.FP, self.NPOS, \
                        self.precision, self.recall, self.detection_rate, \
-                       self.average_prec)
+                       self.confidence, self.average_prec)
 
     def compute_stats(self, pred_bboxes, gt_bboxes, IoU_threshold = 0.5):
         """
@@ -37,6 +38,7 @@ class Stats:
         for i in range(len(pred_bboxes)):
             pred_confidence.append(pred_bboxes[i].confidence)
         idx_sort = np.argsort(pred_confidence)[::-1]
+        self.confidence = pred_confidence
 
         # Compute overlap (IoU) -> code translated from PASCAL VOC
         self.overlap = np.zeros(len(pred_bboxes))
@@ -87,10 +89,17 @@ class Stats:
         stats_aggr = Stats() # aggregate stats
         # Aggregate data
         for i in range(len(stats_list)):
+            stats_aggr.confidence.extend(stats_list[i].confidence)
             stats_aggr.TP.extend(stats_list[i].TP)
             stats_aggr.FP.extend(stats_list[i].FP) 
             stats_aggr.overlap.extend(stats_list[i].overlap)
             stats_aggr.NPOS += stats_list[i].NPOS
+        # Sort by confidence
+        idx_sort = np.argsort(stats_aggr.confidence)[::-1]             
+        stats_aggr.confidence = np.array(stats_aggr.confidence)[idx_sort]
+        stats_aggr.TP = np.array(stats_aggr.TP)[idx_sort]
+        stats_aggr.FP = np.array(stats_aggr.FP)[idx_sort]
+        stats_aggr.overlap = np.array(stats_aggr.overlap)[idx_sort]        
         # Cumulative precision/recall (PASCAL stuff)    
         stats_aggr.precision = np.cumsum(stats_aggr.TP)/float(stats_aggr.NPOS)
         stats_aggr.recall = np.cumsum(stats_aggr.TP)/(np.cumsum(stats_aggr.TP)\
