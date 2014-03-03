@@ -18,8 +18,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp06.Params()
     # experiment name
-    params.exp_name = 'exp06_01'
-    params.exp_name_input = 'exp05_01' # take results from here
+    params.exp_name = 'exp06_03'
+    # take results from here
+    params.exp_name_input = 'exp10_04'
     # Bounding box  parameters
     params.min_bbox_size = 0.02
     params.grab_cut_rounds = 30
@@ -34,9 +35,9 @@ if __name__ == "__main__":
     # max size of the HTML images
     params.html_max_img_size = 300
     # parallelize the script on Anthill?
-    params.run_on_anthill = True 
+    params.run_on_anthill = False
     # Set jobname in case the process stop or crush
-    params.task = None
+    params.task = [0]
     # specify task to debug 
     logging.info('Started')
     # RUN THE EXPERIMENT

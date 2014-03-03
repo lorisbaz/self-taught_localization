@@ -1,5 +1,6 @@
 import cPickle as pickle
 import bsddb
+import glob
 import logging
 import numpy as np
 import os
@@ -58,8 +59,6 @@ def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
     plt.subplot(3,4,np.shape(heatmaps)[0]+4)
     plt.imshow(out_image_desc[1][0])
     plt.title(out_image_desc[1][1])
-
-
     plt.show()
 
 
@@ -77,7 +76,7 @@ def pipeline(inputdb, outputdb, outputhtml, params):
 
     htmlres = HtmlReport()
     logging.info('Opening ' + inputdb)
-    db_input = bsddb.btopen(inputdb, 'c')
+    db_input = bsddb.btopen(inputdb, 'r')
     logging.info('Opening ' + outputdb)
     db_output = bsddb.btopen(outputdb, 'c')
     db_keys = db_input.keys()
@@ -137,21 +136,20 @@ def run_exp(params):
     if os.path.exists(params.output_dir) == False:
         os.makedirs(params.output_dir)
     # list the databases chuncks
-    n_chunks = len(os.listdir(params.input_dir + '/'))
+    n_chunks = len(glob.glob(params.input_dir + '/*.db'))
     # run the pipeline
     parfun = None
-    if (params.run_on_anthill and not(params.task>=0)):
-    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
-                               job_name = 'Job_{0}'.format(params.exp_name))
+    if params.run_on_anthill:
+        jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
+    	parfun = ParFunAnthill(pipeline, time_requested=10, \
+            job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline)
-    if params.task < 0:
-        idx_start = 0
-        idx_end = len(image_chunks)
+    if params.task==None or len(params.task)==0:
+        idx_to_process = range(n_chunks)
     else:
-        idx_start = params.task
-        idx_end = params.task+1
-    for i in range(idx_start, idx_end):
+        idx_to_process = params.task
+    for i in idx_to_process:
         inputdb = params.input_dir + '/%05d'%i + '.db'
         outputfile = params.output_dir + '/%05d'%i
         outputdb = outputfile + '.db'
