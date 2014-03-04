@@ -219,9 +219,9 @@ class ImgSegmFromMatFiles_List(ImgSegm):
             segm_all = []
             for i in range(len(segm_mask)-1): # for each segment (last = full)
                 # usual crazy/tricky indexing of the loadmat
-                if np.sqrt(segm_mask[i][0]['size'][0][0][0]) \
-                            >= self.min_sz_segm_:
-                    tmp = segm_mask[i][0]['rect'][0][0][0]
+                tmp = segm_mask[i][0]['rect'][0][0][0] 
+                if (tmp[3]-tmp[1]-1 >= self.min_sz_segm_) or \
+                    (tmp[2]-tmp[0]-1 >= self.min_sz_segm_): # filter small
                     # note: rect is [ymin,xmin,ymax,xmax]
                     bbox = BBox(tmp[1]-1, tmp[0]-1, tmp[3], tmp[2]) 
                     segm_now = {'bbox': bbox, \

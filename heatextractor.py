@@ -260,14 +260,17 @@ class HeatmapExtractorSliding(HeatmapExtractor):
             for x in xs:
                 for y in ys:
                     # resize image with the same size of the CNN input
-                    image_subw = np.copy(skimage.transform.resize(\
-                                            image[y:y+box_sz, x:x+box_sz], \
-                                            (self.network_.get_input_dim(), \
-                                            self.network_.get_input_dim())))
-                    image_subw = skimage.img_as_ubyte(image_subw) 
+                    #image_subw = np.copy(skimage.transform.resize(\
+                    #                        image[y:y+box_sz, x:x+box_sz], \
+                    #                        (self.network_.get_input_dim(), \
+                    #                        self.network_.get_input_dim())))
+                    #image_subw = skimage.img_as_ubyte(image_subw) 
                     # predict CNN reponse for current window
                     #if np.shape(image.shape)[0]>2: # RGB images
-                    caffe_rep_win = self.network_.evaluate(image_subw) 
+                    #caffe_rep_win = self.network_.evaluate(image_subw) 
+                    caffe_rep_win = \
+                         self.network_.evaluate(image[y:y+box_sz, x:x+box_sz]) 
+                    # 
                     #else: # GRAY images
                     #    caffe_rep_win = \
                     #      self.network_.evaluate(image)
