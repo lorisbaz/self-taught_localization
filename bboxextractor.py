@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import logging
 from matplotlib import pyplot
 import sklearn
 import sklearn.cluster
@@ -16,10 +17,13 @@ class BBoxExtractor:
         INPUT:
         img is a ndarray;
         heatmaps is a list of ndarrays;
+
         OUTPUT:
         - a list of BBox
-        - a list of (image, description) which is implementation-dependent and
+        - a list of (image, description) with the same number of elements 
+               of the list of bboxes which is implementation-dependent and
                could be used for visualization/debugging purposes
+        Note that the outputs might be empty lists (e.g. in case of an error).
         """
         raise NotImplementError()
 
@@ -127,6 +131,8 @@ class GrabCutBBoxExtractor(BBoxExtractor):
             thresholds = self.get_thresholds_from_gmm_(heatmap)
         else:
             raise ValueError('parameter grab_cut_init not valid')
+        if len(thresholds) == 0:
+            return [], []
         # 2) quantize the heatmap into four segmentation labels:
         #    cv2.GC_BGD, cv2.GC_PR_BGD, cv2.GC_PR_FGD, cv2.GC_FGD
         mask = self.get_grabcut_init_mask_(heatmap, thresholds)
@@ -186,6 +192,7 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         """
         Learn a kMeans with 4 clusters, and return the thresholds that separate
         the clusters: [m01, m12, m23]
+        Returns [] in case of error (e.g. when heatmap is all black)
         """
         g = sklearn.cluster.KMeans(n_clusters = 4)
         data = heatmap.reshape((heatmap.size, 1))
@@ -193,7 +200,9 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         assert g.cluster_centers_.shape[0] == 4
         assert g.cluster_centers_.shape[1] == 1
         centers = np.sort(g.cluster_centers_.copy(), axis=None)
-        assert centers[0] < centers[1] < centers[2] < centers[3]
+        if not(centers[0] < centers[1] < centers[2] < centers[3]):
+            logging.warning('Kmeans failed with the collisions of some centroids.')
+            return []
         m01 = (centers[0]+centers[1]) / 2.0
         m12 = (centers[1]+centers[2]) / 2.0
         m23 = (centers[2]+centers[3]) / 2.0
@@ -202,7 +211,8 @@ class GrabCutBBoxExtractor(BBoxExtractor):
     def get_thresholds_from_gmm_(self, heatmap):
         """
         Learn a GMM with 4 gaussians, and return the thresholds that separate
-        the posterior values: [m01, m12, m23]
+        the posterior values: [m01, m12, m23].
+        Returns [] in case of error (e.g. when heatmap is all black)
         """
         # TODooooooooooooooooooooooooooooooooooooooooo
         raise NotImplementError()
@@ -212,7 +222,8 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         assert g.cluster_centers_.shape[0] == 4
         assert g.cluster_centers_.shape[1] == 1
         centers = np.sort(g.cluster_centers_.copy(), axis=None)
-        assert centers[0] < centers[1] < centers[2] < centers[3]
+        if not (centers[0] < centers[1] < centers[2] < centers[3]):
+            return []
         m01 = (centers[0]+centers[1]) / 2.0
         m12 = (centers[1]+centers[2]) / 2.0
         m23 = (centers[2]+centers[3]) / 2.0

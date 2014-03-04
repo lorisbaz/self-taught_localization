@@ -24,7 +24,8 @@ from util import *
 
 class Params:
     def __init__(self):
-        pass
+        self.extract_bbox_from_avg_heatmap = True
+        self.extract_bbox_from_individual_heatmaps = False
 
 def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
                           out_image_desc, out_bboxes):
@@ -94,20 +95,31 @@ def pipeline(inputdb, outputdb, outputhtml, params):
         for classifier in anno.pred_objects.keys():
             assert len(anno.pred_objects[classifier]) == 1
             for label in anno.pred_objects[classifier].keys():
-                # Compute avg heatmap
-                ann_heatmaps = anno.pred_objects[classifier][label].heatmaps
-                heatmaps = []
-                for j in range(len(ann_heatmaps)):
-                    heatmaps.append(ann_heatmaps[j].heatmap)
-                heatmap_avg = np.sum(heatmaps, axis=0)/np.shape(heatmaps)[0]
-                # Extract Bounding box using heatmap
-                out_bboxes, out_image_desc = \
-                                bbox_extractor.extract(img, [heatmap_avg])
-                # visualize partial results for debug
-                #visualize_heatmap_box(img, heatmaps, heatmap_avg, \
-                #                      out_image_desc, out_bboxes)
-                # Save bboxes in the output database
-                anno.pred_objects[classifier][label].bboxes = out_bboxes
+                anno.pred_objects[classifier][label].bboxes = []
+                # Extract the bboxes from the avg heatmap
+                if params.extract_bbox_from_avg_heatmap:
+                    ann_heatmaps = anno.pred_objects[classifier][label].heatmaps
+                    heatmaps = []
+                    for j in range(len(ann_heatmaps)):
+                        heatmaps.append(ann_heatmaps[j].heatmap)
+                    heatmap_avg = np.sum(heatmaps, axis=0)/np.shape(heatmaps)[0]
+                    # Extract Bounding box using heatmap
+                    out_bboxes, out_image_desc = \
+                                    bbox_extractor.extract(img, [heatmap_avg])
+                    # visualize partial results for debug
+                    #visualize_heatmap_box(img, heatmaps, heatmap_avg, \
+                    #                      out_image_desc, out_bboxes)
+                    # Save bboxes in the output database
+                    anno.pred_objects[classifier][label].bboxes\
+                            .extend(out_bboxes)
+                # Extract the bboxes from the individual heatmaps
+                if params.extract_bbox_from_individual_heatmaps:
+                    ann_heatmaps = anno.pred_objects[classifier][label].heatmaps
+                    for ann_heat in ann_heatmaps:
+                        out_bboxes, out_image_desc = \
+                                bbox_extractor.extract(img, [ann_heat.heatmap])
+                        anno.pred_objects[classifier][label].bboxes\
+                                .extend(out_bboxes)
         logging.info(str(anno))
         # visualize the annotation to a HTML row
         htmlres.add_annotated_image_embedded(anno, \

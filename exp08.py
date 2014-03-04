@@ -19,7 +19,8 @@ from stats import *
 
 class Params:
     def __init__(self):
-        pass
+        self.run_stat_pipeline = True
+        self.stats_using_num_pred_bboxes_image = []
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -28,9 +29,8 @@ def pipeline(inputdb, outputdb, params):
     """
     # Instantiate some objects, and open the database
     conf = params.conf
-      
-    print outputdb
-    db_input = bsddb.btopen(inputdb, 'c')
+    logging.info('outputdb: ' + outputdb)
+    db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')
     db_keys = db_input.keys()
     # loop over the images
@@ -88,16 +88,17 @@ def run_exp(params):
         outputfile = params.output_dir + '/%05d'%i
         outputdb = outputfile + '.db'
         parfun.add_task(inputdb, outputdb, params)
-    out = parfun.run()
-    for i, val in enumerate(out):
-        if val != 0:
-            logging.info('Task {0} didn''t exit properly'.format(i))
+    if params.run_stat_pipeline:
+        out = parfun.run()
+        for i, val in enumerate(out):
+            if val != 0:
+                logging.info('Task {0} didn''t exit properly'.format(i))
     # collect the results, and save them under the directory 'imgs'
     logging.info('** Collecting stats **') 
     stats_list = []
     for i in idx_to_process:
-        output = params.output_dir + '/%05d'%i + '.db'
-        db_output = bsddb.btopen(outputdb, 'c')
+        outputdb = params.output_dir + '/%05d'%i + '.db'
+        db_output = bsddb.btopen(outputdb, 'r')
         db_keys = db_output.keys()
         # loop over the images
         for image_key in db_keys:
@@ -110,13 +111,35 @@ def run_exp(params):
             assert len(anno.stats) == 1
             classifier = anno.stats.keys()[0]
             stats_list.append(anno.stats[classifier])
-    # Aggregate results 
+    # ** Aggregate results 
     logging.info('** Aggregating stats **') 
-    n_bins = 32
-    stats_aggr, hist_overlap = Stats.aggregate_results(stats_list, n_bins)
+    num_bins = 32
+    stats_aggr, hist_overlap = Stats.aggregate_results(stats_list, num_bins)
+    # Figure: IoU histogram
     plt.bar((hist_overlap[1][0:-1]+hist_overlap[1][1:])/2, hist_overlap[0], \
-            width = 1/float(n_bins))
+            width = 1/float(num_bins))
+    #plt.hist(stats_aggr.overlap, num_bins)
+    plt.title('IoU histogram')
+    plt.xlabel('IoU overlap')
     plt.savefig(imgs_output_dir + '/hist_overlap.png')
     plt.savefig(imgs_output_dir + '/hist_overlap.pdf')
+    plt.close()
+    # ** Aggregating stats for variable number of subwindows per image
+    if len(params.stats_using_num_pred_bboxes_image) > 0:
+        recall_all = []
+        for num_pred_bboxes in params.stats_using_num_pred_bboxes_image:
+            stat_agg, hist_overlap = Stats.aggregate_results(\
+                              stats_list, num_bins, num_pred_bboxes)
+            recall_all.append(np.max(stat_agg.recall))
+        assert len(recall_all) == len(params.stats_using_num_pred_bboxes_image)
+        # Figure: recall vs numPredBboxesImage
+        line, = plt.plot(params.stats_using_num_pred_bboxes_image,\
+                         recall_all, \
+                         '-', linewidth=2)
+        plt.xlabel('number of predicted bboxes per image')
+        plt.ylabel('recall')
+        plt.savefig(imgs_output_dir + '/recall_vs_numPredBboxesImage.png')
+        plt.savefig(imgs_output_dir + '/recall_vs_numPredBboxesImage.pdf')  
+        plt.close()
     # exit
     logging.info('End of the script')

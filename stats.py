@@ -112,23 +112,22 @@ class Stats:
         stats_aggr.FP = np.array(stats_aggr.FP)[idx_sort]
         stats_aggr.overlap = np.array(stats_aggr.overlap)[idx_sort]        
         # Cumulative precision/recall (PASCAL stuff)    
-        stats_aggr.precision = np.cumsum(stats_aggr.TP)/float(stats_aggr.NPOS)
-        stats_aggr.recall = np.cumsum(stats_aggr.TP)/(np.cumsum(stats_aggr.TP)\
-                                     + np.cumsum(stats_aggr.FP)) 
+        stats_aggr.recall = np.cumsum(stats_aggr.TP)/float(stats_aggr.NPOS)
+        stats_aggr.precision = np.cumsum(stats_aggr.TP) / \
+            np.float32((np.cumsum(stats_aggr.TP) + np.cumsum(stats_aggr.FP)))
         # Compute the average precision        
         stats_aggr.average_prec = 0.0
         for t in np.linspace(0,1,11):
-            ps = stats_aggr.precision[stats_aggr.recall>=t]
+            ps = stats_aggr.precision[stats_aggr.recall >= t]
             if np.shape(ps)[0]==0:
-                p = 0
+                p = 0.0
             else:
-                p = np.max(ps)
-            stats_aggr.average_prec += p/11
+                p = float(np.max(ps))
+            stats_aggr.average_prec += p / 11.0
         # Compute the detection rate
         stats_aggr.detection_rate = np.sum(stats_aggr.TP)/float(stats_aggr.NPOS)
         # Create the histogram of overlap
         hist_overlap = np.histogram(stats_aggr.overlap, \
                                 bins = n_bins, range = (0,1))
-        
         return stats_aggr, hist_overlap
 
