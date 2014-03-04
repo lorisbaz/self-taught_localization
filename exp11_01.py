@@ -20,8 +20,8 @@ if __name__ == "__main__":
     params.exp_name = 'exp11_01'
     params.exp_name_input = 'exp03_04' # take results from here
     # Gray box params (bbox size, stride)
-    params.gray_par = [(50, 25), (75, 25), (100, 25), (125, 25), \
-                       (150, 25), (175, 25), (200, 25)]
+    params.gray_par = [(50, 10), (75, 15), (100, 15), (125, 20), \
+                       (150, 20), (175, 25), (200, 25)]
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1     
     # default Configuration, image and label files
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     params.classifier = 'CAFFE'
     params.center_only = True
     # method for calculating the confidence
-    params.heatextractor_confidence_tech = 'full_win_positive'
+    params.heatextractor_confidence_tech = 'single_win'
     # load the correct segmentation masks dependigly of the exp
     params.segm_type_load = 'warped' # warp to net size
     conf.ilsvrc2012_segm_results_dir += '_ext'

@@ -238,9 +238,6 @@ class HeatmapExtractorSliding(HeatmapExtractor):
         # Cycle over boxes        
         for param in self.params_: # for box parameter
             box_sz, stride = param
-            logging.info('sliding window {0} / {1} '\
-                         .format(np.shape(heatmaps)[0]+1, \
-    				     len(self.params_)))
             heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
             # generate indexes
             xs = np.linspace(0, image.shape[1]-box_sz, \
@@ -249,6 +246,9 @@ class HeatmapExtractorSliding(HeatmapExtractor):
             ys = np.linspace(0, image.shape[0]-box_sz, \
                              (image.shape[0]-box_sz)/float(stride)+1)
             ys = np.int32(ys)
+            logging.info('sliding window {0} / {1} ({2} windows) '\
+                         .format(np.shape(heatmaps)[0]+1, \
+    				     len(self.params_), len(xs)*len(ys))) 
             # crop img and compute CNN response
             for x in xs:
                 for y in ys:
@@ -267,7 +267,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                                 ' Total of {2} maps.'.format(box_sz, stride, \
                                 len(self.params_))) 
             heatmap.normalize_counts()
-            heatmaps.append(heatmap) # append the heatmap to the list                    
+            heatmaps.append(heatmap) # append the heatmap to the list 
         return heatmaps
 
 
