@@ -21,7 +21,7 @@ if __name__ == "__main__":
     params.exp_name = 'exp13_01'
     params.exp_name_input = 'exp03_04' # take results from here
     # Select segmentations
-    params.min_sz_segm = 30 # smallest size of the segment sqrt(Area)
+    params.min_sz_segm = 20 # smallest size of the segment sqrt(Area)
     params.subset_par = False #
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
