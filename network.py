@@ -222,7 +222,7 @@ class NetworkCaffe(Network):
             img = img[:, :, :3]
         # first, extract the 227x227 center, and convert it to BGR
         dim = self.get_input_dim()
-        image = util.crop_image_center(decaf.util.transform.as_rgb(img))
+        image = util.crop_image_center(img)
         image_reshape = skimage.transform.resize(image, (dim, dim))
         image_reshape = (image_reshape * 255)[:, :, ::-1]
         # subtract the mean, cropping the 256x256 mean image
