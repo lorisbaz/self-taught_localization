@@ -47,7 +47,7 @@ class Stats:
         self.TP = np.zeros(len(pred_bboxes)) 
         self.overlap = np.zeros(len(pred_bboxes)) 
         for i in idx_sort:
-            ovmax = float("-inf")
+            ovmax = 0.0
             for j in range(len(gt_bboxes)):
                 ov = pred_bboxes[i].jaccard_similarity(gt_bboxes[j])
                 #print '{0}'.format(ov)
