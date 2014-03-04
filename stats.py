@@ -26,7 +26,8 @@ class Stats:
                        self.precision, self.recall, self.detection_rate, \
                        self.confidence, self.average_prec)
 
-    def compute_stats(self, pred_bboxes, gt_bboxes, IoU_threshold = 0.5):
+    def compute_stats(self, pred_bboxes, gt_bboxes, IoU_threshold = 0.5, \
+                      fp_overlap_zero = False):
         """
         Compute the statistics given a list of BBox objects of the 
         predictions and the ground truth. IoU_threshols is the Intersection 
@@ -62,6 +63,8 @@ class Stats:
                     gt_det[jmax] = True # association done!
                 else:
                     self.FP[i] = 1 # false positive (multiple detection)        
+                    if fp_overlap_zero:
+                        self.overlap[i] = 0.0
             else:
                 self.FP[i] = 1 # false positive
         # Store the tot num positive for the actual image 

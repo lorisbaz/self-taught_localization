@@ -115,7 +115,7 @@ def run_exp(params):
     logging.info('** Aggregating stats **') 
     num_bins = 32
     stats_aggr, hist_overlap = Stats.aggregate_results(stats_list, num_bins)
-    # Figure: IoU histogram
+    # Figure: IoU histogram   (plt.hist(stats_aggr.overlap, num_bins))    
     plt.bar((hist_overlap[1][0:-1]+hist_overlap[1][1:])/2, hist_overlap[0], \
             width = 1/float(num_bins))
     #plt.hist(stats_aggr.overlap, num_bins)
