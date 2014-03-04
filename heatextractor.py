@@ -210,7 +210,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
     Extracts a set of heatmaps built from the results of the CNN by sliding 
     rectangular regions
     """
-    def __init__(self, network, params, confidence_tech = 'full_win', \
+    def __init__(self, network, params, confidence_tech = 'single_win', \
                  area_normalization = True):
         """
       	network is of type Network
@@ -218,11 +218,8 @@ class HeatmapExtractorSliding(HeatmapExtractor):
         - bbox_sz: size of the bounding box
         - stride: regular stride of the windows over the image
         confidence_tech is the type of extracted confidence which can be:
-        - 'only_win': 1 - classification_score for the given label of the 
+        - 'single_win': 1 - classification_score for the given label of the 
                       slide window
-        - 'full_win': classification_score for the image 
-                          - classification_score of the slide window
-        - 'full_win_positive': max(full_win, 0)   
         """
         self.network_ = network
         self.params_ = params
@@ -238,10 +235,6 @@ class HeatmapExtractorSliding(HeatmapExtractor):
         lab_id = self.network_.get_label_id(label)    
         # Init the list of heatmaps
         heatmaps = []
-        # Classify the full image without obfuscation
-        if (self.confidence_tech_ == 'full_win') or \
-           (self.confidence_tech_ == 'full_win_positive'):
-            caffe_rep_full = self.network_.evaluate(image)
         # Cycle over boxes        
         for param in self.params_: # for box parameter
             box_sz, stride = param
@@ -259,30 +252,11 @@ class HeatmapExtractorSliding(HeatmapExtractor):
             # crop img and compute CNN response
             for x in xs:
                 for y in ys:
-                    # resize image with the same size of the CNN input
-                    #image_subw = np.copy(skimage.transform.resize(\
-                    #                        image[y:y+box_sz, x:x+box_sz], \
-                    #                        (self.network_.get_input_dim(), \
-                    #                        self.network_.get_input_dim())))
-                    #image_subw = skimage.img_as_ubyte(image_subw) 
                     # predict CNN reponse for current window
-                    #if np.shape(image.shape)[0]>2: # RGB images
-                    #caffe_rep_win = self.network_.evaluate(image_subw) 
                     caffe_rep_win = \
                          self.network_.evaluate(image[y:y+box_sz, x:x+box_sz]) 
-                    # 
-                    #else: # GRAY images
-                    #    caffe_rep_win = \
-                    #      self.network_.evaluate(image)
                     # Given the class of the image, select the confidence
-                    if self.confidence_tech_ == 'only_win':
-                        confidence = 1-caffe_rep_win[lab_id]
-                    elif self.confidence_tech_ == 'full_win':
-                        confidence = caffe_rep_full[lab_id] - \
-                                     caffe_rep_win[lab_id]
-                    elif self.confidence_tech_ == 'full_win_positive':
-                        confidence = max(caffe_rep_full[lab_id] - \
-                                         caffe_rep_win[lab_id], 0.0)
+                    confidence = caffe_rep_win[lab_id]
                     # update the heatmap
                     heatmap.add_val_rect(confidence, x, y, box_sz, box_sz, \
                                          self.area_normalization_) 
