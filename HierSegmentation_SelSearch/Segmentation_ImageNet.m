@@ -12,7 +12,8 @@ fix_sz = 600; % resize images that are bigger that resize_big_images
                           % set it to 0 if you want to disable it
                           
 seg_params.colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
-seg_params.central_crop = 1;
+seg_params.central_crop = 0;
+seg_params.SelSearchExp = 1;
 
 
 % Here you specify which similarity functions to use in merging
@@ -41,6 +42,7 @@ Configure;
 if ~exist(savePath, 'file')
   mkdir(savePath);
 end
+%run_on_anthill = 0;
 
 if run_on_anthill
     % Anthill processes

@@ -43,9 +43,9 @@ if __name__ == "__main__":
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = True
+    params.run_on_anthill = False
     # Set jobname in case the process stop or crush
-    params.job_name = 'Job_pipeline_140301_133512' # set to None if you do not want to resume things
+    params.job_name = None # set to None if you do not want to resume things
     params.task = [] # specify tasks to debug
     logging.info('Started')
     # RUN THE EXPERIMENT

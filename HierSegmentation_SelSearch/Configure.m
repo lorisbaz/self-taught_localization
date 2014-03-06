@@ -10,9 +10,12 @@ switch (hostname)
         valPath = [imagePath 'val/'];
         testPath = [imagePath 'test/'];
         if seg_params.central_crop == 0
-            savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ext_ILSVRC2012/';
+            savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ILSVRC2012_ext';
         else
-            savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_cropped_ILSVRC2012/';
+            savePath  = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/segment_ILSVRC2012_ext_centered';
+        end
+        if seg_params.SelSearchExp
+            savePath  = [savePath '_SS/'];
         end
         selectivePath = '/home/anthill/vlg/SelectiveSearchCodeIJCV/';        
         addpath(toolboxPath)

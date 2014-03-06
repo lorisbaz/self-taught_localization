@@ -28,39 +28,32 @@ for i=1:length(testIms)
             
             % Get blobs of initial segmentation
             segmentation = SegmentIndices2Blobs(blobIndIm{idx}, blobBoxes);
-               
-            if length(hierarchy)==1
-                tree{idx} = ...
-                    RecreateBlobHierarchyLevelsTree(segmentation, ...
-                                                    hierarchy{1});
-                hBlobs{idx} = RecreateBlobHierarchyIndIm(blobIndIm{idx}, ...
-                                                blobBoxes, hierarchy{1});
-                
+            
+            if seg_params.SelSearchExp 
+                hBlobs{idx} = boxesT{idx};
+                priority{idx} = priorityT{idx};
             else
-                for h = 1:length(hierarchy)
-                    % recreate the tree to be saved
-                    tree{idx2} = ...
+                if length(hierarchy)==1
+                    tree{idx} = ...
                         RecreateBlobHierarchyLevelsTree(segmentation, ...
-                                                        hierarchy{h});                
-                                                    
-                    hBlobs{idx2} = RecreateBlobHierarchyIndIm(blobIndIm{idx}, ...
-                                            blobBoxes, hierarchy{h});
-                                        
-                    idx2 = idx2 + 1;
-%                 % visualization
-%                 subplot(5,5,1)
-%                 imagesc(im), axis image
-%                 [real_hier, hBlobs] = RecreateBlobHierarchyIndImLevels(blobIndIm{idx}, blobBoxes, hierarchy{h});
-%                 % visualize if needed
-%                 for l = 1:min(length(real_hier),24)
-%                     subplot(5,5,l+1), imagesc(real_hier{l}, [0,max(real_hier{end}(:))]),
-%                     axis image
-%                 end
-%                 pause;
-%                 clf;
+                        hierarchy{1});
+                    hBlobs{idx} = RecreateBlobHierarchyIndIm(blobIndIm{idx}, ...
+                        blobBoxes, hierarchy{1});
+                    
+                else
+                    for h = 1:length(hierarchy)
+                        % recreate the tree to be saved
+                        tree{idx2} = ...
+                            RecreateBlobHierarchyLevelsTree(segmentation, ...
+                            hierarchy{h});
+                        
+                        hBlobs{idx2} = RecreateBlobHierarchyIndIm(blobIndIm{idx}, ...
+                            blobBoxes, hierarchy{h});
+                        
+                        idx2 = idx2 + 1;
+                    end
                 end
             end
-            
             idx = idx + 1;
         end
     end
@@ -71,7 +64,11 @@ for i=1:length(testIms)
     else
         remain = remain(2:end);
     end
-    save([savePath strtok(remain,'.') '.mat'],'blobIndIm','tree','hBlobs')
+    if seg_params.SelSearchExp 
+        save([savePath strtok(remain,'.') '.mat'],'blobIndIm','hBlobs','priority')
+    else
+        save([savePath strtok(remain,'.') '.mat'],'blobIndIm','tree','hBlobs')
+    end
 end
 
 % output value
