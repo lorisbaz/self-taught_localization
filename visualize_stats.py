@@ -22,9 +22,9 @@ if __name__ == "__main__":
     # Num bins histogram of overlap
     params.n_bins = 32
     # Select classifier
-    params.classifier = 'DECAF'
+    params.classifier = 'CAFFE'
     # experiment name
-    params.exp_name_input = 'exp08_01' # take results from here
+    params.exp_name_input = 'exp08_05' # take results from here
     # default Configuration, image and label files
     params.conf = conf
     # input directory
