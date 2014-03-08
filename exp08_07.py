@@ -13,9 +13,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp08.Params()
     # experiment name
-    params.exp_name = 'exp08_05'
+    params.exp_name = 'exp08_07'
     # take results from here
-    params.exp_name_input = 'exp06_06'
+    params.exp_name_input = 'exp06_08'
     # default Configuration, image and label files
     params.conf = conf
     # Intersection over Union threshold
@@ -29,7 +29,7 @@ if __name__ == "__main__":
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
     params.run_on_anthill = True
-    params.run_stat_pipeline = False
+    params.run_stat_pipeline = True
     # Set jobname in case the process stop or crush
     params.task = []
     logging.info('Started')

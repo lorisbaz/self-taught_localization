@@ -67,19 +67,28 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
             caffe_rep_full = self.network_.evaluate(image) 
             # select top num_pred classes
             if self.num_pred_>0:
-                labels = self.get_labels()
-                idx_top_c = np.argsort(caffe_rep_full)
-                idx_top_c = idx_top_c[0:num_pred]
+                labels = self.network_.get_labels()
+                idx_top_c = np.argsort(caffe_rep_full)[::-1]
+                idx_top_c = idx_top_c[0:self.num_pred_].tolist()
                 if not(lab_id in idx_top_c):
-                    idx_top_c = idx_top_c.extend(lab_id)
-                lab_list = labels[idx_top_c]
+                    idx_top_c.append(lab_id)
+                # selection of top labels (tricky)
+                lab_list = np.array(labels)[idx_top_c].tolist()
+                top_accuracies = caffe_rep_full[idx_top_c]
+                num_top_c = len(idx_top_c)
             else:
                 idx_top_c = lab_id
                 lab_list = label
+                num_top_c = 1
         # Perform segmentation
         segm_masks = self.segment_.extract(image) # list of segmentation
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
-            heatmap = Heatmap(image.shape[1], image.shape[0]) # init heatmap
+            if self.num_pred_>0:
+                heatmap = []
+                for i in range(num_top_c):
+                    heatmap.append(Heatmap(image.shape[1], image.shape[0]))
+            else:
+                heatmap = Heatmap(image.shape[1], image.shape[0])
             segm_list = segm_masks[s] # retrieve s-th mask 
             #heatmap.set_segment_map(segm_mask)
             #segm_list = np.unique(segm_mask)
@@ -115,29 +124,41 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                     confidence = caffe_rep_full[idx_top_c] - \
                                  caffe_rep_obf[idx_top_c]
                 elif self.confidence_tech_ == 'full_obf_positive':
-                    confidence = max(caffe_rep_full[idx_top_c] - \
-                                     caffe_rep_obf[idx_top_c], 0.0)
+                    confidence = caffe_rep_full[idx_top_c] - \
+                                 caffe_rep_obf[idx_top_c]
+                    if num_top_c>1:
+                        for i in range(num_top_c):
+                            confidence[i] = max(confidence[i], 0.0)             
+                    else:
+                        confidence = max(confidence, 0.0)
                 # update the heatmap
                 if self.num_pred_>0: 
-                    for i in len(idx_top_c):
-                        heatmap[i].add_val_segment_mask(confidence, box, \
+                    for i in range(num_top_c):
+                        heatmap[i].add_val_segment_mask(confidence[i], box, \
                                                mask, self.area_normalization_)
                 else:  # same as before 
                     heatmap.add_val_segment_mask(confidence, box, mask, \
                                                  self.area_normalization_) 
             if self.num_pred_>0:              
-                for i in len(idx_top_c):
-                    print 'test'
-                    # TODOOOOO: implement this stuff
+                for i in range(num_top_c):
+                    heatmap[i].set_description('Computed with segmentation ' + \
+                                    'obfuscation, map with {0} segments' + \
+                                    ' in the {1} confidence setup. Total' + \
+                                    ' of {2} maps.'.format(num_segments, \
+                                    self.confidence_tech_, len(segm_masks)))
+                    heatmap[i].normalize_counts()
             else:
                 heatmap.set_description('Computed with segmentation ' + \
                                     'obfuscation, map with {0} segments' + \
                                     ' in the {1} confidence setup. Total' + \
                                     ' of {2} maps.'.format(num_segments, \
                                     self.confidence_tech_, len(segm_masks)))
-                heatmap.normalize_counts() # not required, segments no overlap
-            heatmaps.append(heatmap) # append the heatmap to the list 
-        return heatmaps
+                heatmap.normalize_counts()
+            heatmaps.append(heatmap) # append the heatmap to the list
+        if self.num_pred_>0:
+            return heatmaps, lab_list, top_accuracies
+        else:     
+            return heatmaps
 
 
 #=============================================================================
