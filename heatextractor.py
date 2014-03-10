@@ -368,7 +368,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                     caffe_rep_win = \
                          self.network_.evaluate(image[y:y+box_sz, x:x+box_sz]) 
                     # Given the class of the image, select the confidence
-                    confidence = caffe_rep_winl[idx_top_c]
+                    confidence = caffe_rep_win[idx_top_c]
                     if num_top_c>1:
                         for i in range(num_top_c):
                             confidence[i] = max(confidence[i], 0.0)  
@@ -386,7 +386,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                                     ' stride {1}. Total' + \
                                     ' of {2} maps.'.format(box_sz, \
                                     stride, len(self.params_)))
-                   heatmap[i].normalize_counts()
+                    heatmap[i].normalize_counts()
             else:
                 heatmap.set_description('Computed with sliding win ' + \
                                     'approach, with window size {0} and' + \
@@ -444,7 +444,7 @@ class HeatmapExtractorBox(HeatmapExtractor):
              (self.network_.get_input_dim(), self.network_.get_input_dim()))
         image_resz = skimage.img_as_ubyte(image_resz) 
         # Classify the full image without obfuscation 
-        caffe_rep_full = self.network_.evaluate(image) 
+        caffe_rep_full = self.network_.evaluate(image_resz) 
         # select top num_pred classes
         if self.num_pred_>0:
             labels = self.network_.get_labels()
@@ -470,9 +470,10 @@ class HeatmapExtractorBox(HeatmapExtractor):
             if self.num_pred_>0:
                 heatmap = []
                 for i in range(num_top_c):
-                    heatmap.append(Heatmap(image.shape[1], image.shape[0]))
+                    heatmap.append(Heatmap(image_resz.shape[1], \
+                                            image_resz.shape[0]))
             else:
-                heatmap = Heatmap(image.shape[1], image.shape[0])             
+                heatmap = Heatmap(image_resz.shape[1], image_resz.shape[0]) 
             # generate indexes (resized img)
             xs = np.linspace(0, image_resz.shape[1]-box_sz, \
                              (image_resz.shape[1]-box_sz)/float(stride)+1)
@@ -514,7 +515,7 @@ class HeatmapExtractorBox(HeatmapExtractor):
                     # update the heatmap
                     if self.num_pred_>0: 
                         for i in range(num_top_c):
-                            heatmap[i].add_val_rect(confidence, x, y, \
+                            heatmap[i].add_val_rect(confidence[i], x, y, \
                                     box_sz, box_sz, self.area_normalization_)
                     else:  # same as before 
                         heatmap.add_val_rect(confidence, x, y, box_sz, box_sz, \
