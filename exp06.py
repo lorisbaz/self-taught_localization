@@ -26,6 +26,7 @@ class Params:
     def __init__(self):
         self.extract_bbox_from_avg_heatmap = True
         self.extract_bbox_from_individual_heatmaps = False
+        self.top_C_classes = 0
 
 def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
                           out_image_desc, out_bboxes):
@@ -93,8 +94,21 @@ def pipeline(inputdb, outputdb, outputhtml, params):
         # Bbox extraction
         out_image_desc = []
         for classifier in anno.pred_objects.keys():
-            assert len(anno.pred_objects[classifier]) == 1
-            for label in anno.pred_objects[classifier].keys():
+            #assert len(anno.pred_objects[classifier]) == 1
+            if params.top_C_classes == 0: # use only the GT
+                label_list = anno.gt_objects.keys()
+            elif params.top_C_classes > 0:
+                label_list_all = anno.pred_objects[classifier].keys()
+                # select the topC predictions (because there is also GT inside)
+                pred_conf = []
+                for label in label_list_all:
+                    pred_conf.append(anno.pred_objects[classifier][label].\
+                                     confidence)
+                idx_top_c = np.argsort(pred_conf)[::-1]
+                idx_top_c = idx_top_c[0:params.top_C_classes]
+                label_list = np.array(label_list_all)[idx_top_c].tolist() 
+            # run bbox extractor on heatmaps
+            for label in label_list:
                 anno.pred_objects[classifier][label].bboxes = []
                 # Extract the bboxes from the avg heatmap
                 if params.extract_bbox_from_avg_heatmap:
