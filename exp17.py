@@ -40,11 +40,11 @@ def pipeline(inputdb, outputdb, params):
                            conf.ilsvrc2012_decaf_model, \
                            conf.ilsvrc2012_classid_wnid_words, \
                            center_only = params.center_only)    
+    # create the HeatmapExtractorSliding object    
     heatext = HeatmapExtractorSliding(net, params.gray_par, \
                 confidence_tech = params.heatextractor_confidence_tech, \
                 area_normalization = params.heatextractor_area_normalization, \
                 num_pred = params.topC)
-
     print outputdb
     db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')
@@ -114,8 +114,9 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
-                               job_name = params.job_name)    	 
+        jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
+    	parfun = ParFunAnthill(pipeline, time_requested=10, \
+            job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline)
     if len(params.task) == 0:

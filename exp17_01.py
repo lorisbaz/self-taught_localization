@@ -20,16 +20,11 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp17_01'
     params.exp_name_input = 'exp03_04' # take results from here
-    # Gray box params (bbox size, stride)
+    # Sliding win params (bbox size, stride)
     params.gray_par = [(50, 10), (75, 15), (100, 15), (125, 20), \
                        (150, 20), (175, 25), (200, 25)]
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1     
-    # Select segmentations
-    params.min_sz_segm = 20 # smallest size of the segment sqrt(Area)
-    params.subset_par = False #
-    # Num elements in batch (for decaf/caffe eval)
-    params.batch_sz = 1
     # default Configuration, image and label files
     params.conf = conf
     # select network: 'CAFFE' or 'DECAF'
@@ -52,7 +47,6 @@ if __name__ == "__main__":
     # parallelize the script on Anthill?
     params.run_on_anthill = True 
     # Set jobname in case the process stop or crush
-    params.job_name = None # set to None if you do not want to resume things
     params.task = [] # specify tasks to debug
     logging.info('Started')
     # RUN THE EXPERIMENT
