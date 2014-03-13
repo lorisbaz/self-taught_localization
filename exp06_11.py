@@ -40,9 +40,9 @@ if __name__ == "__main__":
     # max size of the HTML images
     params.html_max_img_size = 300
     # parallelize the script on Anthill?
-    params.run_on_anthill = True
+    params.run_on_anthill = False
     # Set jobname in case the process stop or crush
-    params.task = []
+    params.task = [592]
     # specify task to debug 
     logging.info('Started')
     # RUN THE EXPERIMENT

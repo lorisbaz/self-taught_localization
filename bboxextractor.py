@@ -148,11 +148,14 @@ class GrabCutBBoxExtractor(BBoxExtractor):
         gc_mask = mask.copy()
         # sanity check for very small segments to avoid (N<K in kmeans)
         gc_mask_new = gc_mask.copy()
+        k2 = 0
+        mapping = []
         for k in range(len(thresholds)+1):
-            if np.sum(gc_mask==k)<len(thresholds)+1:
-                # map k -> k-1
-                for k2 in range(k, len(thresholds)+1):
-                    gc_mask_new[gc_mask==k2] = k2-1
+            if np.sum(gc_mask==k)>=len(thresholds)+1:
+                mapping.append([k,k2])
+                k2 += 1
+        for k in range(len(mapping)):
+            gc_mask_new[gc_mask==mapping[k][0]] = mapping[k][1]
         gc_mask = gc_mask_new.copy()
         cv2.grabCut(gc_img, gc_mask, gc_rect, gc_bgdModel, gc_fgdModel, \
                     self.gc_rounds_, mode=cv2.GC_INIT_WITH_MASK)
