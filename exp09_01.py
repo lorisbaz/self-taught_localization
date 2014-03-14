@@ -15,8 +15,8 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp09.Params()
     # experiment name
-    params.exp_name = 'exp08_04'
-    params.exp_name_input = 'exp08_04' # take results from here
+    params.exp_name = 'exp08_10'
+    params.exp_name_input = 'exp08_10' # take results from here
     # the maximum size of an image in the html files
     params.html_max_img_size = 200
     params.visual_factor = 2 * 10e-2 # normalize output for better visualization
