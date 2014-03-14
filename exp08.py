@@ -9,6 +9,7 @@ import sys
 import scipy.misc
 import skimage.io
 from vlg.util.parfun import *
+from scipy.io import *
 
 from annotatedimage import *
 from bbox import *
@@ -69,6 +70,9 @@ def run_exp(params):
     imgs_output_dir = params.output_dir + '/imgs'
     if os.path.exists(imgs_output_dir) == False:
         os.makedirs(imgs_output_dir)
+    mat_output_dir = params.output_dir + '/mat'       
+    if os.path.exists(mat_output_dir) == False:
+        os.makedirs(mat_output_dir)
     # list the databases chuncks
     n_chunks = len(glob.glob(params.input_dir + '/*.db'))
     # run the pipeline
@@ -141,5 +145,10 @@ def run_exp(params):
         plt.savefig(imgs_output_dir + '/recall_vs_numPredBboxesImage.png')
         plt.savefig(imgs_output_dir + '/recall_vs_numPredBboxesImage.pdf')  
         plt.close()
+        # Save .mat file for visualization in matlab (use aggregate_results.m)
+        savemat(mat_output_dir + '/recall_vs_numPredBboxesImage',\
+                    {'recall_' + params.exp_name: recall_all, \
+                    'x_values_' + params.exp_name: \
+                            params.stats_using_num_pred_bboxes_image})
     # exit
     logging.info('End of the script')
