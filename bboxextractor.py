@@ -5,6 +5,7 @@ from matplotlib import pyplot
 import sklearn
 import sklearn.cluster
 import sys
+import skimage.transform
 
 from bbox import *
 from heatmap import *
@@ -261,3 +262,69 @@ class GrabCutBBoxExtractor(BBoxExtractor):
                 else:
                     mask[y,x] = cv2.GC_FGD
         return mask
+
+
+#=============================================================================
+
+class SlidingWindowBBoxExtractor:
+    def __init__(self, sliding_params, area_normalization = True):
+        """
+        sliding_params: a list of tuples (width, height, stridex, stridey)
+        area_normalization: if True, sum the values inside the window 
+                and normalize by area
+        """
+        self.sliding_params_ = sliding_params
+        self.area_normalization_ = area_normalization
+
+    def extract(self, img, heatmaps):
+        """
+        Returns a set of bboxes, extracted from the given image and heatmaps.
+        INPUT:
+        img is a ndarray; (not used in this implementation)
+        heatmaps is a list of ndarrays;
+
+        OUTPUT:
+        - a list of BBox
+        - a list of (image, description) not used in this implementation
+        Note that the outputs might be empty lists (e.g. in case of an error).
+        """
+        # NOTE: currently , we support a single heatmap
+        assert isinstance(heatmaps, list)
+        assert len(heatmaps) == 1
+        heatmap = heatmaps[0]
+        assert isinstance(heatmap, np.ndarray)
+        assert heatmap.ndim == 2
+        out_image_desc = []
+        # compute integral heatmap
+        integral_heatmap = skimage.transform.integral_image(heatmap)
+        bboxes = []
+        for param in self.sliding_params_:
+            # generate the list of window indexes over the image
+            width, height, stridex, stridey = param
+            xs = np.linspace(0, heatmap.shape[1]-width, \
+                                (heatmap.shape[1]-width)/float(stridex)+1)
+            xs = np.int32(xs)
+            ys = np.linspace(0, heatmap.shape[0]-height, \
+                                (heatmap.shape[0]-height)/float(stridey)+1)
+            ys = np.int32(ys)
+            xv, yv = np.meshgrid(xs, ys) 
+            xv = xv.flatten()
+            yv = yv.flatten()
+            # compute the score of each window using the integral heatmap
+            confidence = skimage.transform.integrate(integral_heatmap, \
+                                            xv, yv, xv+width-1, yv+height-1)
+            if self.area_normalization_:
+                confidence /= (height * width)
+            # build bbox objects
+            for i in range(np.shape(confidence)[0]):
+                bboxes.append(BBox(xv[i], yv[i], xv[i]+width-1, yv+heaight-1, \
+                                   confidence[i]))
+        # normalize the bboxes to one
+        for bbox in bboxes:
+            bbox.normalize_to_outer_box(BBox(0,0,mask.shape[1],mask.shape[0]))
+        # build output
+        out_bboxes = []
+        for bbox in bboxes:
+            out_bboxes.append(bbox)
+        return out_bboxes, out_image_desc
+
