@@ -5,7 +5,10 @@ logging.basicConfig(level=logging.INFO, \
               datefmt='%m/%d/%Y %H:%M:%S')
 import numpy as np
 import os
+import scipy.misc
+import scipy.io
 import skimage
+import skimage.io
 import skimage.transform
 import tempfile
 
@@ -91,3 +94,67 @@ def split_list(l, num_chunks):
             out[i].append(l[idx])
             idx += 1
     return out
+
+def selective_search(images, ss_version):
+    """
+    Given a set of images (ndarrays), it extract the SS bboxes. 
+    It returns a list of list of BBox objects.
+    """
+    # dump the images of the AnnotatedImages to temporary files
+    img_temp_files = []
+    for i in range(len(images)):
+        (fd, tmpfile) = tempfile.mkstemp(suffix = '.bmp')
+        os.close(fd)
+        img_temp_files.append( tmpfile)
+        img = skimage.io.imsave(tmpfile, images[i])
+    # create temporary files for the .mat files
+    mat_temp_files = []
+    for i in range(len(images)):
+        (fd, tmpfile) = tempfile.mkstemp(suffix = '.mat')
+        os.close(fd)
+        mat_temp_files.append( tmpfile )
+    # run the Selective Search Matlab wrapper
+    img_temp_files_cell = \
+         '{' + ','.join("'{}'".format(x) for x in img_temp_files) + '}'
+    mat_temp_files_cell = \
+         '{' + ','.join("'{}'".format(x) for x in mat_temp_files) + '}'
+    matlab_cmd = 'selective_search({0}, {1})'\
+                  .format(img_temp_files_cell, mat_temp_files_cell)
+    command = "matlab -nojvm -nodesktop -r \"try; " + matlab_cmd + \
+              "; catch; exit; end; exit\""
+    logging.info('Executing command ' + command)
+    if os.system(command) != 0:
+        logging.error('Matlab SS script did not exit successfully!')
+        return []
+    # load the .mat files, and create the BBox objects
+    bboxes_all = []
+    for i in range(len(images)):
+        try:
+            mat = scipy.io.loadmat(mat_temp_files[i])
+        except:
+            logging.error('Exception while loading ' + mat_temp_files[i])
+            bboxes_all.append( [] )
+            continue    
+        img_width = mat.get('img_width')[0][0]
+        assert img_width > 0
+        img_height = mat.get('img_height')[0][0]
+        assert img_height > 0
+        bboxes = mat.get('bboxes')
+        assert bboxes.shape[1] == 4
+        priority = mat.get('priority')
+        assert priority.shape[1] == 1
+        assert priority.shape[0] == bboxes.shape[0]
+        bbs = []
+        for j in range(bboxes.shape[0]):
+            bb = BBox(bboxes[j,0], bboxes[j,1], bboxes[j,2]-1, bboxes[j,3]-1, \
+                      priority[j,0])
+            bb.normalize_to_outer_box(BBox(0, 0, img_width, img_height))
+            bbs.append(bb)
+        bboxes_all.append(bbs)
+    assert len(bboxes_all) == len(images)
+    # delete all the temporary files
+    for i in range(len(images)):
+        os.remove(img_temp_files[i])
+        os.remove(mat_temp_files[i])
+    # return
+    return bboxes_all

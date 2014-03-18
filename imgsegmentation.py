@@ -53,6 +53,10 @@ class ImgSegmFelzen(ImgSegm):
 class ImgSegmFromMatFiles(ImgSegm):
     """
     Load a set of segmentations stored in a certain directory
+
+    *********************************************************
+    ************** DEPRECATED *******************************
+    *********************************************************
     """
 
     def __init__(self, directory, img_root_dir, subset_par=False, \
@@ -178,6 +182,12 @@ class ImgSegmFromMatFiles_List(ImgSegm):
     """
     Load a set of segmentations stored in a certain directory and create a list
     of segmentation blobs (not segmentation maps anymore)
+
+    How to use this class: for each image
+    1) call "set_segm_name", passing the
+       usual dataset key (i.e. the image name with the .JPEG extension), 
+    2) call extract passing the image. Note that if segm_type_load=='warped',
+       the warp the bboxes and segments according the size of this image.
     """
 
     def __init__(self, directory, img_root_dir, segm_type_load='original',\
@@ -186,10 +196,16 @@ class ImgSegmFromMatFiles_List(ImgSegm):
         Segmentation files stored in directory
 	    - directory: where segmentation files are stored
 	    - img_root_dir: where images are stored
-        - segm_type_load: either 'original' or 'warped'
+        - segm_type_load: 
+                'original' just the normal segments
+                'warped' the coordinates of the segments are resized so 
+                         to form a square.
         - min_sz_segm: min size of the bbox sorrounding the segment
         - subset_par: if True take a subset of segmentations paramters
                       to speed up the obfuscation part
+
+        The segments have been computed from the original images 
+        resized to have max edge 600 pixels.
         """
         self.directory_ = directory
         self.img_root_dir_ = img_root_dir
@@ -202,6 +218,11 @@ class ImgSegmFromMatFiles_List(ImgSegm):
     def extract(self, image):
         """
         Load segmentation, parse the mat files and returns a set of nd.array
+
+        RETURNS:
+        - a list of dictionaries {'bbox': BBox, 'mask': int nd.array}
+          The bbox is the outer rectable enclosing the segment.
+          The mask contains only 0, 1 values, and it is relative to the bbox.
         """    
 	    # Print
         logging.info('Loading segmentations from disk')

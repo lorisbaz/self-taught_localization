@@ -102,15 +102,14 @@ def run_exp(params):
     stats_list = []
     for i in idx_to_process:
         outputdb = params.output_dir + '/%05d'%i + '.db'
+        logging.info('Loading statistics from {0} ({1}/{2})'.format( \
+                     outputdb, i, len(idx_to_process)))
         db_output = bsddb.btopen(outputdb, 'r')
         db_keys = db_output.keys()
         # loop over the images
         for image_key in db_keys:
             # get database entry
             anno = pickle.loads(db_output[image_key])
-            # get stuff from database entry
-            logging.info('Loading statistics ' + \
-                          os.path.basename(anno.image_name))
             # append stats
             assert len(anno.stats) == 1
             classifier = anno.stats.keys()[0]
