@@ -97,8 +97,19 @@ def split_list(l, num_chunks):
 
 def selective_search(images, ss_version):
     """
-    Given a set of images (ndarrays), it extract the SS bboxes. 
-    It returns a list of list of BBox objects.
+    Extract the Selective Search subwindows from the given input images.
+    This function runs the Matlab function selective_search.m.
+
+    INPUT:
+     images: list of N ndarray elements, each element is an image
+     ss_version: The SelectiveSearch version to use. 
+                 It is a string that could be either 'quality' or 'fast'.
+                 Please refer to selective_search.m.
+    OUTPUT:
+     bboxes_all: list of N lists. The i-th sub-list is a list of BBox objects,
+                 which are the SS subwindows associated to the i-th image.
+                 Note that the confidence value is available, and that the
+                 coordinates are 0-1 normalized.
     """
     # dump the images of the AnnotatedImages to temporary files
     img_temp_files = []
@@ -118,8 +129,8 @@ def selective_search(images, ss_version):
          '{' + ','.join("'{}'".format(x) for x in img_temp_files) + '}'
     mat_temp_files_cell = \
          '{' + ','.join("'{}'".format(x) for x in mat_temp_files) + '}'
-    matlab_cmd = 'selective_search({0}, {1})'\
-                  .format(img_temp_files_cell, mat_temp_files_cell)
+    matlab_cmd = 'selective_search({0}, {1}, \'{2}\')'\
+                  .format(img_temp_files_cell, mat_temp_files_cell, ss_version)
     command = "matlab -nojvm -nodesktop -r \"try; " + matlab_cmd + \
               "; catch; exit; end; exit\""
     logging.info('Executing command ' + command)
@@ -135,9 +146,9 @@ def selective_search(images, ss_version):
             logging.error('Exception while loading ' + mat_temp_files[i])
             bboxes_all.append( [] )
             continue    
-        img_width = mat.get('img_width')[0][0]
+        img_width = mat.get('img_width')[0,0]
         assert img_width > 0
-        img_height = mat.get('img_height')[0][0]
+        img_height = mat.get('img_height')[0,0]
         assert img_height > 0
         bboxes = mat.get('bboxes')
         assert bboxes.shape[1] == 4
@@ -146,7 +157,7 @@ def selective_search(images, ss_version):
         assert priority.shape[0] == bboxes.shape[0]
         bbs = []
         for j in range(bboxes.shape[0]):
-            bb = BBox(bboxes[j,0], bboxes[j,1], bboxes[j,2]-1, bboxes[j,3]-1, \
+            bb = BBox(bboxes[j,0]-1, bboxes[j,1]-1, bboxes[j,2], bboxes[j,3], \
                       priority[j,0])
             bb.normalize_to_outer_box(BBox(0, 0, img_width, img_height))
             bbs.append(bb)

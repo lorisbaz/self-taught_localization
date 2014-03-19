@@ -57,11 +57,16 @@ totalTime = 0;
 for i=1:length(testIms)
     fprintf('extracting SS for %s\n', testIms{i});
     try
+      % reset the pseudo-random number generator, so to have deterministic results
+      rng('default');
+      % load the image
       im = imread(testIms{i});
+      % try many Segmentation thresholds k
       idx = 1;
       for j=1:length(ks)
-          k = ks(j); % Segmentation threshold k
+          k = ks(j); 
           minSize = k; % We set minSize = k
+          % try many color spaces
           for n = 1:length(colorTypes)
               colorType = colorTypes{n};
               fprintf('k=%d, colorType=%s\n', k, colorType);

@@ -22,7 +22,9 @@ if __name__ == "__main__":
     params.IoU_threshold = 0.5
     # create also some statistics using a variable number of predictions/image
     params.stats_using_num_pred_bboxes_image = range(1,16)
-    params.stats_using_num_pred_bboxes_image.extend(range(50,2001,50))
+    params.stats_using_num_pred_bboxes_image.extend(range(50,10051,100))
+    # delete the pred_objects from the AnnotatedImages
+    params.delete_pred_objects = True
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name

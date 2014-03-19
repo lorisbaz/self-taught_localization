@@ -20,8 +20,16 @@ from stats import *
 
 class Params:
     def __init__(self):
+        # execute the extraction of the statistics from the images.
+        # If false, we assumed that we did run the extraction before, and we
+        # perform just the aggregation.
         self.run_stat_pipeline = True
+        # list containing the desired number of subwindows per image to use
+        # for the various plots that require this information.
         self.stats_using_num_pred_bboxes_image = []
+        # delete the pred_objects from the AnnotatedImages, to save storage
+        # and speed-up the unpickling
+        self.delete_pred_objects = False
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -52,10 +60,12 @@ def pipeline(inputdb, outputdb, params):
             stat_obj.compute_stats(pred_bboxes, gt_bboxes, \
                                    params.IoU_threshold)
             anno.stats[classifier] = stat_obj
+            # if requested, delete the pred-objects
+            if params.delete_pred_objects:
+                anno.pred_objects = {}
         # adding stats to the database
         value = pickle.dumps(anno, protocol=2)
         db_output[image_key] = value                 
-        logging.info(str(anno.stats[classifier]))
         logging.info('End record')
     # write the database
     logging.info('Writing file ' + outputdb)
@@ -80,7 +90,7 @@ def run_exp(params):
     if params.run_on_anthill:
         jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
     	parfun = ParFunAnthill(pipeline, time_requested=1, \
-            job_name=jobname)
+            memory_requested=1, job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline)
     if params.task==None or len(params.task)==0:
@@ -131,6 +141,7 @@ def run_exp(params):
     if len(params.stats_using_num_pred_bboxes_image) > 0:
         recall_all = []
         for num_pred_bboxes in params.stats_using_num_pred_bboxes_image:
+            logging.info('num_pred_bboxes: {0}'.format(num_pred_bboxes))
             stat_agg, hist_overlap = Stats.aggregate_results(\
                               stats_list, num_bins, num_pred_bboxes)
             recall_all.append(np.max(stat_agg.recall))
