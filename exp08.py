@@ -30,6 +30,11 @@ class Params:
         # delete the pred_objects from the AnnotatedImages, to save storage
         # and speed-up the unpickling
         self.delete_pred_objects = False
+        # this deletes the confidence of the bboxes of the input 
+        # pred_objects of the AnnotatedImages, and instead, add a fake
+        # confidence value, equal to position of the BBox objects in the
+        # list "AnnotatedObject.bboxes"
+        self.replace_confidence_with_position_index = False
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -46,11 +51,17 @@ def pipeline(inputdb, outputdb, params):
     for image_key in db_keys:
         # get database entry
         anno = pickle.loads(db_input[image_key])
-        anno.set_stats()
-        # get stuff from database entry
         logging.info('***** Elaborating statistics ' + \
                       os.path.basename(anno.image_name))        
+        # if requested, substitute the confidence of the bboxes
+        # with their position indeces
+        if params.replace_confidence_with_position_index:
+            for cl in anno.pred_objects.keys():
+                for lab in anno.pred_objects[cl].keys():
+                    for i, bb in enumerate(anno.pred_objects[cl][lab].bboxes):
+                        bb.confidence = float(i)
         # Flat Gt and Pred objects to BBoxes
+        anno.set_stats()
         gt_bboxes, gt_lab = Stats.flat_anno_bboxes(anno.gt_objects)
         for classifier in anno.pred_objects.keys():
             pred_bboxes, pred_lab = Stats.flat_anno_bboxes( \
