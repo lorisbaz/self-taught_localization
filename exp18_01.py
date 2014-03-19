@@ -26,14 +26,15 @@ if __name__ == "__main__":
     params.extract_bbox_from_individual_heatmaps = True
     # Want to use the top C classes (max C = 5; if = 0 use the GT!)
     params.top_C_classes = 5
-    # Sliding window over heatmap parameters (width, height stridex, stridey)
+    # Sliding window over heatmap parameters (width, height, stridex, stridey)
     params.sliding_win = [(50, 50, 10, 10), (75, 50, 10, 10), \
-                          (55, 70, 10, 10), (75, 75, 15, 15), \
-                          (75, 100, 15, 15), (100, 100, 20, 20), \
+                          (55, 75, 10, 10), (75, 75, 15, 15), \
+                          (75, 100, 15, 15), (100, 75, 15, 15), \
+                          (100, 100, 20, 20), (150, 100, 20, 20), \
                           (100, 150, 20, 20), (150, 150, 20, 20), \
                           (150, 175, 20, 20), (175, 150, 20, 20), \
                           (175, 175, 25, 25), (200, 175, 25, 25), \
-                          (200, 175, 25, 25), (200, 200, 25, 25)]
+                          (175, 200, 25, 25), (200, 200, 25, 25)]
     params.area_normalization = True 
     # default Configuration, image and label files
     params.conf = conf
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     # max size of the HTML images
     params.html_max_img_size = 300
     # parallelize the script on Anthill?
-    params.run_on_anthill = False
+    params.run_on_anthill = True
     # Set jobname in case the process stop or crush
     params.task = []
     # specify task to debug 
