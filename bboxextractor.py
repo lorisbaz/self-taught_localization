@@ -317,11 +317,12 @@ class SlidingWindowBBoxExtractor:
                 confidence /= (height * width)
             # build bbox objects
             for i in range(np.shape(confidence)[0]):
-                bboxes.append(BBox(xv[i], yv[i], xv[i]+width-1, yv+heaight-1, \
-                                   confidence[i]))
+                bboxes.append(BBox(xv[i], yv[i], \
+                              xv[i]+width-1, yv[i]+height-1, confidence[i]))
         # normalize the bboxes to one
         for bbox in bboxes:
-            bbox.normalize_to_outer_box(BBox(0,0,mask.shape[1],mask.shape[0]))
+            bbox.normalize_to_outer_box(BBox(0,0,heatmap.shape[1], \
+                                                 heatmap.shape[0]))
         # build output
         out_bboxes = []
         for bbox in bboxes:

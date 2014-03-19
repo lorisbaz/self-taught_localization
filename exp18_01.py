@@ -27,7 +27,13 @@ if __name__ == "__main__":
     # Want to use the top C classes (max C = 5; if = 0 use the GT!)
     params.top_C_classes = 5
     # Sliding window over heatmap parameters (width, height stridex, stridey)
-    params.sliding_win = [(50,50,10,10), (70,50,10,10)]
+    params.sliding_win = [(50, 50, 10, 10), (75, 50, 10, 10), \
+                          (55, 70, 10, 10), (75, 75, 15, 15), \
+                          (75, 100, 15, 15), (100, 100, 20, 20), \
+                          (100, 150, 20, 20), (150, 150, 20, 20), \
+                          (150, 175, 20, 20), (175, 150, 20, 20), \
+                          (175, 175, 25, 25), (200, 175, 25, 25), \
+                          (200, 175, 25, 25), (200, 200, 25, 25)]
     params.area_normalization = True 
     # default Configuration, image and label files
     params.conf = conf
