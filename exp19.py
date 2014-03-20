@@ -4,132 +4,128 @@ import logging
 import numpy as np
 import os
 import os.path
+import random
 import sys
 import scipy.misc
 import skimage.io
-import glob
+import xml.etree.ElementTree as ET
 from vlg.util.parfun import *
+from PIL import Image
+from PIL import ImageDraw
 
 from annotatedimage import *
+from bbox import *
 from heatmap import *
-from network import *
 from configuration import *
 from imgsegmentation import *
 from heatextractor import *
+from htmlreport import *
 from util import *
 
 class Params:
     def __init__(self):
         pass
 
-def pipeline(inputdb, outputdb, params):
+def get_filenames(params):
     """
-    Run the pipeline for this experiment. images is a list of
-    (wnid, image_filename), or the SAME CLASS (i.e. wnid is a constant).
+    return the list of image-keys for train, validation, and test of VOC 2007
     """
+    conf = params.conf
+    keys = []
+    for set_type in params.sets:
+        fd = open(conf.pascal2007_sets_dir + '/' + set_type + '.txt')
+        for line in fd:
+            keys.append(line.strip())
+        fd.close()
+    return keys
+
+def pipeline(image_keys, outputdb, outputhtml, params):
     # Instantiate some objects, and open the database
     conf = params.conf
-    if params.classifier=='CAFFE':
-        net = NetworkCaffe(conf.ilsvrc2012_caffe_model_spec, \
-                           conf.ilsvrc2012_caffe_model, \
-                           conf.ilsvrc2012_caffe_wnids_words, \
-                           conf.ilsvrc2012_caffe_avg_image, \
-                           center_only = params.center_only)
-    elif params.classifier=='DECAF':
-        net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
-                           conf.ilsvrc2012_decaf_model, \
-                           conf.ilsvrc2012_classid_wnid_words, \
-                           center_only = params.center_only)
-    segmenter = ImgSegm_SelSearch_Wrap(params.ss_version, params.min_sz_segm)
-    heatext = HeatmapExtractorSegm_List(net, segmenter, \
-                confidence_tech = params.heatextractor_confidence_tech, \
-                area_normalization = params.heatextractor_area_normalization,\
-                image_transform = params.segm_type_load, \
-                num_pred = params.topC)
-
-    print outputdb
-    db_input = bsddb.btopen(inputdb, 'r')
-    db_output = bsddb.btopen(outputdb, 'c')
-    db_keys = db_input.keys()
+    htmlres = HtmlReport()
+    db = bsddb.btopen(outputdb, 'c')
     # loop over the images
-    for image_key in db_keys:
-        # get database entry
-        anno = pickle.loads(db_input[image_key])
-        # get stuff from database entry
-        img = anno.get_image()        
-        logging.info('***** Elaborating ' + os.path.basename(anno.image_name))  
-        # sync segmentation loader  
-        anno.segmentation_name = 'ImgSegm_SelSearch_Wrap'
-        # heatmaps extraction (with gt_label)
-        heatmaps, top_labels, top_accuracies = heatext.extract(img, \
-                                                       anno.get_gt_label()) 
-        # Init object to save (dictionary of dictionary) 
-        pred_tmp_object = {}
-        for j in range(len(top_labels)):
-            pred_tmp_object[top_labels[j]]= AnnotatedObject(top_labels[j], \
-                                                        top_accuracies[j])
-        pred_objects = {params.classifier: pred_tmp_object}
-        # add the heatmap obj to the annotation object
-        for j in range(len(top_labels)):
-            for i in range(np.shape(heatmaps)[0]):
-                heatmap_obj = AnnotatedHeatmap()
-                heatmap_obj.heatmap = heatmaps[i][j].get_values()
-                heatmap_obj.description = heatmaps[i][j].get_description()
-                pred_objects[params.classifier][top_labels[j]].\
-                                        heatmaps.append(heatmap_obj)
-        # note: for the next exp store only the avg heatmap
-        anno.pred_objects = pred_objects
+    for image_key in image_keys:
+        # load the image
+        image_file = conf.pascal2007_images_dir + '/' + image_key + \
+                     conf.pascal2007_image_file_extension
+        logging.info('***** Elaborating ' + os.path.basename(image_file))
+        img = skimage.io.imread(image_file)
+        img = skimage.img_as_ubyte(img)
+        # create the AnnotatedImage
+        anno = AnnotatedImage()
+        anno.set_image(img)
+        anno.image_name = image_key
+        anno.crop_description = 'original'
+        # read the ground truth XML file
+        xmlfile = conf.pascal2007_annotations_dir + '/' + image_key + '.xml'
+        xmldoc = ET.parse(xmlfile)
+        xmlanno = xmldoc.getroot()
+        size_width = int(xmlanno.find('size').find('width').text)
+        assert size_width == anno.image_width
+        size_height = int(xmlanno.find('size').find('height').text)
+        assert size_height == anno.image_height
+        xmlobjects = xmlanno.findall('object')
+        #anno_objects_dict = {} # dictionary label --> AnnoObject
+        for xmlobj in xmlobjects:
+            difficult = int(xmlobj.find('difficult').text.strip())
+            if difficult==1 and params.include_difficult_objects==False:
+                continue
+            label = xmlobj.find('name').text.strip()
+            if label not in anno.gt_objects:
+                anno.gt_objects[label] = AnnotatedObject(label)
+            bboxes = xmlobj.findall('bndbox')
+            for bbox in bboxes:
+                xmin = int(bbox.find('xmin').text)
+                ymin = int(bbox.find('ymin').text)
+                xmax = int(bbox.find('xmax').text)
+                ymax = int(bbox.find('ymax').text)
+                bb = BBox(xmin-1, ymin-1, xmax, ymax)
+                bb.normalize_to_outer_box(BBox(0,0,size_width,size_height))
+                anno.gt_objects[label].bboxes.append(bb)
         logging.info(str(anno))
-        # adding the AnnotatedImage with the heatmaps to the database 
-        logging.info('Adding the record to he database')
+        # visualize the annotation to a HTML row
+        htmlres.add_annotated_image_embedded(anno)
+        htmlres.add_newline()
+        # adding the AnnotatedImage to the database
+        logging.info('Adding the record to the database')
         value = pickle.dumps(anno, protocol=2)
-        db_output[image_key] = value
+        db[image_key] = value
         logging.info('End record')
     # write the database
     logging.info('Writing file ' + outputdb)
-    db_output.sync()
-    db_output.close()
+    db.sync()
+    db.close()
+    # write the HTML
+    htmlres.save(outputhtml)
     return 0
 
 def run_exp(params):
     # create output directory
     if os.path.exists(params.output_dir) == False:
         os.makedirs(params.output_dir)
-    # change the protobuf file (for batch mode)
-    filetxt = open(params.conf.ilsvrc2012_caffe_model_spec)
-    # save new file locally
-    if params.classifier=='CAFFE':
-        params.conf.ilsvrc2012_caffe_model_spec = \
-                                            'imagenet_deploy_tmp.prototxt'
-        filetxtout = open(params.conf.ilsvrc2012_caffe_model_spec, 'w')
-        l = 0
-        for line in filetxt.readlines():
-            #print line
-            if l == 1: # second line contains num_dim
-                line_out = 'input_dim: ' + str(params.batch_sz) + '\n'
-            else:
-                line_out = line
-            filetxtout.write(line_out)        
-            l += 1        
-        filetxtout.close()
-        filetxt.close() 
-    # list the databases chuncks
-    n_chunks = len(glob.glob(params.input_dir + '/*.db'))
+    # load the filenames of the the images
+    images = get_filenames(params)
+    # we sort the list, and split it into chunks
+    images = sorted(images)
+    image_chunks = split_list(images, params.num_chunks)
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
-                               job_name = params.job_name)    	 
+        jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
+    	parfun = ParFunAnthill(pipeline, time_requested = 2, \
+            job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline)
     if len(params.task) == 0:
-        idx_to_process = range(n_chunks)
+        idx_to_process = range(len(image_chunks))
     else:
         idx_to_process = params.task
     for i in idx_to_process:
-        inputdb = params.input_dir + '/%05d'%i + '.db'
-        outputdb = params.output_dir + '/%05d'%i + '.db'
-        parfun.add_task(inputdb, outputdb, params)
+        outputfile = params.output_dir + '/%05d'%i
+        outputdb = outputfile + '.db'
+        outputhtml = outputfile + '.html'
+        parfun.add_task(image_chunks[i], outputdb, outputhtml, params)
     out = parfun.run()
     for i, val in enumerate(out):
         if val != 0:

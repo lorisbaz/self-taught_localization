@@ -8,8 +8,10 @@ import os
 class Configuration:
     """
     The following public vaiables (constants) are available:
+
+    ***** ILSVRC 2012 *****
     - ilsvrc2012_root_images_dir
-           root directory storing the all the images
+           root directory storing all the images
     - ilsvrc2012_train_images_dir
            directory storing the training images
     - ilsvrc2012_val_images_dir
@@ -41,17 +43,39 @@ class Configuration:
     - ilsvrc2012_caffe_wnids_words
             the ordered list of wnids and words used by the caffe
 
-    - pascal2007_images
-           directory storing the images for PASCAL VOC 2007
-
-    - experiments_output_directory
-           root directory storing all the partial and final results
     - ilsvrc2012_segm_results_dir
            directory storing the segmentation results
+
+
+    ***** PASCAL VOC 2007 *****
+    - pascal2007_root_dir
+           directory containing the VOC devkit (which includes images, XMLs,etc)
+    - pascal2007_images_dir
+           directory storing the images (extension: ".jpg")
+    - pascal2007_image_file_extension
+           string: ".jpg"
+    - pascal2007_classes
+           list of strings, representing the 20 classes of VOC
+    - pascal2007_sets_dir
+           directory containing the sets.
+           ** The following textfiles-sets are available:
+           train.txt, val.txt, test.txt, trainval.txt
+           where each line an image-key (name of the image, without .jpg).
+           ** Also, each class has, for the classification task:
+           classname_train.txt, classname_val.txt, classname_test.txt,
+           classname_trainval.txt, each line being "<image-key> <1,-1,0>"
+           (1 for positive, -1 for negative, 0 for difficult)
+    - pascal2007_annotations_dir
+           directory containing the XML files
+
+    ***** GRAYOBFUSCATION PROJECT *****
+    - experiments_output_directory
+           root directory storing all the partial and final results
     """
 
     def __init__(self):
         if os.uname()[1] == 'anthill.cs.dartmouth.edu':
+            # ***** ILSVRC 2012 *****
             ilsvrc2012_root = '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
             self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
@@ -78,14 +102,30 @@ class Configuration:
                 '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/anthill/vlg/caffe_131211/caffe/examples/synset_words.txt'
-            self.pascal2007_images = \
-                '/home/data0/vlg/Data/Images' \
-                '/PASCAL_VOC_2007/VOCdevkit/VOC2007/JPEGImages'
+       	    self.ilsvrc2012_segm_results_dir = \
+                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'\
+                 '/segment_ILSVRC2012' 
+            # ***** PASCAL VOC 2007 *****
+            self.pascal2007_root_dir = \
+                '/home/ironfs/scratch/vlg/Data/Images/PASCAL_VOC_2007'
+            self.pascal2007_images_dir = \
+                self.pascal2007_root_dir + '/JPEGImages'
+            self.pascal2007_image_file_extension = '.jpg'
+            self.pascal2007_classes = \
+                 ['aeroplane','bicycle','bird','boat',\
+                 'bottle','bus','car','cat',\
+                 'chair','cow','diningtable','dog',\
+                 'horse','motorbike','person','pottedplant',\
+                 'sheep','sofa','train','tvmonitor']
+            self.pascal2007_sets_dir = \
+                self.pascal2007_root_dir + '/ImageSets/Main'
+            self.pascal2007_annotations_dir = \
+                self.pascal2007_root_dir + '/Annotations'
+            # ***** GRAYOBFUSCATION PROJECT *****
             self.experiments_output_directory = \
                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'
-       	    self.ilsvrc2012_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' 
 	elif os.uname()[1] == 'alessandro-Linux':
+            # ***** ILSVRC 2012 *****
             ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
             self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
@@ -115,13 +155,30 @@ class Configuration:
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/alessandro/Code/caffe_131211/caffe/examples'\
                 '/synset_words.txt'
-            self.pascal2007_images = '/home/alessandro/Data/VOCdevkit/VOC2007'\
-                '/JPEGImages'
+       	    self.ilsvrc2012_segm_results_dir = \
+                '/home/alessandro/Data_projects/grayobfuscation/'\
+                'segment_ILSVRC2012' 
+            # ***** PASCAL VOC 2007 *****
+            self.pascal2007_root_dir = \
+                '/home/alessandro/Data/VOCdevkit/VOC2007'
+            self.pascal2007_images_dir = \
+                self.pascal2007_root_dir + '/JPEGImages'
+            self.pascal2007_image_file_extension = '.jpg'
+            self.pascal2007_classes = \
+                 ['aeroplane','bicycle','bird','boat',\
+                 'bottle','bus','car','cat',\
+                 'chair','cow','diningtable','dog',\
+                 'horse','motorbike','person','pottedplant',\
+                 'sheep','sofa','train','tvmonitor']
+            self.pascal2007_sets_dir = \
+                self.pascal2007_root_dir + '/ImageSets/Main'
+            self.pascal2007_annotations_dir = \
+                self.pascal2007_root_dir + '/Annotations'
+            # ***** GRAYOBFUSCATION PROJECT *****
             self.experiments_output_directory = \
                 '/home/alessandro/Data_projects/grayobfuscation'
-       	    self.ilsvrc2012_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' 
 	elif os.uname()[1] == 'lbazzani-desk':
+            # ***** ILSVRC 2012 *****
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
             self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
@@ -151,12 +208,28 @@ class Configuration:
             self.ilsvrc2012_caffe_wnids_words = \
                 '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
                 '/synset_words.txt'
-            self.pascal2007_images = '/home/lbazzani/DATASETS/VOC2007'\
-               '/JPEGImages'
+       	    self.ilsvrc2012_segm_results_dir = \
+               '/home/lbazzani/CODE/DATA/obfuscation_results/'\
+               'segment_ILSVRC2012' 
+            # ***** PASCAL VOC 2007 *****
+            self.pascal2007_root_dir = \
+                '/home/lbazzani/DATASETS/VOC2007'
+            self.pascal2007_images_dir = \
+                self.pascal2007_root_dir + '/JPEGImages'
+            self.pascal2007_image_file_extension = '.jpg'
+            self.pascal2007_classes = \
+                 ['aeroplane','bicycle','bird','boat',\
+                 'bottle','bus','car','cat',\
+                 'chair','cow','diningtable','dog',\
+                 'horse','motorbike','person','pottedplant',\
+                 'sheep','sofa','train','tvmonitor']
+            self.pascal2007_sets_dir = \
+                self.pascal2007_root_dir + '/ImageSets/Main'
+            self.pascal2007_annotations_dir = \
+                self.pascal2007_root_dir + '/Annotations'
+            # ***** GRAYOBFUSCATION PROJECT *****
             self.experiments_output_directory = \
                '/home/lbazzani/CODE/DATA/obfuscation_results'
-       	    self.ilsvrc2012_segm_results_dir = \
-	       self.experiments_output_directory + '/segment_ILSVRC2012' 
 	else:
             raise ValueError('The current machine is not supported')
 

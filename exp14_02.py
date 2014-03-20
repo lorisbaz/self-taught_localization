@@ -5,27 +5,26 @@ import os.path
 import skimage.io
 from vlg.util.parfun import *
 
+from heatmap import *
+from network import *
 from configuration import *
-import exp08
+from imgsegmentation import *
+from heatextractor import *
+from htmlreport import *
+import exp14
 
 if __name__ == "__main__":
     # load configurations and parameters  
     conf = Configuration()
-    params = exp08.Params()
+    params = exp14.Params()
     # experiment name
-    params.exp_name = 'exp08_12'
-    # take results from here
-    params.exp_name_input = 'exp14_02'
+    params.exp_name = 'exp14_02'
+    # input (GT AnnotatatedImages)
+    params.exp_name_input = 'exp03_04'
+    # selective search version
+    params.ss_version = 'fast'
     # default Configuration, image and label files
     params.conf = conf
-    # Intersection over Union threshold
-    params.IoU_threshold = 0.5
-    # create also some statistics using a variable number of predictions/image
-    params.stats_using_num_pred_bboxes_image = range(1,16)
-    params.stats_using_num_pred_bboxes_image.extend(\
-        [50, 100, 500, 1e3, 2.5e3, 5e3, 7.5e3, 10e3, 12.5e3, 15e3, 20e3])
-    # delete the pred_objects from the AnnotatedImages
-    params.delete_pred_objects = True
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
@@ -33,10 +32,9 @@ if __name__ == "__main__":
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
     params.run_on_anthill = True
-    params.run_stat_pipeline = True
-    # Set jobname in case the process stop or crush
+    # list of tasks to execute
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    exp08.run_exp(params)
+    exp14.run_exp(params)
 
