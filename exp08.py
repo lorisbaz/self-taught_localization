@@ -35,6 +35,9 @@ class Params:
         # confidence value, equal to position of the BBox objects in the
         # list "AnnotatedObject.bboxes"
         self.replace_confidence_with_position_index = False
+        # max num of subwindows generated per image (if 0, take them all)
+        self.max_subwin = 0
+
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -69,7 +72,8 @@ def pipeline(inputdb, outputdb, params):
             # Extract stats 
             stat_obj = Stats()
             stat_obj.compute_stats(pred_bboxes, gt_bboxes, \
-                                   params.IoU_threshold)
+                                   params.IoU_threshold, \
+                                   max_subwin = params.max_subwin)
             anno.stats[classifier] = stat_obj
             # if requested, delete the pred-objects
             if params.delete_pred_objects:

@@ -22,6 +22,10 @@ if __name__ == "__main__":
     params.IoU_threshold = 0.5
     # create also some statistics using a variable number of predictions/image
     params.stats_using_num_pred_bboxes_image = range(1,16)
+    params.stats_using_num_pred_bboxes_image.extend(\
+                [50, 100, 500, 1e3, 2.5e3, 5e3, 7.5e3, 10e3, 15e3, 20e3])
+    # max num of subwindows generated per image (if 0, take them all)
+    params.max_subwin = 10e4 
     # delete the pred_objects from the AnnotatedImages
     params.delete_pred_objects = True
     # input/output directory
@@ -30,8 +34,8 @@ if __name__ == "__main__":
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = True
-    params.run_stat_pipeline = True
+    params.run_on_anthill = False
+    params.run_stat_pipeline = False
     # Set jobname in case the process stop or crush
     params.task = []
     logging.info('Started')

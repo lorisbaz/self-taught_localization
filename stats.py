@@ -27,7 +27,7 @@ class Stats:
                        self.confidence, self.average_prec)
 
     def compute_stats(self, pred_bboxes, gt_bboxes, IoU_threshold = 0.5, \
-                      fp_overlap_zero = False):
+                      fp_overlap_zero = False, max_subwin = 0):
         """
         Compute the statistics given a list of BBox objects of the 
         predictions and the ground truth. IoU_threshols is the Intersection 
@@ -39,14 +39,12 @@ class Stats:
         for i in range(len(pred_bboxes)):
             pred_confidence.append(pred_bboxes[i].confidence)
         idx_sort = np.argsort(pred_confidence)[::-1]
-        self.confidence = pred_confidence
-
+        self.confidence = pred_confidence 
         # Compute overlap (IoU) -> code translated from PASCAL VOC
-        self.overlap = np.zeros(len(pred_bboxes))
         gt_det = np.zeros(len(gt_bboxes), 'bool')
-        self.FP = np.zeros(len(pred_bboxes))  
-        self.TP = np.zeros(len(pred_bboxes)) 
-        self.overlap = np.zeros(len(pred_bboxes)) 
+        self.FP = np.zeros(len(idx_sort))  
+        self.TP = np.zeros(len(idx_sort)) 
+        self.overlap = np.zeros(len(idx_sort))
         for i in idx_sort:
             ovmax = 0.0
             for j in range(len(gt_bboxes)):
@@ -62,14 +60,23 @@ class Stats:
                     self.TP[i] = 1 # true positive
                     gt_det[jmax] = True # association done!
                 else:
-                    self.FP[i] = 1 # false positive (multiple detection)        
+                    self.FP[i] = 1 # false positive (multiple detection) 
                     if fp_overlap_zero:
                         self.overlap[i] = 0.0
             else:
                 self.FP[i] = 1 # false positive
         # Store the tot num positive for the actual image 
         self.NPOS = len(gt_bboxes) 
-    
+        # Keep the top num_windows 
+        if max_subwin > 0:
+            # select num_windows indexes
+            idx_sort = idx_sort[0:min(len(idx_sort), max_subwin)] 
+            self.overlap = self.overlap[idx_sort]
+            self.FP = self.FP[idx_sort]
+            self.TP = self.TP[idx_sort]
+            self.confidence = np.array(self.confidence)[idx_sort].tolist()
+            # it is a list to keep compatibility
+
     @staticmethod
     def flat_anno_bboxes(bboxes):
         bboxes_flat = []

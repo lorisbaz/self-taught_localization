@@ -3,7 +3,9 @@ from skimage import segmentation
 from scipy import io
 from util import *
 import skimage.io
+import tempfile
 import logging
+import os
 from bbox import *
 
 class ImgSegm:
@@ -289,3 +291,83 @@ class ImgSegmFromMatFiles_List(ImgSegm):
         else:
             segm['mask'] = []
         return segm
+
+
+
+#=============================================================================
+class ImgSegm_SelSearch_Wrap(ImgSegm):
+    """
+    This is a wrapper that runs the selective search matlab function to 
+    extract the segments.
+    """
+
+    def __init__(self, ss_version = 'fast', min_sz_segm = 20):
+        """
+        - ss_version:
+            'fast' (default): uses a reduced set of sel search parameters
+            'quality': uses all the parameters (for more info see IJCV paper)
+        - min_sz_segm: min size of the bbox sorrounding the segment
+        """
+        self.ss_version_ = ss_version 
+        self.min_sz_segm_ = min_sz_segm
+
+    def extract(self, image):
+        """
+        Compute segmentation using matlab function, parse the mat files 
+        and returns a set of nd.array
+
+        RETURNS:
+        - a list of dictionaries {'bbox': BBox, 'mask': int nd.array}
+          The bbox is the outer rectable enclosing the segment.
+          The mask contains only 0, 1 values, and it is relative to the bbox.
+        """    
+	    # Print
+        logging.info('Running MATLAB selective search.')  
+        # dump the images of the AnnotatedImages to temporary files 
+        (fd, img_temp_file) = tempfile.mkstemp(suffix = '.bmp')
+        os.close(fd)
+        img = skimage.io.imsave(img_temp_file, image)
+        # create temporary files for the .mat files
+        (fd, mat_temp_file) = tempfile.mkstemp(suffix = '.mat')
+        os.close(fd)
+        # run the Selective Search Matlab wrapper
+        img_temp_files_cell = '{\'' + img_temp_file + '\'}'
+        mat_temp_files_cell = '{\'' + mat_temp_file + '\'}'
+        matlab_cmd = 'selective_search_obfuscation({0}, {1}, \'{2}\')'\
+                        .format(img_temp_files_cell, mat_temp_files_cell, \
+                                self.ss_version_)
+        command = "matlab -nojvm -nodesktop -r \"try; " + matlab_cmd + \
+                "; catch; exit; end; exit\""
+        logging.info('Executing command ' + command)
+        if os.system(command) != 0:
+            logging.error('Matlab SS script did not exit successfully!')
+            return []
+        # load the .mat file
+        try:
+            segm_mat = scipy.io.loadmat(mat_temp_file)
+        except:
+            logging.error('Exception while loading ' + mat_temp_file)
+        # delete all the temporary files
+        os.remove(img_temp_file)
+        os.remove(mat_temp_file)
+        # Parse segmentation files:  [0,s][i][0][X] X = 'mask', 'rect', 'size' 
+        segm_blobs = segm_mat.get('hBlobs')	 
+        # make segm_blobs more "usable" and filter small segments
+        segm_all_list = []
+        for s in range(np.shape(segm_blobs)[1]): # for each segm mask
+            segm_mask = segm_blobs[0,s]
+            segm_all = []
+            for i in range(len(segm_mask)-1): # for each segment (last = full)
+                # usual crazy/tricky indexing of the loadmat
+                tmp = segm_mask[i][0]['rect'][0][0][0] 
+                if (tmp[3]-tmp[1]-1 >= self.min_sz_segm_) or \
+                    (tmp[2]-tmp[0]-1 >= self.min_sz_segm_): # filter small
+                    # note: rect is [ymin,xmin,ymax,xmax]
+                    bbox = BBox(tmp[1]-1, tmp[0]-1, tmp[3], tmp[2]) 
+                    segm_now = {'bbox': bbox, \
+                                'mask': segm_mask[i][0]['mask'][0][0]}
+                    if segm_now['mask']!=[]:
+                        segm_all.append(segm_now)
+            segm_all_list.append(segm_all)
+        return segm_all_list
+
