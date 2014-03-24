@@ -32,6 +32,8 @@ class Params:
         self.delete_pred_objects = False
         # max num of subwindows generated per image (if 0, take them all)
         self.max_subwin = 0
+        # calculate histogram overlap?
+        self.calculate_histogram = True
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -129,16 +131,17 @@ def run_exp(params):
     # ** Aggregate results 
     logging.info('** Aggregating stats **') 
     num_bins = 32
-    stats_aggr, hist_overlap = Stats.aggregate_results(stats_list, num_bins)
-    # Figure: IoU histogram   (plt.hist(stats_aggr.overlap, num_bins))    
-    plt.bar((hist_overlap[1][0:-1]+hist_overlap[1][1:])/2, hist_overlap[0], \
-            width = 1/float(num_bins))
-    #plt.hist(stats_aggr.overlap, num_bins)
-    plt.title('IoU histogram')
-    plt.xlabel('IoU overlap')
-    plt.savefig(imgs_output_dir + '/hist_overlap.png')
-    plt.savefig(imgs_output_dir + '/hist_overlap.pdf')
-    plt.close()
+    if params.calculate_histogram:
+        stats_aggr, hist_overlap = Stats.aggregate_results(stats_list, num_bins)
+        # Figure: IoU histogram   (plt.hist(stats_aggr.overlap, num_bins))    
+        plt.bar((hist_overlap[1][0:-1]+hist_overlap[1][1:])/2, hist_overlap[0], \
+                width = 1/float(num_bins))
+        #plt.hist(stats_aggr.overlap, num_bins)
+        plt.title('IoU histogram')
+        plt.xlabel('IoU overlap')
+        plt.savefig(imgs_output_dir + '/hist_overlap.png')
+        plt.savefig(imgs_output_dir + '/hist_overlap.pdf')
+        plt.close()
     # ** Aggregating stats for variable number of subwindows per image
     if len(params.stats_using_num_pred_bboxes_image) > 0:
         recall_all = []
