@@ -1,8 +1,9 @@
-function selective_search(testIms, outFiles, ss_version)
+function [bboxes_all, priority_all, img_width_all, img_height_all] = selective_search(testIms, outFiles, ss_version)
 % Extract the SelectiveSearch bboxes, using the original pipeline
 % described in the demo "demoPascal2007.m SelectiveSearch toolbox"
 %
-% Each MAT output file will contain the following variables:
+% If outFiles is not empty, then for each testIms{i} the function writes the MAT file outFiles{i}
+% containing the variables:
 %  img_width: width of the image
 %  img_height: height of the image
 %  bboxes: [N x 4] matrix, each row is [xmin, ymin, xmax, ymax]
@@ -12,13 +13,21 @@ function selective_search(testIms, outFiles, ss_version)
 %  selective_search({'ILSVRC2012_val_00000001_n01751748.JPEG','ILSVRC2012_val_00000001_n01751748.JPEG'}, {'temp.mat', 'temp2.mat'})
 %
 % INPUT:
-%  testIms: cell-array containing the list of image filenames
+%  testIms: cell-array containing the list of the M image filenames
 %  ss_version: either 'quality' (default), or 'fast'
 %
 % OUTPUT:
-%  nothing, the function writes the output to files.
+%  img_width_all: cell array of M elements, each being of type 'img_width'
+%  img_height_all: cell array of M elements, each being of type 'img_height'
+%  bboxes_all: cell array of M elements, each being of type 'bboxes'
+%  priority_all: cell array of M elements, each being of type 'priority'
 
-assert(numel(testIms) == numel(outFiles));
+% input checks
+if ~isempty(outFiles)
+  assert(numel(testIms) == numel(outFiles));
+end
+
+% default input arguments
 if nargin < 3
   ss_version = 'quality';
 end
@@ -54,6 +63,10 @@ end
 
 % Test the boxes
 totalTime = 0;
+bboxes_all = {};
+priority_all = {};
+img_width_all = {};
+img_height_all = {};
 for i=1:length(testIms)
     fprintf('extracting SS for %s\n', testIms{i});
     try
@@ -102,10 +115,20 @@ for i=1:length(testIms)
       % convert the boxes coordinates to the PASCAL standard [xmin, ymin, xmax, ymax]
       bboxes = [boxes(:,2) , boxes(:,1) , boxes(:,4) , boxes(:,3)];
 
-      % saving
+      % image size
       img_width = size(im, 2);
       img_height = size(im, 1);
-      save(outFiles{i}, 'bboxes', 'priority', 'img_width', 'img_height');
+      
+      % saving (if requested)
+      if ~isempty(outFiles)
+        save(outFiles{i}, 'bboxes', 'priority', 'img_width', 'img_height');
+      end
+      
+      % return values
+      bboxes_all{i} = bboxes;
+      priority_all{i} = priority;
+      img_width_all{i} = img_width;
+      img_height_all{i} = img_height;  
     catch Exception
       Exception
       fprintf('AN ERROR HAS OCCURED!\n');      
