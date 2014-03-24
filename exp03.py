@@ -137,7 +137,7 @@ def pipeline(images, outputdb, outputhtml, params):
                 ymin = int(bbox.find('ymin').text)
                 xmax = int(bbox.find('xmax').text)
                 ymax = int(bbox.find('ymax').text)
-                bb = BBox(xmin, ymin, xmax, ymax)
+                bb = BBox(xmin-1, ymin-1, xmax, ymax)
                 bb.normalize_to_outer_box(bbox_center_crop)
                 bb.intersect(BBox(0.0, 0.0, 1.0, 1.0))
                 # it can happen that the gt bbox is outside the center bbox
