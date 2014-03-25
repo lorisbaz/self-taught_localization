@@ -152,13 +152,13 @@ def selective_search(images, ss_version):
         assert img_height > 0
         bboxes = mat.get('bboxes')
         assert bboxes.shape[1] == 4
-        priority = mat.get('priority')
-        assert priority.shape[1] == 1
-        assert priority.shape[0] == bboxes.shape[0]
+        confidence = mat.get('confidence')
+        assert confidence.shape[1] == 1
+        assert confidence.shape[0] == bboxes.shape[0]
         bbs = []
         for j in range(bboxes.shape[0]):
             bb = BBox(bboxes[j,0]-1, bboxes[j,1]-1, bboxes[j,2], bboxes[j,3], \
-                      priority[j,0])
+                      confidence[j,0])
             bb.normalize_to_outer_box(BBox(0, 0, img_width, img_height))
             bbs.append(bb)
         bboxes_all.append(bbs)

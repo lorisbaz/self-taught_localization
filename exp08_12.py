@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # create also some statistics using a variable number of predictions/image
     params.stats_using_num_pred_bboxes_image = range(1,16)
     params.stats_using_num_pred_bboxes_image.extend(\
-        [50, 100, 500, 1e3, 2.5e3, 5e3, 7.5e3, 10e3, 12.5e3, 15e3, 20e3])
+        [50, 100, 500, 1e3, 2.5e3])
     # delete the pred_objects from the AnnotatedImages
     params.delete_pred_objects = True
     # input/output directory

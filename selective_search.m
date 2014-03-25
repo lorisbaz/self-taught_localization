@@ -1,4 +1,4 @@
-function [bboxes_all, priority_all, img_width_all, img_height_all] = selective_search(testIms, outFiles, ss_version)
+function [bboxes_all, confidence_all, img_width_all, img_height_all] = selective_search(testIms, outFiles, ss_version)
 % Extract the SelectiveSearch bboxes, using the original pipeline
 % described in the demo "demoPascal2007.m SelectiveSearch toolbox"
 %
@@ -7,7 +7,8 @@ function [bboxes_all, priority_all, img_width_all, img_height_all] = selective_s
 %  img_width: width of the image
 %  img_height: height of the image
 %  bboxes: [N x 4] matrix, each row is [xmin, ymin, xmax, ymax]
-%  priority: [N x 1] vector, each element containing the confidence value
+%  confidence: [N x 1] vector, each element containing the confidence value
+%                      (higher values mean higher chance to contain objects)
 %
 % Example usage:
 %  selective_search({'ILSVRC2012_val_00000001_n01751748.JPEG','ILSVRC2012_val_00000001_n01751748.JPEG'}, {'temp.mat', 'temp2.mat'})
@@ -20,7 +21,7 @@ function [bboxes_all, priority_all, img_width_all, img_height_all] = selective_s
 %  img_width_all: cell array of M elements, each being of type 'img_width'
 %  img_height_all: cell array of M elements, each being of type 'img_height'
 %  bboxes_all: cell array of M elements, each being of type 'bboxes'
-%  priority_all: cell array of M elements, each being of type 'priority'
+%  confidence_all: cell array of M elements, each being of type 'confidence'
 
 % input checks
 if ~isempty(outFiles)
@@ -64,7 +65,7 @@ end
 % Test the boxes
 totalTime = 0;
 bboxes_all = {};
-priority_all = {};
+confidence_all = {};
 img_width_all = {};
 img_height_all = {};
 for i=1:length(testIms)
@@ -119,14 +120,17 @@ for i=1:length(testIms)
       img_width = size(im, 2);
       img_height = size(im, 1);
       
+      % the confidence is the inverse of the SS priority
+      confidence = -1 .* priority;
+      
       % saving (if requested)
       if ~isempty(outFiles)
-        save(outFiles{i}, 'bboxes', 'priority', 'img_width', 'img_height');
+        save(outFiles{i}, 'bboxes', 'confidence', 'img_width', 'img_height');
       end
       
       % return values
       bboxes_all{i} = bboxes;
-      priority_all{i} = priority;
+      confidence_all{i} = confidence;
       img_width_all{i} = img_width;
       img_height_all{i} = img_height;  
     catch Exception
