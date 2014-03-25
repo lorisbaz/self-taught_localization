@@ -37,9 +37,9 @@ i = 0;
 exp_set = struct([]);
 experiments_output_directory = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
 plot_GT = 0;
-plot_Top5 = 0;
-plot_SS = 0;
-plot_BING = 1;
+plot_Top5 = 1;
+plot_SS = 1;
+plot_BING_Pascal2007 = 0;
 
 % *** GT
 if plot_GT
@@ -105,13 +105,13 @@ for k = 1:length(exp_set)
 end
 
 % *** BING
-if plot_BING
+if plot_BING_Pascal2007
     load('plot_defs.mat');
     i = i + 1;
     exp_set(i).name = '(from paper)';
     exp_set(i).spec = 'BING';
-    exp_set(i).method = 'DR';
-    exp_set(i).color = MATLAB.Color.blue;
+    exp_set(i).method = 'DR (Pascal 2007)';
+    exp_set(i).color = MATLAB.Color.red;
     plot(1:numel(DR), DR, 'Color', exp_set(i).color, 'LineWidth', 3);
     legend_stuff{i} =  [exp_set(i).spec ' - ' exp_set(i).method ' (' ...
         exp_set(i).name ')'];    
