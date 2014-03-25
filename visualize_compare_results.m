@@ -34,13 +34,15 @@ MATLAB.Colors_all = {MATLAB.Color.yellow, MATLAB.Color.magenta, MATLAB.Color.ora
 
 % init
 i = 0;
+exp_set = struct([]);
 experiments_output_directory = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
-GT = 0;
-Top5 = 1;
-SS = 1;
+plot_GT = 0;
+plot_Top5 = 0;
+plot_SS = 0;
+plot_BING = 1;
 
 % *** GT
-if GT
+if plot_GT
     i = i + 1;
     exp_set(i).name = 'exp08_03';
     exp_set(i).spec = 'GT label';
@@ -61,7 +63,7 @@ if GT
 end
 
 % *** Top 5
-if Top5
+if plot_Top5
     i = i + 1;
     exp_set(i).name = 'exp08_08';
     exp_set(i).spec = 'Top 5 labels';
@@ -82,7 +84,7 @@ if Top5
 end
 
 % *** SS
-if SS
+if plot_SS
     i = i + 1;
     exp_set(i).name = 'exp08_12';
     exp_set(i).spec = '';
@@ -93,14 +95,28 @@ end
 figure(121);
 hold on;
 legend_stuff = cell(length(exp_set),1);
-for i = 1:length(exp_set)
-    load([experiments_output_directory '/' exp_set(i).name ...
+for k = 1:length(exp_set)
+    load([experiments_output_directory '/' exp_set(k).name ...
         '/mat/recall_vs_numPredBboxesImage.mat'])
-    plot(eval(['x_values_' exp_set(i).name]), eval(['recall_' ...
-        exp_set(i).name]),'Color',exp_set(i).color, 'LineWidth', 3)
-    legend_stuff{i} =  [exp_set(i).spec ' - ' exp_set(i).method ' (' ...
-        exp_set(i).name ')'];
+    plot(eval(['x_values_' exp_set(k).name]), eval(['recall_' ...
+        exp_set(k).name]),'Color',exp_set(k).color, 'LineWidth', 3)
+    legend_stuff{k} =  [exp_set(k).spec ' - ' exp_set(k).method ' (' ...
+        exp_set(k).name ')'];
 end
+
+% *** BING
+if plot_BING
+    load('plot_defs.mat');
+    i = i + 1;
+    exp_set(i).name = '(from paper)';
+    exp_set(i).spec = 'BING';
+    exp_set(i).method = 'DR';
+    exp_set(i).color = MATLAB.Color.blue;
+    plot(1:numel(DR), DR, 'Color', exp_set(i).color, 'LineWidth', 3);
+    legend_stuff{i} =  [exp_set(i).spec ' - ' exp_set(i).method ' (' ...
+        exp_set(i).name ')'];    
+end
+
 hold off;
 grid on;
 legend(legend_stuff, 'Interpreter', 'none')
@@ -108,4 +124,6 @@ axis([1, 20, 0, 1])
 xlabel('Num subwindows')
 ylabel('Recall')
 title('Results on ILSVRC2012-val-200')
+
+
 
