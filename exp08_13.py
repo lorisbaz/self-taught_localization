@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # create also some statistics using a variable number of predictions/image
     params.stats_using_num_pred_bboxes_image = range(1,16)
     params.stats_using_num_pred_bboxes_image.extend(\
-                [50, 100, 500, 1e3, 2.5e3, 5e3, 7.5e3, 10e3, 15e3, 20e3])
+                [50, 100, 500, 1e3, 2.5e3, 5e3])
     # max num of subwindows generated per image (if 0, take them all)
     params.max_subwin = 10e4 
     # delete the pred_objects from the AnnotatedImages
@@ -36,6 +36,7 @@ if __name__ == "__main__":
     # parallelize the script on Anthill?
     params.run_on_anthill = False
     params.run_stat_pipeline = False
+    params.calculate_histogram = False
     # Set jobname in case the process stop or crush
     params.task = []
     logging.info('Started')
