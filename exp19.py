@@ -74,15 +74,14 @@ def pipeline(image_keys, outputdb, outputhtml, params):
             label = xmlobj.find('name').text.strip()
             if label not in anno.gt_objects:
                 anno.gt_objects[label] = AnnotatedObject(label)
-            bboxes = xmlobj.findall('bndbox')
-            for bbox in bboxes:
-                xmin = int(bbox.find('xmin').text)
-                ymin = int(bbox.find('ymin').text)
-                xmax = int(bbox.find('xmax').text)
-                ymax = int(bbox.find('ymax').text)
-                bb = BBox(xmin-1, ymin-1, xmax, ymax)
-                bb.normalize_to_outer_box(BBox(0,0,size_width,size_height))
-                anno.gt_objects[label].bboxes.append(bb)
+            bbox = xmlobj.find('bndbox')
+            xmin = int(bbox.find('xmin').text)
+            ymin = int(bbox.find('ymin').text)
+            xmax = int(bbox.find('xmax').text)
+            ymax = int(bbox.find('ymax').text)
+            bb = BBox(xmin-1, ymin-1, xmax, ymax)
+            bb.normalize_to_outer_box(BBox(0,0,size_width,size_height))
+            anno.gt_objects[label].bboxes.append(bb)
         logging.info(str(anno))
         # visualize the annotation to a HTML row
         htmlres.add_annotated_image_embedded(anno)

@@ -1,18 +1,20 @@
 function selective_search_pascal()
-% This script is a debugging script that computes the SS performance on PASCAL VOC.
+% This script is a debugging script that computes the SS performance on PASCAL VOC,
+% using the same Matlab script we use in our Python wrapper.
 %
 % NOTE: this is very hacky code, not meant to be really used :)
 
 addpath('~/toolbox');
 addpath('/home/anthill/vlg/SelectiveSearchCodeIJCV');
 addpath('/home/anthill/vlg/SelectiveSearchCodeIJCV/Dependencies');
+addpath('/home/anthill/aleb/clients/vlg/vlg/experimental/grayobfuscation');
 
 params = [];
 
 % pascal 2007 root dir
 params.root_dir = '/home/ironfs/scratch/vlg/Data/Images/PASCAL_VOC_2007';
 % output directory
-params.out_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/test_aleb';
+params.out_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/test_aleb_shuffle';
 % ss version
 params.ss_version = 'fast';
 % output file
@@ -43,7 +45,7 @@ if ~exist(params.out_file, 'file')
   fun_parameters = {testImgs, params};
   fun_parameters_to_parallize = [1 0];
   num_tasks = 500;
-  parallelize_function(fun_handler, fun_parameters, fun_parameters_to_parallize, num_tasks, options3);
+  %parallelize_function(fun_handler, fun_parameters, fun_parameters_to_parallize, num_tasks, options3);
 
   % compact everything in a single file
   load(params.gt_bboxes, 'testIms');
@@ -61,7 +63,7 @@ if ~exist(params.out_file, 'file')
      pred_bboxes{i}.img_width = S.img_width;
      pred_bboxes{i}.img_height = S.img_height;
      pred_bboxes{i}.bboxes = S.bboxes;
-     pred_bboxes{i}.priority = S.priority;
+     pred_bboxes{i}.confidence = S.confidence;
   end
   
   % saving
@@ -72,11 +74,11 @@ end
 load(params.gt_bboxes);
 load(params.out_file);
 
-% sort the priorities and swap x/y
+% sort the confidence and swap x/y
 for i=1:numel(pred_bboxes)
-  aa = pred_bboxes{i}.priority;
-  [~, idxsort] = sort(aa, 'ascend');
-  pred_bboxes{i}.priority = pred_bboxes{i}.priority(idxsort);
+  aa = pred_bboxes{i}.confidence;
+  [~, idxsort] = sort(aa, 'descend');
+  pred_bboxes{i}.confidence = pred_bboxes{i}.confidence(idxsort);
   bbb = pred_bboxes{i}.bboxes(idxsort,:);
   bbb = [bbb(:,2), bbb(:,1), bbb(:,4), bbb(:,3)];
   pred_bboxes{i}.bboxes = bbb;
@@ -94,13 +96,13 @@ if 1
     recall = sum(maxScoresFlat > 0.5) / numel(maxScoresFlat);
     recall_all(i) = recall;
   end
-  save('temp_recall.mat', 'recall_all');
+  save([params.out_dir '/temp_recall.mat'], 'recall_all');
   h=figure;
   hold on;
   xlabel('num bboxes per image');
   ylabel('recall');
   plot(params.max_num_pred_bboxes, recall_all, '-bo');
-  saveas(h,'recall.fig');  
+  saveas(h, [params.out_dir '/recall.fig']);  
 end
   
 if 1
@@ -116,13 +118,13 @@ if 1
     end
     recall_mean_all(i) = mean(recall);
   end
-  save('temp_recall_mean.mat', 'recall_mean_all');
+  save([params.out_dir '/temp_recall_mean.mat'], 'recall_mean_all');
   h=figure;
   hold on;
   xlabel('num bboxes per image');
   ylabel('mean recall (over the classes)');
   plot(params.max_num_pred_bboxes, recall_mean_all, '-rx');
-  saveas(h,'recall_mean.fig');  
+  saveas(h, [params.out_dir '/recall_mean.fig']);  
 end
 
 end
@@ -172,6 +174,7 @@ function val = selective_search_pascal_support(testImg, params)
 val = 0;
 
 system('uname -a');
+addpath('/home/anthill/aleb/clients/vlg/vlg/experimental/grayobfuscation');
 
 infile = [params.root_dir '/JPEGImages/' testImg '.jpg'];
 outfile = [params.out_dir '/testImgs/' testImg '.mat'];

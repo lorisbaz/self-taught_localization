@@ -73,6 +73,7 @@ for i=1:length(testIms)
     try
       % reset the pseudo-random number generator, so to have deterministic results
       rng('default');
+      
       % load the image
       im = imread(testIms{i});
       % try many Segmentation thresholds k
