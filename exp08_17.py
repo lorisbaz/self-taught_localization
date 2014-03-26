@@ -13,9 +13,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp08.Params()
     # experiment name
-    params.exp_name = 'exp08_16'
+    params.exp_name = 'exp08_17'
     # take results from here
-    params.exp_name_input = 'exp21_01'
+    params.exp_name_input = 'exp06_12'
     # default Configuration, image and label files
     params.conf = conf
     # Intersection over Union threshold
@@ -27,16 +27,14 @@ if __name__ == "__main__":
     params.max_subwin = 6e3 
     # delete the pred_objects from the AnnotatedImages
     params.delete_pred_objects = True
-    # skip the histogram calculation
-    params.calculate_histogram = False
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = False
-    params.run_stat_pipeline = False
+    params.run_on_anthill = True
+    params.run_stat_pipeline = True
     # Set jobname in case the process stop or crush
     params.task = []
     logging.info('Started')
