@@ -113,4 +113,19 @@ class AnnotatedImage:
     def set_stats(self):
         self.stats = {}
 
+    def extend_pred_objects(self, anno, classifier):
+        """
+        This function extend the predicted objects in self with the pred_objs
+        It keeps the label and confidence of self in case of collision.
+        """
+        for eachkey in anno.pred_objects[classifier].keys():
+            # check existing key
+            if self.pred_objects[classifier].has_key(eachkey): # collision
+                self.pred_objects[classifier][eachkey].bboxes.extend( \
+                          anno.pred_objects[classifier][eachkey].bboxes)
+                self.pred_objects[classifier][eachkey].heatmaps.extend( \
+                          anno.pred_objects[classifier][eachkey].heatmaps)
+            else: # add the key
+                self.pred_objects[classifier][eachkey] = \
+                                    anno.pred_objects[classifier][eachkey]
 
