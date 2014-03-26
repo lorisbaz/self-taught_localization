@@ -20,7 +20,8 @@ from util import *
 
 class Params:
     def __init__(self):
-        pass
+        # include the heatmap generated with the GT label scores?
+        self.include_gt_label_heatmap = True
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -60,9 +61,11 @@ def pipeline(inputdb, outputdb, params):
         logging.info('***** Elaborating ' + os.path.basename(anno.image_name))  
         # sync segmentation loader  
         anno.segmentation_name = 'ImgSegm_SelSearch_Wrap'
-        # heatmaps extraction (with gt_label)
-        heatmaps, top_labels, top_accuracies = heatext.extract(img, \
-                                                       anno.get_gt_label()) 
+        # heatmaps extraction (with gt_label, if requested)
+        label = ''
+        if params.include_gt_label_heatmap:
+            label = anno.get_gt_label()
+        heatmaps, top_labels, top_accuracies = heatext.extract(img, label) 
         # Init object to save (dictionary of dictionary) 
         pred_tmp_object = {}
         for j in range(len(top_labels)):
@@ -118,8 +121,9 @@ def run_exp(params):
     # run the pipeline
     parfun = None
     if params.run_on_anthill:
-    	parfun = ParFunAnthill(pipeline, time_requested = 10, \
-                               job_name = params.job_name)    	 
+        jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
+    	parfun = ParFunAnthill(pipeline, time_requested=23, \
+            job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline)
     if len(params.task) == 0:

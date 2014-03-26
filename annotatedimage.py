@@ -53,6 +53,8 @@ class AnnotatedImage:
                   The unique file identifier of the image
                   (i.e. 'val/ILSVRC2012_val_00000001.JPEG')
     - gt_objects: dictionary  {'label'} -> AnnotatedObject
+                  Note that the confidence values must be set (with any value)
+                  if you want to use the method get_gt_label()
     - pred_objects: dictionary {'name'} -> ({'label'} -> AnnotatedObject)
     - crop_description: string, containing a description regarding how the image
                         has been generated from its original version
@@ -102,7 +104,7 @@ class AnnotatedImage:
         Return the top-scoring (full image) gt label.
         """
         label = ''
-        max_conf = sys.float_info.min
+        max_conf = -sys.float_info.max
         for key, obj in self.gt_objects.iteritems():
             assert key == obj.label
             if (obj.confidence != None) and (obj.confidence > max_conf):
