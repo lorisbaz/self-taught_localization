@@ -11,7 +11,7 @@ params.out_file = '/home/anthill/vlg/SelectiveSearchCodeIJCV/demoPascal2007.mat'
 % gt file
 params.gt_bboxes = ['/home/anthill/vlg/SelectiveSearchCodeIJCV/GroundTruthVOC2007test.mat'];
 % max_num_pred_bboxes
-params.max_num_pred_bboxes = [50, 100, 500, 1000, 2500];
+params.max_num_pred_bboxes = [50, 100, 200, 300, 400, 500, 750, 1000, 1500, 2500];
 
 
 % load the pred and gt boxes
