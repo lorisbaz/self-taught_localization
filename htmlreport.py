@@ -62,8 +62,10 @@ class HtmlReport():
             for label in anno.pred_objects[classifier].keys():
                 # Load and visualize heatmaps
                 ann_pred = anno.pred_objects[classifier][label]
+                assert ann_pred.label == label
                 # Draw img and bboxes associated to the current avg heatmap
-                desc = '{0}-{1}'.format(ann_pred.label, anno.image_name)
+                desc = 'imagename:{0}; classifier:{1}; label:{2}'.format(\
+                         anno.image_name, classifier, label)
                 np_bbox = np.zeros((4,len(ann_pred.bboxes)))
                 for j in range(len(ann_pred.bboxes)):
                     np_bbox[0,j] = ann_pred.bboxes[j].xmin * width
@@ -84,7 +86,7 @@ class HtmlReport():
                 visual_factor = 1.0 / max_value
                 for j in range(len(ann_pred.heatmaps)):
                     heatmaps.append(ann_pred.heatmaps[j].heatmap)
-                    desc = 'Heatmap'
+                    desc = 'Heatmap:{0}'.format(j)
                     self.add_image_embedded( \
                                    heatmaps[j]*visual_factor, \
                                    max_size = img_max_size, \

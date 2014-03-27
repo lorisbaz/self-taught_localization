@@ -28,42 +28,6 @@ class Params:
         self.extract_bbox_from_individual_heatmaps = False
         self.top_C_classes = 0
 
-def visualize_heatmap_box(img, heatmaps, heatmap_avg, \
-                          out_image_desc, out_bboxes):
-    """
-    Function useful for visualizing partial results during debuging.
-    """
-    import matplotlib.pyplot as plt
-    plt.subplot(3,4,1)
-    plt.imshow(img)
-    plt.title('Cropped img')
-    height, width = np.shape(img)[0:2]
-    for i in range(len(out_bboxes)):
-        logging.info(str(out_bboxes[i]))
-        out_bboxes[i].xmin = out_bboxes[i].xmin * width
-        out_bboxes[i].xmax = out_bboxes[i].xmax * width
-        out_bboxes[i].ymin = out_bboxes[i].ymin * height
-        out_bboxes[i].ymax = out_bboxes[i].ymax * height
-        rect = plt.Rectangle((out_bboxes[i].xmin, out_bboxes[i].ymin), \
-                              out_bboxes[i].xmax - out_bboxes[i].xmin, \
-                              out_bboxes[i].ymax - out_bboxes[i].ymin, \
-                              facecolor="#ff0000", alpha=0.4)
-        plt.gca().add_patch(rect)
-    for i in range(np.shape(heatmaps)[0]):
-        plt.subplot(3,4,i+2)
-        plt.imshow(heatmaps[i])
-    plt.subplot(3,4,np.shape(heatmaps)[0]+2)
-    plt.imshow(heatmap_avg)
-    plt.title('Avg Heatmap')
-    plt.subplot(3,4,np.shape(heatmaps)[0]+3)
-    plt.imshow(out_image_desc[0][0])
-    plt.title(out_image_desc[0][1])
-    plt.subplot(3,4,np.shape(heatmaps)[0]+4)
-    plt.imshow(out_image_desc[1][0])
-    plt.title(out_image_desc[1][1])
-    plt.show()
-
-
 def pipeline(inputdb, outputdb, outputhtml, params):
     """
     Run the pipeline for this experiment. images is a list of
@@ -92,7 +56,7 @@ def pipeline(inputdb, outputdb, outputhtml, params):
                       os.path.basename(anno.image_name))
         assert len(anno.pred_objects) == 1  # for the visualization
         # Bbox extraction
-        out_image_desc = []
+        out_image_desc_all = []
         for classifier in anno.pred_objects.keys():
             #assert len(anno.pred_objects[classifier]) == 1
             if params.top_C_classes == 0: # use only the GT
@@ -120,26 +84,32 @@ def pipeline(inputdb, outputdb, outputhtml, params):
                     # Extract Bounding box using heatmap
                     out_bboxes, out_image_desc = \
                                     bbox_extractor.extract(img, [heatmap_avg])
-                    # visualize partial results for debug
-                    #visualize_heatmap_box(img, heatmaps, heatmap_avg, \
-                    #                      out_image_desc, out_bboxes)
-                    # Save bboxes in the output database
                     anno.pred_objects[classifier][label].bboxes\
                             .extend(out_bboxes)
+                    for desc in out_image_desc:
+                        desc2 = 'AVG heatmap. classifier:{0}; label:{1}; '\
+                                'info:{2}'.format(\
+                                classifier, label, desc[1])
+                        out_image_desc_all.append((desc[0], desc2))
                 # Extract the bboxes from the individual heatmaps
                 if params.extract_bbox_from_individual_heatmaps:
                     ann_heatmaps = anno.pred_objects[classifier][label].heatmaps
-                    for ann_heat in ann_heatmaps:
+                    for idx_heat, ann_heat in enumerate(ann_heatmaps):
                         out_bboxes, out_image_desc = \
                                 bbox_extractor.extract(img, [ann_heat.heatmap])
                         anno.pred_objects[classifier][label].bboxes\
                                 .extend(out_bboxes)
+                        for desc in out_image_desc:
+                            desc2 = 'Heatmap: {0}; classifier:{1}; '\
+                                    'label:{2}; info:{3}'.format(\
+                                    idx_heat, classifier, label, desc[1])
+                            out_image_desc_all.append((desc[0], desc2))
         logging.info(str(anno))
         # visualize the annotation to a HTML row
         htmlres.add_annotated_image_embedded(anno, \
                         img_max_size=params.html_max_img_size)
         # visualize the debugging images
-        for img, desc in out_image_desc:
+        for img, desc in out_image_desc_all:
             htmlres.add_image_embedded(img, \
                                        max_size = params.html_max_img_size, \
                                        text = desc)
