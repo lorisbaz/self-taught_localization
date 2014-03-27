@@ -36,13 +36,14 @@ class Params:
         # calculate histogram overlap?
         self.calculate_histogram = True
     
-def compute_statistics_exp(input_exp, output_exp, run_on_anthill = True, \
-                             run_stat_pipeline = True, stats_per_class = True):
+def compute_statistics_exp(input_exp, run_on_anthill = True, \
+                             run_stat_pipeline = True, stats_per_class = True,\
+                             tasks = []):
     """
     Computes the statistics for the exp input_exp and save in output_exp folder
     To generate the db results make sure that the run_stat_pipeline is True.
+    They will be store in input_exp + '/stats/'
     - input_exp: name of the input exp, with the bbox results
-    - output_exp: name of the output exp, where the statistics will be saved
     - run_on_anthill: if you want to run on the cluster
     - run_stat_pipeline: if you want to compute the stats (first time that you
                         run the script for a new dataset this has to be = True)
@@ -51,7 +52,7 @@ def compute_statistics_exp(input_exp, output_exp, run_on_anthill = True, \
     conf = Configuration()
     params = Params()
     # experiment name
-    params.exp_name = output_exp
+    params.exp_name = input_exp + 'stats/'
     # take results from here
     params.exp_name_input = input_exp
     # default Configuration, image and label files
@@ -75,7 +76,7 @@ def compute_statistics_exp(input_exp, output_exp, run_on_anthill = True, \
     params.run_on_anthill = run_on_anthill
     params.run_stat_pipeline = run_stat_pipeline
     # Set jobname in case the process stop or crush
-    params.task = [0,10]
+    params.task = tasks
     logging.info('Started')
     # RUN THE EXPERIMENT
     if stats_per_class:
