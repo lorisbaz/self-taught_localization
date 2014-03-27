@@ -22,6 +22,8 @@ class Params:
     def __init__(self):
         # include the heatmap generated with the GT label scores?
         self.include_gt_label_heatmap = True
+        # scores quantile
+        self.quantile_pred = 1.0
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -45,7 +47,7 @@ def pipeline(inputdb, outputdb, params):
     heatext = HeatmapExtractorBox(net, params.gray_par, \
                 confidence_tech = params.heatextractor_confidence_tech, \
                 area_normalization = params.heatextractor_area_normalization, \
-                num_pred = params.topC)
+                num_pred = params.topC, quantile_pred=params.quantile_pred)
     print outputdb
     db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')
