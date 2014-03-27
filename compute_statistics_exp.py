@@ -52,7 +52,7 @@ def compute_statistics_exp(input_exp, run_on_anthill = True, \
     conf = Configuration()
     params = Params()
     # experiment name
-    params.exp_name = input_exp + 'stats/'
+    params.exp_name = input_exp + 'stats'
     # take results from here
     params.exp_name_input = input_exp
     # default Configuration, image and label files
