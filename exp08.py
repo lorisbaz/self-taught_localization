@@ -145,12 +145,20 @@ def run_exp(params):
     # ** Aggregating stats for variable number of subwindows per image
     if len(params.stats_using_num_pred_bboxes_image) > 0:
         recall_all = []
+        precision_all = []
+        average_precision_all = []
         for num_pred_bboxes in params.stats_using_num_pred_bboxes_image:
             logging.info('num_pred_bboxes: {0}'.format(num_pred_bboxes))
             stat_agg, hist_overlap = Stats.aggregate_results(\
                               stats_list, num_bins, num_pred_bboxes)
             recall_all.append(np.max(stat_agg.recall))
+            precision_all.append(np.max(stat_agg.precision))
+            average_precision_all.append(stat_agg.average_prec)
         assert len(recall_all) == len(params.stats_using_num_pred_bboxes_image)
+        assert len(precision_all) == \
+                    len(params.stats_using_num_pred_bboxes_image)
+        assert len(average_precision_all) == \
+                    len(params.stats_using_num_pred_bboxes_image)
         # Figure: recall vs numPredBboxesImage
         line, = plt.plot(params.stats_using_num_pred_bboxes_image,\
                          recall_all, \
@@ -163,7 +171,10 @@ def run_exp(params):
         # Save .mat file for visualization in matlab (use aggregate_results.m)
         savemat(mat_output_dir + '/recall_vs_numPredBboxesImage',\
                     {'recall_' + params.exp_name: recall_all, \
+                    'precision_' + params.exp_name: precision_all, \
                     'x_values_' + params.exp_name: \
-                            params.stats_using_num_pred_bboxes_image})
+                            params.stats_using_num_pred_bboxes_image, \
+                    'average_precision_' + params.exp_name: \
+                            average_precision_all})
     # exit
     logging.info('End of the script')

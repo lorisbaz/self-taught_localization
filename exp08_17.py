@@ -29,11 +29,11 @@ if __name__ == "__main__":
     params.delete_pred_objects = True
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
-                        + '/' + params.exp_name
+                        + '/ '+ params.exp_name
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = True
+    params.run_on_anthill = False
     params.run_stat_pipeline = True
     # Set jobname in case the process stop or crush
     params.task = []

@@ -64,23 +64,29 @@ end
 
 % *** Top 5
 if plot_Top5
-    i = i + 1;
-    exp_set(i).name = 'exp08_08';
-    exp_set(i).spec = 'Top 5 labels';
-    exp_set(i).method = 'GraySegm';
-    exp_set(i).color = [0.4177    0.6981    0.0326];
+%     i = i + 1;
+%     exp_set(i).name = 'exp08_08';
+%     exp_set(i).spec = 'Top 5 labels';
+%     exp_set(i).method = 'GraySegm';
+%     exp_set(i).color = [0.4177    0.6981    0.0326];
     
     i = i + 1;
     exp_set(i).name = 'exp08_09';
     exp_set(i).spec = 'Top 5 labels';
     exp_set(i).method = 'GrayBox';
-    exp_set(i).color = [0.9831    0.6665    0.5612];
+    exp_set(i).color = MATLAB.Color.brown;
     
     i = i + 1;
     exp_set(i).name = 'exp08_10';
     exp_set(i).spec = 'Top 5 labels';
     exp_set(i).method = 'ClassicSliding';
-    exp_set(i).color = [0.3015    0.1781    0.8819];
+    exp_set(i).color = MATLAB.Color.cyan;
+
+    i = i + 1;
+    exp_set(i).name = 'exp08_17';
+    exp_set(i).spec = 'Top 5 labels';
+    exp_set(i).method = 'GraySegm';
+    exp_set(i).color = MATLAB.Color.orangeLight;
 end
 
 % *** SS
