@@ -39,6 +39,8 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
         area_normalization: normalize by area of the segment
         image_transform: 'original' or 'warping'
         num_pred: take the best num_pred and build the heatmaps
+                    if 0, we keep only the label provided in the extract method 
+                    (which clearly has to be given)
         """
         self.network_ = network
         self.segment_ = segment
@@ -53,7 +55,11 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
         (Heatmap objects)
         """
         # retrieve the label id
-        lab_id = self.network_.get_label_id(label)    
+        if label == '':
+            assert self.num_pred_ > 0, 'parameter label has to be specified'
+            lab_id = None
+        else:
+            lab_id = self.network_.get_label_id(label)
         # Init the list of heatmaps
         heatmaps = []
         if (self.image_trans_=='warped'):
@@ -68,7 +74,7 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
             labels = self.network_.get_labels()
             idx_top_c = np.argsort(caffe_rep_full)[::-1]
             idx_top_c = idx_top_c[0:self.num_pred_].tolist()
-            if not(lab_id in idx_top_c):
+            if (lab_id != None) and not(lab_id in idx_top_c):
                 idx_top_c.append(lab_id)
             # selection of top labels (tricky)
             lab_list = np.array(labels)[idx_top_c].tolist()
@@ -178,6 +184,8 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         - 'full_obf_positive': max(full_obf, 0)
         area_normalization: normalize by area of the segment
         num_pred: take the best num_pred and build the heatmaps
+                    if 0, we keep only the label provided in the extract method 
+                    (which clearly has to be given)
         """
         self.network_ = network
         self.segment_ = segment
@@ -191,7 +199,11 @@ class HeatmapExtractorSegm(HeatmapExtractor):
         (Heatmap objects)
         """
         # retrieve the label id
-        lab_id = self.network_.get_label_id(label)    
+        if label == '':
+            assert self.num_pred_ > 0, 'parameter label has to be specified'
+            lab_id = None
+        else:
+            lab_id = self.network_.get_label_id(label) 
         # Init the list of heatmaps
         heatmaps = []
         # Classify the full image without obfuscation 
@@ -201,7 +213,7 @@ class HeatmapExtractorSegm(HeatmapExtractor):
             labels = self.network_.get_labels()
             idx_top_c = np.argsort(caffe_rep_full)[::-1]
             idx_top_c = idx_top_c[0:self.num_pred_].tolist()
-            if not(lab_id in idx_top_c):
+            if (lab_id != None) and not(lab_id in idx_top_c):
                 idx_top_c.append(lab_id)
             # selection of top labels (tricky)
             lab_list = np.array(labels)[idx_top_c].tolist()
@@ -309,6 +321,8 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                       slide window
         area_normalization: normalize by area of the segment
         num_pred: take the best num_pred and build the heatmaps
+                  if 0, we keep only the label provided in the extract method 
+                  (which clearly has to be given)
         """
         self.network_ = network
         self.params_ = params
@@ -322,7 +336,11 @@ class HeatmapExtractorSliding(HeatmapExtractor):
             (Heatmap objects)
         """
         # retrieve the label id
-        lab_id = self.network_.get_label_id(label)    
+        if label == '':
+            assert self.num_pred_ > 0, 'parameter label has to be specified'
+            lab_id = None
+        else:
+            lab_id = self.network_.get_label_id(label)
         # Classify the full image without obfuscation 
         caffe_rep_full = self.network_.evaluate(image) 
         # select top num_pred classes
@@ -330,7 +348,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
             labels = self.network_.get_labels()
             idx_top_c = np.argsort(caffe_rep_full)[::-1]
             idx_top_c = idx_top_c[0:self.num_pred_].tolist()
-            if not(lab_id in idx_top_c):
+            if (lab_id != None) and not(lab_id in idx_top_c):
                 idx_top_c.append(lab_id)
             # selection of top labels (tricky)
             lab_list = np.array(labels)[idx_top_c].tolist()
@@ -415,14 +433,16 @@ class HeatmapExtractorBox(HeatmapExtractor):
 	    params are tuples of sliding window parameters:
 	    - bbox_sz: size of the bounding box
 	    - stride: regular stride of the windows over the image
-        confidence_tech is the type of extracted confidence which can be:
-        - 'only_obf': 1 - classification_score for the given label of the 
+        - confidence_tech is the type of extracted confidence which can be:
+          'only_obf': 1 - classification_score for the given label of the 
                       obfuscated image
-        - 'full_obf': classification_score for the image 
+           'full_obf': classification_score for the image 
                           - classification_score of the obfuscated image
-        - 'full_obf_positive': max(full_obf, 0)
-        area_normalization: normalize by area of the segment
-        num_pred: take the best num_pred and build the heatmaps
+           ll_obf_positive': max(full_obf, 0)
+        - area_normalization: normalize by area of the segment
+        - num_pred: take the best num_pred and build the heatmaps
+                    if 0, we keep only the label provided in the extract method 
+                    (which clearly has to be given)
         """
         self.network_ = network
         self.params_ = params
@@ -436,7 +456,11 @@ class HeatmapExtractorBox(HeatmapExtractor):
         (Heatmap objects)
         """
         # retrieve the label id
-        lab_id = self.network_.get_label_id(label)    
+        if label == '':
+            assert self.num_pred_ > 0, 'parameter label has to be specified'
+            lab_id = None
+        else:
+            lab_id = self.network_.get_label_id(label)    
         # Init the list of heatmaps
         heatmaps = []
         # resize image with the same size of the CNN input
@@ -446,11 +470,11 @@ class HeatmapExtractorBox(HeatmapExtractor):
         # Classify the full image without obfuscation 
         caffe_rep_full = self.network_.evaluate(image_resz) 
         # select top num_pred classes
-        if self.num_pred_>0:
+        if self.num_pred_ > 0:
             labels = self.network_.get_labels()
             idx_top_c = np.argsort(caffe_rep_full)[::-1]
             idx_top_c = idx_top_c[0:self.num_pred_].tolist()
-            if not(lab_id in idx_top_c):
+            if (lab_id != None) and not(lab_id in idx_top_c):
                 idx_top_c.append(lab_id)
             # selection of top labels (tricky)
             lab_list = np.array(labels)[idx_top_c].tolist()
