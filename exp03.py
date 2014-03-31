@@ -24,13 +24,17 @@ from util import *
 
 class Params:
     def __init__(self):
-        pass
+        # If False, we randomly choose a subset of "num_classes" classes.
+        # If True, we pick the first "num_classes" classes 
+        #          according the official ILSVRC ordering.
+        self.randomly_choose_classes = False
 
 def get_filenames(params):
     """
     Return a list of (wnid, filename) for all the files
-    with label_id \in {1, ..., num_classe}
+    with label_id \in {1, ..., num_classes}
     """
+    NUM_CLASSES = 1000
     conf = params.conf
     wnids = []
     fd = open(conf.ilsvrc2012_classid_wnid_words)
@@ -49,18 +53,25 @@ def get_filenames(params):
         labels_id.append(int(line.strip()))
     fd.close()
     assert len(images) == len(labels_id)
-    # return only the labels 1..num_classes, and at most num_images_per_class
-    num_images_classes = [0]*1000
+    # define how many and which classes to keep, and how many imgs per class
+    num_images_classes = [0]*NUM_CLASSES
     num_classes = params.num_classes
     if num_classes <= 0:
-        num_classes = sys.maxint
+        num_classes = NUM_CLASSES
     num_images_per_class = params.num_images_per_class
     if num_images_per_class <= 0:
         num_images_per_class = sys.maxint
+    classes_to_keep = range(1, NUM_CLASSES+1)
+    if params.randomly_choose_classes:
+        idxperm = randperm_deterministic(NUM_CLASSES)
+        classes_to_keep = \
+           [classes_to_keep[idxperm[i]] for i in range(NUM_CLASSES)]
+    classes_to_keep = classes_to_keep[0:params.num_classes]
+    # return only the correct labels, and at most num_images_per_class
     out = []
     for i in range(len(images)):
         num_images_classes[labels_id[i]-1] += 1
-        if labels_id[i] > num_classes \
+        if labels_id[i] not in classes_to_keep \
               or num_images_classes[labels_id[i]-1] > num_images_per_class:
             continue
         out.append( (wnids[labels_id[i]-1], images[i]) )
