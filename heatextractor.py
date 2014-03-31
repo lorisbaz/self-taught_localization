@@ -47,8 +47,8 @@ class HeatmapExtractor:
             top_accuracies = caffe_rep_full[idx_top_c]
             num_top_c = len(idx_top_c)                
         else:
-            idx_top_c = lab_id
-            lab_list = label
+            idx_top_c = [lab_id]
+            lab_list = [label]
             num_top_c = 1   
         return lab_id, caffe_rep_full, idx_top_c, lab_list, num_top_c, top_accuracies
 
@@ -109,12 +109,11 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
         # Perform segmentation
         segm_masks = self.segment_.extract(image) # list of segmentation
         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
-            if self.num_pred_>0:
-                heatmap = []
-                for i in range(num_top_c):
-                    heatmap.append(Heatmap(image.shape[1], image.shape[0]))
-            else:
-                heatmap = Heatmap(image.shape[1], image.shape[0])
+            # init heatmap
+            heatmap = []
+            for i in range(num_top_c):
+                heatmap.append(Heatmap(image_resz.shape[1], \
+                                        image_resz.shape[0]))
             segm_list = segm_masks[s] # retrieve s-th mask 
             #heatmap.set_segment_map(segm_mask)
             #segm_list = np.unique(segm_mask)
@@ -152,21 +151,15 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                 elif self.confidence_tech_ == 'full_obf_positive':
                     confidence = caffe_rep_full[idx_top_c] - \
                                  caffe_rep_obf[idx_top_c]
-                    if num_top_c>1:
-                        for i in range(num_top_c):
-                            confidence[i] = max(confidence[i], 0.0)             
-                    else:
-                        confidence = max(confidence, 0.0)
-                # update the heatmap
-                if self.num_pred_>0: 
                     for i in range(num_top_c):
-                        heatmap[i].add_val_segment_mask(confidence[i], box, \
+                        confidence[i] = max(confidence[i], 0.0)
+                # update the heatmap
+                for i in range(num_top_c):
+                    heatmap[i].add_val_segment_mask(confidence[i], box, \
                                                mask, self.area_normalization_)
-                else:  # same as before 
-                    heatmap.add_val_segment_mask(confidence, box, mask, \
-                                                 self.area_normalization_) 
             if self.num_pred_>0:              
                 for i in range(num_top_c):
+                    assert len(heatmap) == num_top_c
                     heatmap[i].set_description('Computed with segmentation ' + \
                                     'obfuscation, map with {0} segments' + \
                                     ' in the {1} confidence setup. Total' + \
@@ -174,12 +167,13 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                                     self.confidence_tech_, len(segm_masks)))
                     heatmap[i].normalize_counts()
             else:
-                heatmap.set_description('Computed with segmentation ' + \
+                assert len(heatmap) == 1
+                heatmap[0].set_description('Computed with segmentation ' + \
                                     'obfuscation, map with {0} segments' + \
                                     ' in the {1} confidence setup. Total' + \
                                     ' of {2} maps.'.format(num_segments, \
                                     self.confidence_tech_, len(segm_masks)))
-                heatmap.normalize_counts()
+                heatmap[0].normalize_counts()
             heatmaps.append(heatmap) # append the heatmap to the list
         if self.num_pred_>0:
             return heatmaps, lab_list, top_accuracies
@@ -234,12 +228,11 @@ class HeatmapExtractorSliding(HeatmapExtractor):
         # Cycle over boxes        
         for param in self.params_: # for box parameter
             box_sz, stride = param
-            if self.num_pred_>0:
-                heatmap = []
-                for i in range(num_top_c):
-                    heatmap.append(Heatmap(image.shape[1], image.shape[0]))
-            else:
-                heatmap = Heatmap(image.shape[1], image.shape[0])
+            # init heatmap
+            heatmap = []
+            for i in range(num_top_c):
+                heatmap.append(Heatmap(image_resz.shape[1], \
+                                       image_resz.shape[0]))
             # generate indexes
             xs = np.linspace(0, image.shape[1]-box_sz, \
                              (image.shape[1]-box_sz)/float(stride)+1)
@@ -258,17 +251,12 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                          self.network_.evaluate(image[y:y+box_sz, x:x+box_sz]) 
                     # Given the class of the image, select the confidence
                     confidence = caffe_rep_win[idx_top_c]
-                    if num_top_c>1:
-                        for i in range(num_top_c):
-                            confidence[i] = max(confidence[i], 0.0)  
-                            heatmap[i].add_val_rect(confidence[i], x, y, \
-                                      box_sz, box_sz, self.area_normalization_)
-                    else:
-                        confidence = max(confidence, 0.0)
-                        # update the heatmap
-                        heatmap.add_val_rect(confidence, x, y, box_sz, box_sz,\
-                                            self.area_normalization_)  
-            if self.num_pred_>0:              
+                    for i in range(num_top_c):
+                        confidence[i] = max(confidence[i], 0.0)
+                        heatmap[i].add_val_rect(confidence[i], x, y, \
+                                box_sz, box_sz, self.area_normalization_)
+            if self.num_pred_>0:
+                assert len(heatmap) == num_top_c
                 for i in range(num_top_c):
                     heatmap[i].set_description('Computed with sliding win ' + \
                                     'approach, with window size {0} and' + \
@@ -277,12 +265,13 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                                     stride, len(self.params_)))
                     heatmap[i].normalize_counts()
             else:
-                heatmap.set_description('Computed with sliding win ' + \
+                assert len(heatmap) == 1
+                heatmap[0].set_description('Computed with sliding win ' + \
                                     'approach, with window size {0} and' + \
                                     ' stride {1}. Total' + \
                                     ' of {2} maps.'.format(box_sz, \
                                     stride, len(self.params_)))
-                heatmap.normalize_counts()
+                heatmap[0].normalize_counts()
             heatmaps.append(heatmap) # append the heatmap to the list 
         if self.num_pred_>0:
             return heatmaps, lab_list, top_accuracies
@@ -348,13 +337,10 @@ class HeatmapExtractorBox(HeatmapExtractor):
                           .format(np.shape(heatmaps)[0]+1, \
     				      len(self.params_)))
             # init heatmap
-            if self.num_pred_>0:
-                heatmap = []
-                for i in range(num_top_c):
-                    heatmap.append(Heatmap(image_resz.shape[1], \
-                                            image_resz.shape[0]))
-            else:
-                heatmap = Heatmap(image_resz.shape[1], image_resz.shape[0]) 
+            heatmap = []
+            for i in range(num_top_c):
+                heatmap.append(Heatmap(image_resz.shape[1], \
+                                       image_resz.shape[0]))
             # generate indexes (resized img)
             xs = np.linspace(0, image_resz.shape[1]-box_sz, \
                              (image_resz.shape[1]-box_sz)/float(stride)+1)
@@ -388,20 +374,14 @@ class HeatmapExtractorBox(HeatmapExtractor):
                     elif self.confidence_tech_ == 'full_obf_positive':
                         confidence = caffe_rep_full[idx_top_c] - \
                                     caffe_rep_obf[idx_top_c]
-                        if num_top_c>1:
-                            for i in range(num_top_c):
-                                confidence[i] = max(confidence[i], 0.0)
-                        else:
-                            confidence = max(confidence, 0.0)
-                    # update the heatmap
-                    if self.num_pred_>0: 
                         for i in range(num_top_c):
-                            heatmap[i].add_val_rect(confidence[i], x, y, \
-                                    box_sz, box_sz, self.area_normalization_)
-                    else:  # same as before 
-                        heatmap.add_val_rect(confidence, x, y, box_sz, box_sz, \
-                                         self.area_normalization_)
-            if self.num_pred_>0:              
+                            confidence[i] = max(confidence[i], 0.0)
+                    # update the heatmap
+                    for i in range(num_top_c):
+                        heatmap[i].add_val_rect(confidence[i], x, y, \
+                                box_sz, box_sz, self.area_normalization_)
+            if self.num_pred_>0:  
+                assert len(heatmap) == num_top_c
                 for i in range(num_top_c):
                     heatmap[i].set_description('computed with gray box' + \
                                     'obfuscation, with window size {0}' + \
@@ -409,150 +389,14 @@ class HeatmapExtractorBox(HeatmapExtractor):
                                     .format(box_sz, stride, len(self.params_)))
                     heatmap[i].normalize_counts()
             else:
-                heatmap.set_description('computed with gray box' + \
+                assert len(heatmap) == 1
+                heatmap[0].set_description('computed with gray box' + \
                                     'obfuscation, with window size {0}' + \
                                     ' and stride {1}. Total of {2} maps.'\
                                     .format(box_sz, stride, len(self.params_)))
-                heatmap.normalize_counts()
+                heatmap[0].normalize_counts()
             heatmaps.append(heatmap) # append the heatmap to the list
         if self.num_pred_>0:
             return heatmaps, lab_list, top_accuracies
         else:     
             return heatmaps
-
-
-#=============================================================================
-
-# class HeatmapExtractorSegm(HeatmapExtractor):
-#     """
-#     Extracts a set of heatmaps built from the results of the CNN by obfuscating 
-#     segments of the image
-#     """
-#     def __init__(self, network, segment, confidence_tech = 'full_obf', \
-#                  area_normalization = True, num_pred = 0):
-#         """
-#         segment is of type ImgSegm.
-#         confidence_tech is the type of extracted confidence which can be:
-#         - 'only_obf': 1 - classification_score for the given label of the 
-#                       obfuscated image
-#         - 'full_obf': classification_score for the image 
-#                           - classification_score of the obfuscated image
-#         - 'full_obf_positive': max(full_obf, 0)
-#         area_normalization: normalize by area of the segment
-#         num_pred: take the best num_pred and build the heatmaps
-#                     if 0, we keep only the label provided in the extract method 
-#                     (which clearly has to be given)
-#         """
-#         self.network_ = network
-#         self.segment_ = segment
-#         self.area_normalization_ = area_normalization
-#         self.confidence_tech_ = confidence_tech
-#         self.num_pred_ = num_pred
-         
-#     def extract(self, image, label = ''):
-#         """
-#         Perform segmentation-based obfuscation and returns a set of heatmaps 
-#         (Heatmap objects)
-#         """
-#         # retrieve the label id
-#         if label == '':
-#             assert self.num_pred_ > 0, 'parameter label has to be specified'
-#             lab_id = None
-#         else:
-#             lab_id = self.network_.get_label_id(label) 
-#         # Init the list of heatmaps
-#         heatmaps = []
-#         # Classify the full image without obfuscation 
-#         caffe_rep_full = self.network_.evaluate(image) 
-#         # select top num_pred classes
-#         if self.num_pred_>0:
-#             labels = self.network_.get_labels()
-#             idx_top_c = np.argsort(caffe_rep_full)[::-1]
-#             idx_top_c = idx_top_c[0:self.num_pred_].tolist()
-#             if (lab_id != None) and not(lab_id in idx_top_c):
-#                 idx_top_c.append(lab_id)
-#             # selection of top labels (tricky)
-#             lab_list = np.array(labels)[idx_top_c].tolist()
-#             top_accuracies = caffe_rep_full[idx_top_c]
-#             num_top_c = len(idx_top_c)
-#         else:
-#             idx_top_c = lab_id
-#             lab_list = label
-#             num_top_c = 1
-#         # Perform segmentation
-#         segm_masks = self.segment_.extract(image) # list of segmentation
-#         for s in range(np.shape(segm_masks)[0]): # for each segm. mask
-#             if self.num_pred_>0:
-#                 heatmap = []
-#                 for i in range(num_top_c):
-#                     heatmap.append(Heatmap(image.shape[1], image.shape[0]))
-#             else:
-#                 heatmap = Heatmap(image.shape[1], image.shape[0])
-#             segm_mask = segm_masks[s] # retrieve s-th mask 
-#             heatmap.set_segment_map(segm_mask)
-#             segm_list = np.unique(segm_mask)
-#             num_segments = len(segm_list) + 1
-#             max_segments = np.max(segm_mask) + 1
-#             logging.info('segm_mask {0} / {1} ({2} segments)'.format( \
-#                          s, len(segm_masks), num_segments))
-#             # obfuscation & heatmap
-#             for id_segment in segm_list: #range(num_segments):
-#                 if id_segment % (max_segments / 10) == 0:
-#                     logging.info('segment {0} / {1}'.format(id_segment, \
-#                                  max_segments))
-#                 image_obf = np.copy(image) # copy array            
-#                 # obfuscation 
-#                 if np.shape(image.shape)[0]>2: # RGB images
-#                     image_obf[segm_mask==id_segment,0] = \
-#                                             self.network_.get_mean_img()[0]
-#                     image_obf[segm_mask==id_segment,1] = \
-#                                             self.network_.get_mean_img()[1]
-#                     image_obf[segm_mask==id_segment,2] = \
-#                                             self.network_.get_mean_img()[2]   
-#                 else: # GRAY images
-#                     image_obf[segm_mask==id_segment] = \
-#                                       np.mean(self.network_.get_mean_img())
-#                 # predict CNN reponse for obfuscation
-#                 caffe_rep_obf = self.network_.evaluate(image_obf)
-#                 # Given the class of the image, select the confidence
-#                 if self.confidence_tech_ == 'only_obf':
-#                     confidence = 1-caffe_rep_obf[idx_top_c]
-#                 elif self.confidence_tech_ == 'full_obf':
-#                     confidence = caffe_rep_full[idx_top_c] - \
-#                                  caffe_rep_obf[idx_top_c]
-#                 elif self.confidence_tech_ == 'full_obf_positive':
-#                     confidence = caffe_rep_full[idx_top_c] - \
-#                                  caffe_rep_obf[idx_top_c]
-#                     if num_top_c>1:
-#                         for i in range(num_top_c):
-#                             confidence[i] = max(confidence[i], 0.0)             
-#                     else:
-#                         confidence = max(confidence, 0.0)
-#                 # update the heatmap
-#                 if self.num_pred_>0: 
-#                     for i in range(num_top_c):
-#                         heatmap[i].add_val_segment(confidence[i], id_segment, \
-#                                                 self.area_normalization_)
-#                 else:  # same as before 
-#                     heatmap.add_val_segment(confidence, id_segment, \
-#                                                 self.area_normalization_) 
-#             if self.num_pred_>0:              
-#                 for i in range(num_top_c):
-#                     heatmap[i].set_description('Computed with segmentation ' + \
-#                                     'obfuscation, map with {0} segments' + \
-#                                     ' in the {1} confidence setup. Total' + \
-#                                     ' of {2} maps.'.format(num_segments, \
-#                                     self.confidence_tech_, len(segm_masks)))
-#                     heatmap[i].normalize_counts()
-#             else:
-#                 heatmap.set_description('Computed with segmentation ' + \
-#                                     'obfuscation, map with {0} segments' + \
-#                                     ' in the {1} confidence setup. Total' + \
-#                                     ' of {2} maps.'.format(num_segments, \
-#                                     self.confidence_tech_, len(segm_masks)))
-#                 heatmap.normalize_counts()
-#             heatmaps.append(heatmap) # append the heatmap to the list
-#         if self.num_pred_>0:
-#             return heatmaps, lab_list, top_accuracies
-#         else:     
-#             return heatmaps
