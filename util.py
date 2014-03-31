@@ -169,3 +169,34 @@ def selective_search(images, ss_version):
         os.remove(mat_temp_files[i])
     # return
     return bboxes_all
+
+
+def reRank_pred_objects(pred_objects, image, net):
+    """
+    Re-rank the confidence score of the pred_objects accordingly to the
+    classification result of the bbox.
+    """
+    img_sz = np.shape(image)
+    height = img_sz[0]
+    width = img_sz[1]
+    for label in pred_objects.keys():
+        # Do it for each BBox 
+        for b in range(len(pred_objects[label].bboxes)):
+            # project bbox to the image sizes 
+            ymin = np.int16(pred_objects[label].bboxes[b].ymin * height)
+            ymax = np.int16(pred_objects[label].bboxes[b].ymax * height)
+            xmin = np.int16(pred_objects[label].bboxes[b].xmin * width)
+            xmax = np.int16(pred_objects[label].bboxes[b].xmax * width)
+            # Extract crop in the image
+            image_crop = np.copy(image[ymin:ymax, xmin:xmax])
+            # Resize crop
+            image_crop = skimage.transform.resize(image_crop, \
+                                (net.get_input_dim(), net.get_input_dim()))
+            image_crop = skimage.img_as_ubyte(image_crop)
+            # Compute Net max score 
+            net_feature_vector = net.evaluate(image_crop)
+            confidence = np.max(net_feature_vector)
+            # Overwrite the old confidence value
+            pred_objects[label].bboxes[b].confidence = confidence
+
+    return pred_objects
