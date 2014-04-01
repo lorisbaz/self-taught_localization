@@ -29,3 +29,8 @@ MATLAB.Color.brownLight = [255 128 0]./255; % brown light
 MATLAB.Color.brownDark = [64 32 0]./255; % brown dark
 MATLAB.Colors_all = {MATLAB.Color.magenta, MATLAB.Color.orange, MATLAB.Color.blue, MATLAB.Color.cyanMed, MATLAB.Color.cyanDark, MATLAB.Color.red, MATLAB.Color.redMed, MATLAB.Color.redDark, MATLAB.Color.green , MATLAB.Color.blue, MATLAB.Color.white, MATLAB.Color.black, MATLAB.Color.orange, MATLAB.Color.greenMed, MATLAB.Color.greenDark, MATLAB.Color.greyLight, MATLAB.Color.greyMed, MATLAB.Color.greyDark, MATLAB.Color.orange2, MATLAB.Color.brown};
 
+% some standard colors
+MATLAB.LineSpec.colors  = ['g', 'r', 'b', 'c', 'm', 'y', 'k', 'g', 'r', 'b', 'c', 'm', 'y', 'k'];
+
+% some markers
+MATLAB.LineSpec.markers = ['+', 'o', '*', '.', 'x', 's', 'd', '^', 'v', '>', '<', 'p', 'h'];
