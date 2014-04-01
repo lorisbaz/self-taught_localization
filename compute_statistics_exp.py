@@ -202,8 +202,8 @@ def run_exp(params):
             logging.info('num_pred_bboxes: {0}'.format(num_pred_bboxes))
             stat_agg, hist_overlap = Stats.aggregate_results(\
                               stats_list, num_bins, num_pred_bboxes)
-            recall_all.append(np.max(stat_agg.recall))
-            precision_all.append(np.max(stat_agg.precision))
+            recall_all.append(stat_agg.recall[-1])
+            precision_all.append(stat_agg.precision[-1])
             average_precision_all.append(stat_agg.average_prec)
         assert len(recall_all) == len(params.stats_using_num_pred_bboxes_image)
         assert len(precision_all) == \
@@ -374,8 +374,8 @@ def run_exp_per_class(params):
                 logging.info('num_pred_bboxes: {0}'.format(num_pred_bboxes))
                 stat_agg, hist_overlap = Stats.aggregate_results(\
                               stats_list[label], num_bins, num_pred_bboxes)
-                recall_all[label].append(np.max(stat_agg.recall))
-                precision_all[label].append(np.max(stat_agg.precision))
+                recall_all[label].append(stat_agg.recall[-1])
+                precision_all[label].append(stat_agg.precision[-1])
                 average_precision_all[label].append(stat_agg.average_prec)
                 ABO_all[label].append(stat_agg.ABO)
             # Cumulative sum over classes
