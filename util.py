@@ -50,12 +50,19 @@ class TempFile:
         If copy=True, we copy the temporary file (which is supposed to be
         modified to the mapped_file)
         """
-        # copy the mapped file, if requested
-        if copy:
-            command = 'scp {0} {1}@anthill:{2}'.format(\
-                self.tmpfilename, self.user, self.mappedfilename)
-            logging.info('Executing command ' + command)    
-            subprocess.check_call(command, shell=True)      
+        try:
+            # copy the mapped file, if requested
+            if copy:
+                command = 'scp {0} {1}@anthill:{2}'.format(\
+                    self.tmpfilename, self.user, self.mappedfilename)
+                logging.info('Executing command ' + command)    
+                subprocess.check_call(command, shell=True)
+        except:
+            # remote the temporary file
+            os.remove(self.tmpfilename)
+            raise
+        else:
+            os.remove(self.tmpfilename)
     
 
 def resize_image_max_size(img, fix_sz):

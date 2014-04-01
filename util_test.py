@@ -97,7 +97,9 @@ class UtilTest(unittest.TestCase):
             fd.close()
         except:
             os.remove(mapped_file)
-        os.remove(mapped_file)
+            raise
+        else:
+            os.remove(mapped_file)
         
 #=============================================================================
 
