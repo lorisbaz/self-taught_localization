@@ -5,6 +5,7 @@ logging.basicConfig(level=logging.INFO, \
               datefmt='%m/%d/%Y %H:%M:%S')
 import numpy as np
 import os
+import random
 import scipy.misc
 import scipy.io
 import skimage
@@ -201,10 +202,24 @@ def reRank_pred_objects(pred_objects, image, net):
 
     return pred_objects
 
+
 def segments_to_bboxes(segments): 
     bboxes = [] 
     for s in range(np.shape(segments)[0]):
         for w in range(np.shape(segments[s])[0]): 
             bboxes.append(segments[s][w]['bbox']) 
     return bboxes  
-                                                                                  
+                                                                                
+
+def randperm_deterministic(n):
+    """
+    Return a list, containing a deterministically-computed pseudo-random
+    permutation of numbers from 0 to n-1
+
+    NOTE: The determinist is guaranteed at least for Python 2.7
+    """
+    perm = range(n)
+    random.seed(0)
+    random.shuffle(perm)
+    return perm
+
