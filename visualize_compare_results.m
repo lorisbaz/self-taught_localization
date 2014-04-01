@@ -74,6 +74,12 @@ if plot_Top5
     exp_set(i).name = 'exp08_09';
     exp_set(i).spec = 'Top 5 labels';
     exp_set(i).method = 'GrayBox';
+    exp_set(i).color = MATLAB.Color.orange;
+        
+    i = i + 1;
+    exp_set(i).name = 'exp06_12';
+    exp_set(i).spec = 'Top 5 labels';
+    exp_set(i).method = 'GraySegm';
     exp_set(i).color = MATLAB.Color.brown;
     
     i = i + 1;
@@ -81,12 +87,30 @@ if plot_Top5
     exp_set(i).spec = 'Top 5 labels';
     exp_set(i).method = 'ClassicSliding';
     exp_set(i).color = MATLAB.Color.cyan;
-
+    
+%     i = i + 1;
+%     exp_set(i).name = 'exp08_13';
+%     exp_set(i).spec = 'Top 5 labels';
+%     exp_set(i).method = 'Sliding over GraySegm heatmaps';
+%     exp_set(i).color = MATLAB.Color.black;
+    
     i = i + 1;
-    exp_set(i).name = 'exp08_17';
+    exp_set(i).name = 'exp08_16';
     exp_set(i).spec = 'Top 5 labels';
-    exp_set(i).method = 'GraySegm';
-    exp_set(i).color = MATLAB.Color.orangeLight;
+    exp_set(i).method = 'GraySegm+GrayBox';
+    exp_set(i).color = MATLAB.Color.blue;
+ 
+    i = i + 1;
+    exp_set(i).name = 'exp22_01';
+    exp_set(i).spec = 'Top 5 labels';
+    exp_set(i).method = 'Re-rank GrayBox';
+    exp_set(i).color = MATLAB.Color.red;
+    
+    i = i + 1;
+    exp_set(i).name = 'exp22_02';
+    exp_set(i).spec = 'Top 5 labels';
+    exp_set(i).method = 'Re-rank GraySegm+GrayBox';
+    exp_set(i).color = MATLAB.Color.redDark;
 end
 
 % *** SS
@@ -102,10 +126,19 @@ figure(121);
 hold on;
 legend_stuff = cell(length(exp_set),1);
 for k = 1:length(exp_set)
-    load([experiments_output_directory '/' exp_set(k).name ...
+    try
+        load([experiments_output_directory '/' exp_set(k).name 'stats'...
         '/mat/recall_vs_numPredBboxesImage.mat'])
-    plot(eval(['x_values_' exp_set(k).name]), eval(['recall_' ...
-        exp_set(k).name]),'Color',exp_set(k).color, 'LineWidth', 3)
+    catch
+        load([experiments_output_directory '/' exp_set(k).name ...
+        '/mat/recall_vs_numPredBboxesImage.mat'])
+    end
+    try
+        plot(eval(['x_values_' exp_set(k).name]), eval(['recall_' ...
+            exp_set(k).name]),'Color',exp_set(k).color, 'LineWidth', 3)
+    catch
+        plot(x_values, recall, 'Color',exp_set(k).color, 'LineWidth', 3)
+    end
     legend_stuff{k} =  [exp_set(k).spec ' - ' exp_set(k).method ' (' ...
         exp_set(k).name ')'];
 end
@@ -126,7 +159,7 @@ end
 hold off;
 grid on;
 legend(legend_stuff, 'Interpreter', 'none')
-axis([1, 20, 0, 1])
+axis([1, 50, 0, 1])
 xlabel('Num subwindows')
 ylabel('Recall')
 title('Results on ILSVRC2012-val-200')

@@ -6,35 +6,31 @@ import skimage.io
 from vlg.util.parfun import *
 
 from configuration import *
-import exp08
+import exp22
 
 if __name__ == "__main__":
     # load configurations and parameters  
     conf = Configuration()
-    params = exp08.Params()
+    params = exp22.Params()
     # experiment name
-    params.exp_name = 'exp08_09'
+    params.exp_name = 'exp22_02'
     # take results from here
-    params.exp_name_input = 'exp06_10'
+    params.exp_name_input = 'exp21_01'
+    # select classifier
+    params.classifier = 'CAFFE'
+    params.center_only = True
     # default Configuration, image and label files
     params.conf = conf
-    # Intersection over Union threshold
-    params.IoU_threshold = 0.5
-    # create also some statistics using a variable number of predictions/image
-    params.stats_using_num_pred_bboxes_image = range(1,16)
-    params.stats_using_num_pred_bboxes_image.extend([20, 30, 50, 100, 200, \
-                                                 500, 1000, 2000, 3000, 5000]) 
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = False
-    params.run_stat_pipeline = False
+    params.run_on_anthill = True
     # Set jobname in case the process stop or crush
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    exp08.run_exp(params)
+    exp22.run_exp(params)
 

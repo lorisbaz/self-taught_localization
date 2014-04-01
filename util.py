@@ -200,3 +200,11 @@ def reRank_pred_objects(pred_objects, image, net):
             pred_objects[label].bboxes[b].confidence = confidence
 
     return pred_objects
+
+def segments_to_bboxes(segments): 
+    bboxes = [] 
+    for s in range(np.shape(segments)[0]):
+        for w in range(np.shape(segments[s])[0]): 
+            bboxes.append(segments[s][w]['bbox']) 
+    return bboxes  
+                                                                                  
