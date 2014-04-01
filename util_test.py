@@ -1,5 +1,7 @@
+import os
 import unittest
 import skimage.io
+import subprocess
 
 import util
 
@@ -61,6 +63,42 @@ class UtilTest(unittest.TestCase):
         self.assertAlmostEqual(t[3], 3)
         self.assertAlmostEqual(t[4], 4)
 
+#=============================================================================
+
+
+class UtilTest(unittest.TestCase):
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_tmpfile(self):
+        """
+        We try to map a file that is on ironfs.
+        """
+        mapped_file = '/home/ironfs/scratch/vlg/THIS_IS_A_TEST.dat'
+        try:
+            # create a fake mapped file
+            subprocess.check_call('touch {0}'.format(mapped_file), shell=True)        
+            tmp = util.TempFile(mapped_file, copy=True)
+            # test get_temp_filename
+            tmp.get_temp_filename()
+            # write something on the mapped file
+            fd = open(tmp.get_temp_filename(), 'w')
+            fd.write('THIS IS A TEST')
+            fd.close()
+            # test close
+            tmp.close(copy=True)
+            # make sure we write the content back to the mapped file
+            fd = open(mapped_file, 'r')
+            line = fd.readline()
+            self.assertEqual(line, 'THIS IS A TEST')
+            fd.close()
+        except:
+            os.remove(mapped_file)
+        os.remove(mapped_file)
+        
 #=============================================================================
 
 if __name__ == '__main__':
