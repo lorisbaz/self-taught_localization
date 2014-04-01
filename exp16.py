@@ -24,6 +24,8 @@ class Params:
         self.include_gt_label_heatmap = True
         # scores quantile
         self.quantile_pred = 1.0
+        # minimum number of prediction labels to keep
+        self.minTopC = 0
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -47,7 +49,8 @@ def pipeline(inputdb, outputdb, params):
     heatext = HeatmapExtractorBox(net, params.gray_par, \
                 confidence_tech = params.heatextractor_confidence_tech, \
                 area_normalization = params.heatextractor_area_normalization, \
-                num_pred = params.topC, quantile_pred=params.quantile_pred)
+                num_pred = params.topC, quantile_pred=params.quantile_pred, \
+                min_num_pred = params.minTopC)
     print outputdb
     db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')

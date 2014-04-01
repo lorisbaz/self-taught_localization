@@ -37,8 +37,9 @@ class HeatmapExtractor:
             for idx in idx_sorted_scores:
                 idx_top_c.append(idx)
                 quantile += caffe_rep_full[idx]
-                if (quantile >= self.quantile_pred_) \
-                    or (len(idx_top_c) >= self.num_pred_):
+                if ((quantile >= self.quantile_pred_) \
+                       or (len(idx_top_c) >= self.num_pred_)) \
+                    and (len(idx_top_c) > self.min_num_pred):
                     break
             if (lab_id != None) and not(lab_id in idx_top_c):
                 idx_top_c.append(lab_id)
@@ -62,7 +63,7 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
     """
     def __init__(self, network, segment, confidence_tech = 'full_obf', \
                  area_normalization = True, image_transform = 'original', \
-                 num_pred = 0, quantile_pred=1.0):
+                 num_pred = 0, quantile_pred=1.0, min_num_pred=0):
         """
         segment is of type ImgSegm.
         confidence_tech is the type of extracted confidence which can be:
@@ -82,6 +83,8 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                          Note that this option can be used in combination
                          with num_pred (which can be used to cap 
                          the number of labels).
+        min_num_pred: the minimum number of labels to keep.
+                      if num_pred==0, this parameter is ignored
         """
         self.network_ = network
         self.segment_ = segment
@@ -90,6 +93,7 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
         self.image_trans_ = image_transform
         self.num_pred_ = num_pred
         self.quantile_pred_ = quantile_pred
+        self.min_num_pred = min_num_pred
         
     def extract(self, image, label = ''):
         """
@@ -188,7 +192,8 @@ class HeatmapExtractorSliding(HeatmapExtractor):
     rectangular regions
     """
     def __init__(self, network, params, confidence_tech = 'single_win', \
-                 area_normalization = True, num_pred = 0, quantile_pred=1.0):
+                 area_normalization = True, num_pred = 0, quantile_pred=1.0,\
+                 min_num_pred=0):
         """
       	network is of type Network
         params are tuples of sliding window parameters:
@@ -207,6 +212,8 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                          Note that this option can be used in combination
                          with num_pred (which can be used to cap 
                          the number of labels).
+        min_num_pred: the minimum number of labels to keep.
+                      if num_pred==0, this parameter is ignored
         """
         self.network_ = network
         self.params_ = params
@@ -214,6 +221,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
         self.confidence_tech_ = confidence_tech
         self.num_pred_ = num_pred
         self.quantile_pred_ = quantile_pred
+        self.min_num_pred = min_num_pred
   
     def extract(self, image, label = ''):
         """
@@ -286,28 +294,31 @@ class HeatmapExtractorBox(HeatmapExtractor):
     rectangular regions
     """
     def __init__(self, network, params, confidence_tech = 'full_obf', \
-                 area_normalization = True, num_pred = 0, quantile_pred=1.0):
+                 area_normalization = True, num_pred = 0, quantile_pred=1.0,
+                 min_num_pred=0):
         """
         network is of type Network
 	    params are tuples of sliding window parameters:
-	    - bbox_sz: size of the bounding box
-	    - stride: regular stride of the windows over the image
-        - confidence_tech is the type of extracted confidence which can be:
-          'only_obf': 1 - classification_score for the given label of the 
+	    bbox_sz: size of the bounding box
+	    stride: regular stride of the windows over the image
+        confidence_tech is the type of extracted confidence which can be:
+          - 'only_obf': 1 - classification_score for the given label of the 
                       obfuscated image
-           'full_obf': classification_score for the image 
+          - 'full_obf': classification_score for the image 
                           - classification_score of the obfuscated image
-           ll_obf_positive': max(full_obf, 0)
-        - area_normalization: normalize by area of the segment
-        - num_pred: take the best num_pred and build the heatmaps
+          - 'll_obf_positive': max(full_obf, 0)
+        area_normalization: normalize by area of the segment
+        num_pred: take the best num_pred and build the heatmaps
                     if 0, we keep only the label provided in the extract method 
                     (which clearly has to be given). In this case, quantile_pred
                     is ignored.
-        - quantile_pred: keep only the number of labels whose sum of the scores
+        quantile_pred: keep only the number of labels whose sum of the scores
                          is >= quantile_pred. Remember that the max value is 1.0
                          Note that this option can be used in combination
                          with num_pred (which can be used to cap 
                          the number of labels).
+        min_num_pred: the minimum number of labels to keep.
+                      if num_pred==0, this parameter is ignored
         """
         self.network_ = network
         self.params_ = params
@@ -315,6 +326,7 @@ class HeatmapExtractorBox(HeatmapExtractor):
         self.confidence_tech_ = confidence_tech
         self.num_pred_ = num_pred 
         self.quantile_pred_ = quantile_pred
+        self.min_num_pred = min_num_pred
   
     def extract(self, image, label = ''):
         """
