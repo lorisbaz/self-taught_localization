@@ -32,12 +32,23 @@ xlabel('Num subwindows')
 ylabel('MABO')
 title('Results on PASCAL-2007-test')
 
+% create the figure for the Precision
+figure;
+h_precision = gca;
+hold on;
+grid on;
+axis([1, 50, 0, 0.3]);
+xlabel('Num subwindows')
+ylabel('Precision')
+title('Results on PASCAL-2007-test')
+
 % *** our experiments
 % this is list of cells of 2-elements-cells {experiment_name, legend}
 params.exps = {{'exp06_13stats','exp06_13 (GrayBox, topC=5)'}, ...
                {'exp06_14stats', 'exp06_14 (SlidingWindow, topC=5)'}, ...
                {'exp06_15stats', 'exp06_15 (GraySegm, topC=5)'}, ...
                {'exp06_17stats', 'exp06_17 (GrayBox, topC=5, quantile_pred=0.98)'}, ...
+               {'exp06_18stats', 'exp06_18 (GrayBox, topC=20, quantile_pred=0.99, minTopC=5'}, ...
                };
 
 for i=1:numel(params.exps)
@@ -49,6 +60,9 @@ for i=1:numel(params.exps)
   % plot the MABO
   plot(h_mean_mabo, S.x_values, S.mean_ABO, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none');
+  % plot the Precision
+  plot(h_precision, S.x_values, S.precision, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
+  h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none');
 end
      
 
