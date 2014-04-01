@@ -51,7 +51,15 @@ class UtilTest(unittest.TestCase):
         self.assertAlmostEqual(bboxes[1][0].ymin, 0.0)
         self.assertAlmostEqual(bboxes[1][0].xmax, 1.0)        
         self.assertAlmostEqual(bboxes[1][0].ymax, 0.288)
-        self.assertAlmostEqual(bboxes[1][0].confidence, 0.002731697745111)        
+        self.assertAlmostEqual(bboxes[1][0].confidence, 0.002731697745111) 
+
+    def test_randperm_deterministic(self):
+        t = util.randperm_deterministic(5)
+        self.assertAlmostEqual(t[0], 2)
+        self.assertAlmostEqual(t[1], 0)
+        self.assertAlmostEqual(t[2], 1)
+        self.assertAlmostEqual(t[3], 3)
+        self.assertAlmostEqual(t[4], 4)
 
 #=============================================================================
 
