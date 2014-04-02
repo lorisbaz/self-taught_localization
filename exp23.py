@@ -39,13 +39,14 @@ def pipeline(inputdb, outputdb, params):
                            conf.ilsvrc2012_classid_wnid_words, \
                            center_only = params.center_only)
     segmenter = ImgSegm_ObfuscationSearch(net, params.ss_version, \
-                                        params.min_sz_segm, params.topC)
+                                   params.min_sz_segm, topC = params.topC,\
+                                   alpha = params.alpha)
     # retrieve all the AnnotatedImages and images from the database
     logging.info('Opening ' + inputdb)
     db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')
     db_keys = db_input.keys()
-    label = 'none'
+    ss_label = 'none'
     # loop over the images
     for image_key in db_keys:
         # get database entry
@@ -69,8 +70,10 @@ def pipeline(inputdb, outputdb, params):
                                                 img_width, img_height))
             pred_bboxes.append(pred_bboxes_unnorm[j])
         # store results
-        anno.pred_objects['OBFUSCSEARCH'] = {}
-        anno.pred_objects['OBFUSCSEARCH'][label] = pred_bboxes
+        pred_obj = AnnotatedObject(label=ss_label)
+        pred_obj.bboxes = pred_bboxes 
+        anno.pred_objects['SELECTIVESEARCH'] = {}
+        anno.pred_objects['SELECTIVESEARCH'][ss_label] = pred_obj
         logging.info(str(anno))
         # adding the AnnotatedImage with the heatmaps to the database 
         logging.info('Adding the record to he database')

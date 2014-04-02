@@ -32,9 +32,10 @@ if __name__ == "__main__":
     params.topC = 0     # if 0, take the max across classes
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'     
-    # selective search version
+    # obfuscation search params
     params.ss_version = 'fast'
     params.min_sz_segm = 5 # keep this low (because we resize!!)
+    params.alpha = alpha
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name

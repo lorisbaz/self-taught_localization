@@ -382,7 +382,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
     """
 
     def __init__(self, network, ss_version = 'fast', min_sz_segm = 0, \
-                        topC = 0):
+                        topC = 0, alpha = 1):
         """
         - network: neural net used for classification        
         - ss_version:
@@ -391,11 +391,13 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         - min_sz_segm: min size of the bbox sorrounding the segment
         - topC: keep the topC classifier result. =0 means that take the max
                 response of the classifier
+        - alpha: merge two distance matrices (space and confidence)
         """ 
         self.ss_version_ = ss_version
         self.min_sz_segm_ = min_sz_segm
         self.net_ = network
         self.topC_ = topC
+        self.alpha_ = alpha
 
     def extract(self, image):
         """
@@ -415,6 +417,12 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         # dump the images of the AnnotatedImages to temporary files 
         (fd, img_temp_file) = tempfile.mkstemp(suffix = '.bmp')
         os.close(fd)
+        if len(np.shape(image))==2: # gray img
+            img = np.zeros((np.shape(image)[0], np.shape(image)[1], 3))
+            img[:,:,0] = image
+            img[:,:,1] = image
+            img[:,:,2] = image
+            image = img
         img = skimage.io.imsave(img_temp_file, image)
         # create temporary files for the .mat files
         (fd, mat_temp_file) = tempfile.mkstemp(suffix = '.mat')
@@ -437,8 +445,8 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         except:
             logging.error('Exception while loading ' + mat_temp_file)
         # delete all the temporary files
-        os.remove(img_temp_file)
-        os.remove(mat_temp_file)
+        #os.remove(img_temp_file)
+        #os.remove(mat_temp_file)
         # Load only first-level segmentation (i.e., Felzenswalb) 
         segm_masks = segm_mat.get('blobIndIm')
         # classify full img
@@ -499,8 +507,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
             X = np.array(feature_vec)[:,0:3] # remove id segm
             X[:,0] = X[:,0]/np.shape(image)[1] # normalize
             X[:,1] = X[:,1]/np.shape(image)[0]
-            alpha = 10
-            D = dist.pdist(X[:,0:2], 'euclidean') + alpha * \
+            D = dist.pdist(X[:,0:2], 'euclidean') + self.alpha_ * \
                 dist.pdist(X[:,2].reshape((np.shape(X)[0],1)), 'euclidean')
             Z = hierarchy.linkage(D, method='average')
 #            # visualize

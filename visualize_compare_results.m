@@ -111,6 +111,12 @@ if plot_Top5
     exp_set(i).spec = 'Top 5 labels';
     exp_set(i).method = 'Re-rank GraySegm+GrayBox';
     exp_set(i).color = MATLAB.Color.redDark;
+    
+%     i = i + 1;
+%     exp_set(i).name = 'exp23_01';
+%     exp_set(i).spec = ' ';
+%     exp_set(i).method = 'Obfuscation Search';
+%     exp_set(i).color = MATLAB.Color.yellow;
 end
 
 % *** SS
