@@ -1,5 +1,5 @@
-function visualize_results_PASCAL2007_test()
-% This script plots results for PASCAL VOC 2007 - TEST set.
+function visualize_results_ILSVRC2012_val200rnd()
+% This script plots results for ILSVRC 2012 - validation (200 classes).
 %
 %
 
@@ -20,7 +20,7 @@ grid on;
 axis([1, 70, 0, 1]);
 xlabel('Num subwindows')
 ylabel('Mean recall per class')
-title('Results on PASCAL-2007-test')
+title('Results on ILSVRC2012-val-200rnd')
 
 % create the figure for the MABO score
 figure;
@@ -30,7 +30,7 @@ grid on;
 axis([1, 50, 0, 1]);
 xlabel('Num subwindows')
 ylabel('MABO')
-title('Results on PASCAL-2007-test')
+title('Results on ILSVRC2012-val-200rnd')
 
 % create the figure for the Precision
 figure;
@@ -40,16 +40,11 @@ grid on;
 axis([1, 50, 0, 0.5]);
 xlabel('Num subwindows')
 ylabel('Precision')
-title('Results on PASCAL-2007-test')
+title('Results on ILSVRC2012-val-200rnd')
 
 % *** our experiments
 % this is list of cells of 2-elements-cells {experiment_name, legend}
-params.exps = {{'exp06_13stats','exp06_13 (GrayBox, topC=5)'}, ...
-               {'exp06_14stats', 'exp06_14 (SlidingWindow, topC=5)'}, ...
-               {'exp06_15stats', 'exp06_15 (GraySegm, topC=5)'}, ...
-               {'exp06_17stats', 'exp06_17 (GrayBox, topC=5, quantile_pred=0.98)'}, ...
-               {'exp06_18stats', 'exp06_18 (GrayBox, topC=20, quantile_pred=0.99, minTopC=5'}, ...
-               {'exp14_04stats', 'exp14_04 (SelectiveSearch, fast)'}, ...
+params.exps = {{'exp06_??stats','exp06_?? (GrayBox, topC=5)'}, ...          
                };
 
 for i=1:numel(params.exps)
@@ -65,30 +60,11 @@ for i=1:numel(params.exps)
   plot(h_precision, S.x_values, S.precision, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 end
-     
 
-% *** SS (from BING paper)
-if 1
-S=load('plot_defs_Cheng_CVPR14.mat');
-plot(h_mean_recall, [1:numel(S.SS_IJCV13)], S.SS_IJCV13, '-o', 'DisplayName', 'SS_IJCV13', 'Color', MATLAB.Color.green);
-h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none');
-end
-
-% *** BING BING_RGB_HSV_Gray_CVPR14
-if 1
-% load the results
-S=load('plot_defs_Cheng_CVPR14.mat');
-% plot the mean recall per class
-plot(h_mean_recall, [1:numel(S.BING_RGB_HSV_Gray_CVPR14)], S.BING_RGB_HSV_Gray_CVPR14, '-o', 'DisplayName', 'BING_RGB_HSV_Gray_CVPR14', 'Color', MATLAB.Color.greenDark);
-h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none');
-% plot the MABO
-plot(h_mean_mabo, [1:numel(S.MABO)], S.MABO, '-o', 'DisplayName', 'BING (?)', 'Color', MATLAB.Color.greenDark);
-h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none');
-end
 
 % *** save figures
-saveas(h_mean_recall, 'results_PASCAL2007test_mean_recall.png');
-saveas(h_mean_mabo, 'results_PASCAL2007test_mean_mabo.png')
-saveas(h_precision, 'results_PASCAL2007test_precision.png')
+saveas(h_mean_recall, 'results_ILSVRC2012val200rnd_mean_recall.png');
+saveas(h_mean_mabo, 'results_ILSVRC2012val200rnd_mean_mabo.png')
+saveas(h_precision, 'results_ILSVRC2012val200rnd_precision.png')
 
 end

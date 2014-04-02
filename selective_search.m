@@ -76,6 +76,10 @@ for i=1:length(testIms)
       
       % load the image
       im = imread(testIms{i});
+      % if the image is in grayscale, we convert it to colors
+      if size(im, 3) == 1
+        im = repmat(im, [1, 1, 3]);
+      end
       % try many Segmentation thresholds k
       idx = 1;
       for j=1:length(ks)

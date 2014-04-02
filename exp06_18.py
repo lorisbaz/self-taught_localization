@@ -10,44 +10,44 @@ from network import *
 from configuration import *
 from imgsegmentation import *
 from heatextractor import *
-from compute_statistics_exp import *
 from htmlreport import *
-import exp23
+from compute_statistics_exp import *
+import exp06
 
 if __name__ == "__main__":
     # load configurations and parameters  
     conf = Configuration()
-    params = exp23.Params()
+    params = exp06.Params()
     # experiment name
-    params.exp_name = 'exp23_01'
-    # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp03_04'
-    # Num elements in batch (for decaf/caffe eval)
-    params.batch_sz = 1
+    params.exp_name = 'exp06_18'
+    # take results from here
+    params.exp_name_input = 'exp16_05'
+    # extract heat heatmaps from AVG heatmap and INDIVIDUAL heats
+    params.extract_bbox_from_avg_heatmap = True
+    params.extract_bbox_from_individual_heatmaps = True
+    # Want to use the top C classes (max C = 5; if = 0 use the GT!)
+    params.top_C_classes = 5
+    # Bounding box  parameters
+    params.min_bbox_size = 0.02
+    params.grab_cut_rounds = 30
+    params.consider_pr_fg = True
     # default Configuration, image and label files
     params.conf = conf
-    # select network: 'CAFFE' or 'DECAF'
-    params.classifier = 'CAFFE'
-    params.center_only = True
-    # select top C classes used to generate the predicted bboxes
-    params.topC = 0     # if 0, take the max across classes
-    # method for calculating the confidence
-    params.heatextractor_confidence_tech = 'full_obf_positive'     
-    # obfuscation search params
-    params.ss_version = 'fast'
-    params.min_sz_segm = 5 # keep this low (because we resize!!)
-    params.alpha = alpha
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
+    # max size of the HTML images
+    params.html_max_img_size = 300
     # parallelize the script on Anthill?
     params.run_on_anthill = True
-    # list of tasks to execute
+    # Set jobname in case the process stop or crush
     params.task = []
+    # specify task to debug 
     logging.info('Started')
     # RUN THE EXPERIMENT
-    exp23.run_exp(params)
+    #exp06.run_exp(params)
     # RUN THE STATISTICS PIPELINE
     compute_statistics_exp(input_exp=params.exp_name)
+

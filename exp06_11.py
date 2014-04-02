@@ -10,6 +10,7 @@ from network import *
 from configuration import *
 from imgsegmentation import *
 from heatextractor import *
+from compute_statistics_exp import *
 from htmlreport import *
 import exp06
 
@@ -40,11 +41,12 @@ if __name__ == "__main__":
     # max size of the HTML images
     params.html_max_img_size = 300
     # parallelize the script on Anthill?
-    params.run_on_anthill = False
+    params.run_on_anthill = True
     # Set jobname in case the process stop or crush
-    params.task = [592]
+    params.task = []
     # specify task to debug 
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp06.run_exp(params)
-
+    # RUN THE STATISTICS PIPELINE
+    compute_statistics_exp(input_exp=params.exp_name)

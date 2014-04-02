@@ -5,15 +5,63 @@ logging.basicConfig(level=logging.INFO, \
               datefmt='%m/%d/%Y %H:%M:%S')
 import numpy as np
 import os
+import os.path
 import random
 import scipy.misc
 import scipy.io
 import skimage
 import skimage.io
 import skimage.transform
+import subprocess
 import tempfile
 
 from bbox import *
+
+class TempFile:
+    def __init__(self, mapped_file='', copy=True):
+        """
+        mapped_file is the file that you want to map. if copy=True, we copy
+        this mapped file to the temporary location
+        """
+        # open the temporary file
+        mapFileExtension = ''
+        if mapped_file:
+            mapFileName, mapFileExtension = os.path.splitext(mapped_file)
+        (fd, tmpfilename) = tempfile.mkstemp(suffix=mapFileExtension)
+        os.close(fd)
+        self.tmpfilename = tmpfilename
+        # set some class fields
+        self.user = os.getenv('USER')
+        self.mappedfilename = mapped_file
+        # copy the mapped file, if requested        
+        if mapped_file and copy:
+            command = 'scp {0}@anthill:{1} {2}'.format(\
+                       self.user, mapped_file, tmpfilename)
+            logging.info('Executing command ' + command)
+            subprocess.check_call(command, shell=True)        
+
+    def get_temp_filename(self):
+        return self.tmpfilename
+
+    def close(self, copy=True):
+        """
+        If copy=True, we copy the temporary file (which is supposed to be
+        modified to the mapped_file)
+        """
+        try:
+            # copy the mapped file, if requested
+            if copy:
+                command = 'scp {0} {1}@anthill:{2}'.format(\
+                    self.tmpfilename, self.user, self.mappedfilename)
+                logging.info('Executing command ' + command)    
+                subprocess.check_call(command, shell=True)
+        except:
+            # remote the temporary file
+            os.remove(self.tmpfilename)
+            raise
+        else:
+            os.remove(self.tmpfilename)
+    
 
 def resize_image_max_size(img, fix_sz):
     """
