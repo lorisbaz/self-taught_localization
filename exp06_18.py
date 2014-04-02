@@ -10,8 +10,8 @@ from network import *
 from configuration import *
 from imgsegmentation import *
 from heatextractor import *
-from compute_statistics_exp import *
 from htmlreport import *
+from compute_statistics_exp import *
 import exp06
 
 if __name__ == "__main__":
@@ -19,12 +19,14 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp06.Params()
     # experiment name
-    params.exp_name = 'exp06_08'
+    params.exp_name = 'exp06_18'
     # take results from here
-    params.exp_name_input = 'exp11_01'
+    params.exp_name_input = 'exp16_05'
     # extract heat heatmaps from AVG heatmap and INDIVIDUAL heats
     params.extract_bbox_from_avg_heatmap = True
     params.extract_bbox_from_individual_heatmaps = True
+    # Want to use the top C classes (max C = 5; if = 0 use the GT!)
+    params.top_C_classes = 5
     # Bounding box  parameters
     params.min_bbox_size = 0.02
     params.grab_cut_rounds = 30
@@ -45,6 +47,7 @@ if __name__ == "__main__":
     # specify task to debug 
     logging.info('Started')
     # RUN THE EXPERIMENT
-    exp06.run_exp(params)
+    #exp06.run_exp(params)
     # RUN THE STATISTICS PIPELINE
     compute_statistics_exp(input_exp=params.exp_name)
+

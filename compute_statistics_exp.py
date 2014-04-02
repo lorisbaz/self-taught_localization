@@ -295,6 +295,7 @@ def run_exp_per_class(params):
         os.makedirs(mat_output_dir)
     # list the databases chuncks
     n_chunks = len(glob.glob(params.input_dir + '/*.db'))
+    assert n_chunks > 0, 'The input dataset is empty!'
     # run the pipeline
     parfun = None
     if params.run_on_anthill:

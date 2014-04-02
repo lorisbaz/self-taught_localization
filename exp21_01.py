@@ -5,6 +5,7 @@ import os.path
 import skimage.io
 from vlg.util.parfun import *
 
+from compute_statistics_exp import *
 from configuration import *
 import exp21
 
@@ -33,4 +34,5 @@ if __name__ == "__main__":
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp21.run_exp(params)
-
+    # RUN THE STATISTICS PIPELINE
+    compute_statistics_exp(input_exp=params.exp_name)

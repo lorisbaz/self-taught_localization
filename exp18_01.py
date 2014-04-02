@@ -10,6 +10,7 @@ from network import *
 from configuration import *
 from imgsegmentation import *
 from heatextractor import *
+from compute_statistics_exp import *
 from htmlreport import *
 import exp18
 
@@ -53,4 +54,6 @@ if __name__ == "__main__":
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp18.run_exp(params)
+    # RUN THE STATISTICS PIPELINE
+    compute_statistics_exp(input_exp=params.exp_name)    
 
