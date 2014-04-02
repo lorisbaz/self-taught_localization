@@ -35,8 +35,6 @@ class TempFile:
         self.mappedfilename = mapped_file
         # copy the mapped file, if requested        
         if mapped_file and copy:
-            if not os.path.exists(mapped_file):
-                raise InputError('File {0} does not exist'.format(mapped_file))
             command = 'scp {0}@anthill:{1} {2}'.format(\
                        self.user, mapped_file, tmpfilename)
             logging.info('Executing command ' + command)

@@ -49,6 +49,7 @@ params.exps = {{'exp06_13stats','exp06_13 (GrayBox, topC=5)'}, ...
                {'exp06_15stats', 'exp06_15 (GraySegm, topC=5)'}, ...
                {'exp06_17stats', 'exp06_17 (GrayBox, topC=5, quantile_pred=0.98)'}, ...
                {'exp06_18stats', 'exp06_18 (GrayBox, topC=20, quantile_pred=0.99, minTopC=5'}, ...
+               {'exp14_04stats', 'exp14_04 (SelectiveSearch, fast)'}, ...
                };
 
 for i=1:numel(params.exps)
@@ -56,13 +57,13 @@ for i=1:numel(params.exps)
   S=load([params.exp_dir '/' params.exps{i}{1} '/mat/recall_vs_numPredBboxesImage.mat']);  
   % plot the mean recall per class
   plot(h_mean_recall, S.x_values, S.mean_recall, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
-  h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none');
+  h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the MABO
   plot(h_mean_mabo, S.x_values, S.mean_ABO, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
-  h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none');
+  h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the Precision
   plot(h_precision, S.x_values, S.precision, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
-  h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none');
+  h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 end
      
 
