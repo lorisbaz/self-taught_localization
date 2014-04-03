@@ -116,8 +116,8 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
             # init heatmap
             heatmap = []
             for i in range(num_top_c):
-                heatmap.append(Heatmap(image_resz.shape[1], \
-                                        image_resz.shape[0]))
+                heatmap.append(Heatmap(image.shape[1], \
+                                        image.shape[0]))
             segm_list = segm_masks[s] # retrieve s-th mask 
             #heatmap.set_segment_map(segm_mask)
             #segm_list = np.unique(segm_mask)
@@ -239,8 +239,8 @@ class HeatmapExtractorSliding(HeatmapExtractor):
             # init heatmap
             heatmap = []
             for i in range(num_top_c):
-                heatmap.append(Heatmap(image_resz.shape[1], \
-                                       image_resz.shape[0]))
+                heatmap.append(Heatmap(image.shape[1], \
+                                       image.shape[0]))
             # generate indexes
             xs = np.linspace(0, image.shape[1]-box_sz, \
                              (image.shape[1]-box_sz)/float(stride)+1)
@@ -276,7 +276,7 @@ class HeatmapExtractorSliding(HeatmapExtractor):
                 assert len(heatmap) == 1
                 heatmap[0].set_description('Computed with sliding win ' + \
                                     'approach, with window size {0} and' + \
-                                    ' stride {1}. Total' + \
+                                    ' stride {0}. Total' + \
                                     ' of {2} maps.'.format(box_sz, \
                                     stride, len(self.params_)))
                 heatmap[0].normalize_counts()
