@@ -177,6 +177,7 @@ def run_exp(params):
             anno = pickle.loads(db_output[image_key])
             # append stats
             assert len(anno.stats) == 1
+            assert len(anno.stats.keys()) == 1, 'Only one classifier is supp.'
             classifier = anno.stats.keys()[0]
             stats_list.append(anno.stats[classifier])
     # ** Aggregate results 
@@ -333,6 +334,7 @@ def run_exp_per_class(params):
             anno = pickle.loads(db_output[image_key])
             # append stats
             assert len(anno.stats) == 1
+            assert len(anno.stats.keys()) == 1, 'Only one classifier is supp.'
             classifier = anno.stats.keys()[0]
             for label in anno.stats[classifier].keys():
                 if not(stats_list.has_key(label)): # init first time...

@@ -6,7 +6,7 @@ import subprocess
 import util
 import vlg.util.parfun
 
-@unittest.skip('')
+
 class UtilTest(unittest.TestCase):
     def setUp(self):
         pass
@@ -67,22 +67,15 @@ class UtilTest(unittest.TestCase):
 #=============================================================================
 
 def utiltesttempfile_support(mapped_file):
-    tmp = util.TempFile(mapped_file, copy=True)
-    # test get_temp_filename
-    tmp.get_temp_filename()
     # write something on the temporary file
+    tmp = util.TempFile(mapped_file, copy=True)
     fd = open(tmp.get_temp_filename(), 'w')
     fd.write('THIS IS A TEST')
     fd.close()
-    # test close
+    # close and mape the file
     tmp.close(copy=True)
-    # make sure we write the content back to the mapped file
-    fd = open(mapped_file, 'r')
-    line = fd.readline()
-    fd.close()  
-    return line
+    return 0
 
-#@unittest.skip('')
 class UtilTestTempFile(unittest.TestCase):
     def setUp(self):
         self.mapped_file = '/home/ironfs/scratch/vlg/THIS_IS_A_TEST.dat'
@@ -91,13 +84,24 @@ class UtilTestTempFile(unittest.TestCase):
     def tearDown(self):
         os.remove(self.mapped_file)
 
-    @unittest.skip('')
     def test_tmpfile(self):
         """
         We try to map a file that is on ironfs.
         """        
-        s = utiltesttempfile_support(self.mapped_file)
-        self.assertEqual(s, 'THIS IS A TEST')
+        tmp = util.TempFile(self.mapped_file, copy=True)
+        # test get_temp_filename
+        tmp.get_temp_filename()
+        # write something on the temporary file
+        fd = open(tmp.get_temp_filename(), 'w')
+        fd.write('THIS IS A TEST')
+        fd.close()
+        # test close
+        tmp.close(copy=True)
+        # make sure we write the content back to the mapped file
+        fd = open(self.mapped_file, 'r')
+        line = fd.readline()
+        fd.close()  
+        self.assertEqual(line, 'THIS IS A TEST')
 
     @unittest.skipIf(os.uname()[1] != 'anthill.cs.dartmouth.edu',
                      'Skipping TestParFunAnthill because we are not on Anthill')
@@ -106,9 +110,12 @@ class UtilTestTempFile(unittest.TestCase):
                             time_requested=1, memory_requested=1, \
                             hostname_requested = 'tanto*', ironfs=False)
         pf.add_task(self.mapped_file)
-        s = pf.run()
-        print 'OUT: ' + str(s)
-        self.assertEqual(s[0], 'THIS IS A TEST')
+        out = pf.run()
+        # make sure we write the content back to the mapped file
+        fd = open(self.mapped_file, 'r')
+        line = fd.readline()
+        fd.close()  
+        self.assertEqual(line, 'THIS IS A TEST')
 
 #=============================================================================
 
