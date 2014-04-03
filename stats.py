@@ -1,3 +1,5 @@
+from util import *
+import logging
 import numpy as np
 
 class Stats:
@@ -123,6 +125,9 @@ class Stats:
             # select topN
             stats_now = Stats()
             idx_sort = np.argsort(stats_list[i].confidence)[::-1]
+            if len(idx_sort)==0:
+                logging.warning('The stats {0} is empty!'.format(i))
+                continue
             if len(idx_sort)>topN:
                 idx_sort = idx_sort[0:topN]
             stats_now.confidence = np.array(stats_list[i].confidence)[idx_sort]

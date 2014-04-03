@@ -44,7 +44,8 @@ title('Results on ILSVRC2012-val-200rnd')
 
 % *** our experiments
 % this is list of cells of 2-elements-cells {experiment_name, legend}
-params.exps = {{'exp06_??stats','exp06_?? (GrayBox, topC=5)'}, ...          
+params.exps = {{'exp06_19stats','exp06_19 (GrayBox, topC=5)'}, ...
+               {'exp14_05stats','exp14_05 (SelectiveSearch, fast)'}, ...
                };
 
 for i=1:numel(params.exps)
