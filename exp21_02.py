@@ -5,6 +5,7 @@ import os.path
 import skimage.io
 from vlg.util.parfun import *
 
+from compute_statistics_exp import *
 from configuration import *
 import exp21
 
@@ -15,7 +16,7 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp21_02'
     # take results from here
-    params.exp_name_input = ['exp06_15', 'exp06_18']
+    params.exp_name_input = ['exp06_13', 'exp06_15']
     # default Configuration, image and label files
     params.conf = conf
     # max size of the HTML images
@@ -33,4 +34,6 @@ if __name__ == "__main__":
     logging.info('Started')
     # RUN THE EXPERIMENT
     exp21.run_exp(params)
+    # RUN THE STATISTICS PIPELINE
+    compute_statistics_exp(input_exp=params.exp_name)
 

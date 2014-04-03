@@ -451,6 +451,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         segm_masks = segm_mat.get('blobIndIm')
         # classify full img
         caffe_rep_full = self.net_.evaluate(image)
+        class_guess = np.argmax(caffe_rep_full)
         # make segm_blobs more "usable" and filter small segments
         segm_all_list = []
         for s in range(np.shape(segm_masks)[1]): # for each segm mask
@@ -463,7 +464,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
             logging.info('segm_mask {0} / {1} ({2} segments)'.format( \
                          s, np.shape(segm_masks)[1], max_segm_id)) 
             # compute obfuscation score for each segment
-            heatmap_tmp = np.zeros((np.shape(image)[0], np.shape(image)[1]))
+            #heatmap_tmp = np.zeros((np.shape(image)[0], np.shape(image)[1]))
             for id_segment in segm_ids: # for each segment of level 0
                 # compute bbox (for filtering)
                 mask = segm_mask==id_segment
@@ -491,10 +492,11 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
                     caffe_rep_obf = self.net_.evaluate(image_obf)
                     # Given the class of the image, select the confidence
                     if self.topC_ == 0:
-                        confidence = np.max(caffe_rep_full - caffe_rep_obf)
+                        confidence = caffe_rep_full[class_guess] - \
+                                        caffe_rep_obf[class_guess]
                     else: ### TODOOOOOOOOOOOOOOOOO ###
                         raise NotImplementedError()
-                    heatmap_tmp[mask] = confidence
+                    #heatmap_tmp[mask] = confidence
                     # Build output (bbox and mask)
                     feature_vec.append([xmin+(xmax-xmin)/2.0, \
                                         ymin+(ymax-ymin)/2.0, \

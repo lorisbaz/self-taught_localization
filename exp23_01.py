@@ -36,7 +36,7 @@ if __name__ == "__main__":
     # obfuscation search params
     params.ss_version = 'fast'
     params.min_sz_segm = 5 # keep this low (because we resize!!)
-    params.alpha = alpha
+    params.alpha = 1
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
