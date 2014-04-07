@@ -53,7 +53,6 @@ def pipeline(inputdb, outputdb, params):
         anno = pickle.loads(db_input[image_key])
         # get stuff from database entry
         img = anno.get_image()
-        img_width, img_height = np.shape(img)[0:2]
         logging.info('***** Elaborating ' + os.path.basename(anno.image_name))
         # resize img to fit the size of the network
         image_resz = skimage.transform.resize(img,\
@@ -61,6 +60,7 @@ def pipeline(inputdb, outputdb, params):
         image_resz = skimage.img_as_ubyte(image_resz) 
         # extract segments
         segment_lists = segmenter.extract(image_resz)
+        img_width, img_height = np.shape(image_resz)[0:2]
         # Convert the segmentation lists to BBoxes
         pred_bboxes_unnorm = segments_to_bboxes(segment_lists)
         # Normalize the bboxes

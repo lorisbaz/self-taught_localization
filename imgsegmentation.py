@@ -445,8 +445,8 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         except:
             logging.error('Exception while loading ' + mat_temp_file)
         # delete all the temporary files
-        #os.remove(img_temp_file)
-        #os.remove(mat_temp_file)
+        os.remove(img_temp_file)
+        os.remove(mat_temp_file)
         # Load only first-level segmentation (i.e., Felzenswalb) 
         segm_masks = segm_mat.get('blobIndIm')
         # classify full img
@@ -512,27 +512,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
             D = dist.pdist(X[:,0:2], 'euclidean') + self.alpha_ * \
                 dist.pdist(X[:,2].reshape((np.shape(X)[0],1)), 'euclidean')
             Z = hierarchy.linkage(D, method='average')
-#            # visualize
-#            import pylab as pl
-#            pl.subplot(131)
-#            pl.imshow(segm_mask, interpolation='nearest')
-#            labs = []
-#            for pos in feature_vec:
-#                x,y,c,id = pos
-#                pl.text(x, y, str(id), fontdict={'size': 18})
-#                labs.append(str(id))
-#            pl.subplot(132)
-#            pl.imshow(heatmap_tmp, interpolation='nearest')
-#            labs = []
-#            for pos in feature_vec:
-#                x,y,c,id = pos
-#                pl.scatter(x,y)
-#                pl.text(x, y, str(id), fontdict={'size': 18})
-#                labs.append(str(id))
-#            pl.subplot(133)
-#            W = hierarchy.dendrogram(Z, labels = labs)
-#            pl.show()
-            ZZ = segm_all
+            ZZ = list(segm_all)
             n = np.shape(Z)[0]
             segm_mask_support = np.copy(segm_mask)
             id_segments = np.array(feature_vec)[:,3].tolist()
@@ -547,7 +527,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
                 ymax = max(ZZ[id1]['bbox'].ymax, ZZ[id2]['bbox'].ymax)
                 conf = (ZZ[id1]['bbox'].confidence + \
                             ZZ[id2]['bbox'].confidence)/2.0
-                bbox = BBox(xmin, ymin, xmax, ymax, conf)
+                bbox = BBox(xmin, ymin, xmax, ymax, max(conf, 0.0))
                 # Extract the mask
                 id_segment1 = id_segments[id1]
                 id_segment2 = id_segments[id2]                 
@@ -561,6 +541,34 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
 #                print (id1, id2, len(ZZ)-1)
 #                W = hierarchy.dendrogram(Z)
 #                pl.show() 
+            # visualize
+            import pylab as pl
+            pl.subplot(141)
+            pl.imshow(image)
+            pl.subplot(142)
+            pl.imshow(segm_mask, interpolation='nearest')
+            patches = []
+            confid = []
+            for bbox in ZZ:
+                confid.append(bbox['bbox'].confidence)
+            idx_sort = np.argsort(np.array(confid))[::-1]
+            for i in range(30):
+                bbox = ZZ[idx_sort[i]]
+                patch = pl.Rectangle((bbox['bbox'].xmin, bbox['bbox'].ymin),\
+                           bbox['bbox'].xmax-bbox['bbox'].xmin,\
+                           bbox['bbox'].ymax-bbox['bbox'].ymin, alpha=0.2)
+                pl.gca().add_patch(patch)
+            pl.subplot(143)
+            pl.imshow(segm_mask, interpolation='nearest')
+            labs = []
+            for pos in feature_vec:
+                x,y,c,id = pos
+                pl.scatter(x,y)
+                pl.text(x, y, str(id), fontdict={'size': 18})
+                labs.append(str(id))
+            pl.subplot(144)
+            W = hierarchy.dendrogram(Z, labels = labs)
+            pl.show()                
             segm_all_list.append(ZZ)
         return segm_all_list
 
@@ -571,4 +579,252 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
             for w in np.shape(segments[s])[0]:
                 bboxes.append(segments[s][w]['bbox'])
         return bboxes 
+
+
+    def extract2(self, image):
+        """
+        Compute segmentation using matlab function, parse the mat files 
+        perform segment merging accordingly to the classification score
+        and returns a list of dictionaries
+
+        RETURNS:
+        - a list of dictionaries {'bbox': BBox, 'mask': int nd.array, 
+                                  'confidence': int}
+          The bbox is the outer rectable enclosing the segment.
+          The mask contains only 0, 1 values, and it is relative to the bbox.
+          The conficende is max(1 - classification accuracy of obfuscation)
+        """    
+	    # Print
+        logging.info('Running MATLAB selective search.')  
+        # dump the images of the AnnotatedImages to temporary files 
+        (fd, img_temp_file) = tempfile.mkstemp(suffix = '.bmp')
+        os.close(fd)
+        if len(np.shape(image))==2: # gray img
+            img = np.zeros((np.shape(image)[0], np.shape(image)[1], 3))
+            img[:,:,0] = image
+            img[:,:,1] = image
+            img[:,:,2] = image
+            image = img
+        img = skimage.io.imsave(img_temp_file, image)
+        # create temporary files for the .mat files
+        (fd, mat_temp_file) = tempfile.mkstemp(suffix = '.mat')
+        os.close(fd)
+        # run the Selective Search Matlab wrapper
+        img_temp_files_cell = '{\'' + img_temp_file + '\'}'
+        mat_temp_files_cell = '{\'' + mat_temp_file + '\'}'
+        matlab_cmd = 'selective_search_obfuscation({0}, {1}, \'{2}\')'\
+                        .format(img_temp_files_cell, mat_temp_files_cell, \
+                                self.ss_version_)
+        command = "matlab -nojvm -nodesktop -r \"try; " + matlab_cmd + \
+                "; catch; exit; end; exit\""
+        logging.info('Executing command ' + command)
+        if os.system(command) != 0:
+            logging.error('Matlab SS script did not exit successfully!')
+            return []
+        # load the .mat file
+        try:
+            segm_mat = scipy.io.loadmat(mat_temp_file)
+        except:
+            logging.error('Exception while loading ' + mat_temp_file)
+        # delete all the temporary files
+        os.remove(img_temp_file)
+        os.remove(mat_temp_file)
+        # Load only first-level segmentation (i.e., Felzenswalb) 
+        segm_masks = segm_mat.get('blobIndIm')
+        # classify full img
+        caffe_rep_full = self.net_.evaluate(image)
+        class_guess = np.argmax(caffe_rep_full)
+        # Our Obfuscation Search---
+        segm_all_list = []
+        image_sz = np.shape(image)[0:2]
+        for s in range(np.shape(segm_masks)[1]): # for each segm mask
+            segm_mask = segm_masks[0,s]
+            segm_all = []
+            segm_ids = np.unique(segm_mask)
+            max_segm_id = np.max(segm_ids)
+            confidence = np.zeros(len(segm_ids))
+            logging.info('segm_mask {0} / {1} ({2} segments)'.format( \
+                         s, np.shape(segm_masks)[1], max_segm_id)) 
+            # Generate the basic segments
+            for id_segment in segm_ids: # for each segment of level 0
+                # compute bbox (for filtering)
+                mask = segm_mask==id_segment
+                ys = np.argwhere(np.sum(mask, axis = 1) > 0)
+                xs = np.argwhere(np.sum(mask, axis = 0) > 0)
+                ymin = np.min(ys)
+                ymax = np.max(ys)
+                xmin = np.min(xs)
+                xmax = np.max(xs)
+                if (xmax-xmin >= self.min_sz_segm_) and \
+                        (ymax-ymin >= self.min_sz_segm_): # filter small
+                    # compute confidence
+                    confidence = self.obfuscation_confidence_(image, \
+                             segm_mask, id_segment, caffe_rep_full, class_guess)
+                    # Build the list of segments with positive confidence
+                    if confidence>0:
+                        bbox = BBox(xmin, ymin, xmax, ymax, confidence)
+                        mask_tmp = mask[ymin:ymax,xmin:xmax]
+                        segm_all.append({'bbox': bbox, 'mask': mask_tmp, \
+                                         'id': id_segment})
+            # Init the similarity matrix (contains only neighbouring pairs) 
+            alpha = np.array([0.1, 0.2, 0.3])
+            similarity = self.compute_similarity_sets_(segm_all, segm_all, \
+                                                       alpha, image_sz)
+            # Clustering
+            S = list(segm_all)
+            segm_mask_supp = np.copy(segm_mask)
+            while S!=[]:
+                # Find highest similarity
+                i_max, j_max = np.unravel_index(similarity.argmax(), \
+                                                similarity.shape)
+                # Merge regions
+                segment, segm_mask_supp = self.merge_segments_(S[i_max], \
+                                                        S[j_max], \
+                                                        segm_mask_supp)
+                # Remove Similarity i_max: max and then min preserve structure
+                similarity = np.delete(similarity, i_max, 0)
+                S.remove(max(i_max, j_max))
+                # Remove Similarity j_max
+                similarity = np.delete(similarity, j_max, 1)
+                S.remove(min(i_max, j_max))
+                # compute similarity of the new segment with the rest
+                s = np.shape(similarity)[0]
+                similarity[s,:] = self.compute_similarity_sets_([segment], S)
+                similartty[:,s] = similarity[s,:]
+                # Add merged segment to S
+                S.append(segment)
+                # Add merged segment to the output 
+                segm_all.append(segment)
+
+
+    def merge_segments_(self, segm_1, segm_2, segm_mask):
+
+        raise NotImplementedError()
+
+
+    def obfuscation_confidence_(self, image, segm_mask, id_segment, \
+                                caffe_rep_full, class_guess):
+        image_obf = np.copy(image) # copy array
+        # obfuscation 
+        if np.shape(image.shape)[0]>2: # RGB images
+            image_obf[segm_mask==id_segment,0] = \
+                                 self.net_.get_mean_img()[0]
+            image_obf[segm_mask==id_segment,1] = \
+                                 self.net_.get_mean_img()[1]
+            image_obf[segm_mask==id_segment,2] = \
+                                 self.net_.get_mean_img()[2]   
+        else: # GRAY images
+            image_obf[segm_mask==id_segment] = \
+                           np.mean(self.net_.get_mean_img())
+        # predict CNN reponse for obfuscation
+        caffe_rep_obf = self.net_.evaluate(image_obf)
+        # Given the class of the image, select the confidence
+        if self.topC_ == 0:
+            confidence = caffe_rep_full[class_guess] - \
+                            caffe_rep_obf[class_guess]
+        else: ### TODOOOOOOOOOOOOOOOOO ###
+            raise NotImplementedError()
+
+        return confidence
+
+
+    def compute_similarity_sets_(self, segm_set1, segm_set2, alpha, image_sz):
+
+        img_area = np.float(np.sum(image_sz))
+        similarity = np.zeros((len(segm_set1), len(segm_set2)))
+        for i in range(len(segm_set1)):
+            segm_i = segm_set1[i]
+            for j in range(i, len(segm_set2)): # only lower triang
+                segm_j = segm_set2[j]
+                if True: # self.adjacency_test_(segm_i, segm_j):
+                    # Compute new obfuscation score (eulidean dist)
+                    s_obf = np.linalg.norm(segm_i['bbox'].confidence-\
+                                           segm_j['bbox'].confidence)
+                    # Compute size measure
+                    s_size = 1- (np.sum(segm_i['mask']) + \
+                                    np.sum(segm_j['mask']))/img_area
+                    # Compute fill measure
+                    size_BB = (max(segm_i['bbox'].xmax, segm_j['bbox'].xmax) -\
+                              min(segm_i['bbox'].xmin, segm_j['bbox'].xmin)) *\
+                              (max(segm_i['bbox'].ymax, segm_j['bbox'].ymax) -\
+                              min(segm_i['bbox'].ymin, segm_j['bbox'].ymin))
+                    s_fill = 1 - (size_BB - np.sum(segm_i['mask']) -
+                                    np.sum(segm_j['mask']))/img_area
+                    # Merge measures 
+                    similarity[i,j] = alpha[0]*s_obf + alpha[1]*s_size \
+                                        + alpha[2]*s_fill 
+        return similarity
+
+ 
+    def adjacency_test_(segm_1, segm_2):
+
+        raise NotImplementedError()
+
+#            # Merging segments by confidence [TODOO]
+#            logging.info(' - Hierarchical Clustering')
+#            X = np.array(feature_vec)[:,0:3] # remove id segm
+#            X[:,0] = X[:,0]/np.shape(image)[1] # normalize
+#            X[:,1] = X[:,1]/np.shape(image)[0]
+#            D = dist.pdist(X[:,0:2], 'euclidean') + self.alpha_ * \
+#                dist.pdist(X[:,2].reshape((np.shape(X)[0],1)), 'euclidean')
+#            Z = hierarchy.linkage(D, method='average')
+#            ZZ = list(segm_all)
+#            n = np.shape(Z)[0]
+#            segm_mask_support = np.copy(segm_mask)
+#            id_s0egments = np.array(feature_vec)[:,3].tolist()
+#            for i in range(n): 
+#                # Extract the bbox
+#                id1, id2, conf, num = Z[i,:]
+#                id1 = np.int16(id1)
+#                id2 = np.int16(id2)
+#                xmin = min(ZZ[id1]['bbox'].xmin, ZZ[id2]['bbox'].xmin)
+#                ymin = min(ZZ[id1]['bbox'].ymin, ZZ[id2]['bbox'].ymin)
+#                xmax = max(ZZ[id1]['bbox'].xmax, ZZ[id2]['bbox'].xmax)
+#                ymax = max(ZZ[id1]['bbox'].ymax, ZZ[id2]['bbox'].ymax)
+#                conf = (ZZ[id1]['bbox'].confidence + \
+#                            ZZ[id2]['bbox'].confidence)/2.0
+#                bbox = BBox(xmin, ymin, xmax, ymax, max(conf, 0.0))
+#                # Extract the mask
+#                id_segment1 = id_segments[id1]
+#                id_segment2 = id_segments[id2]                 
+#                max_segm_id = max_segm_id + 1   
+#                segm_mask_support[segm_mask_support==id_segment1] = max_segm_id
+#                segm_mask_support[segm_mask_support==id_segment2] = max_segm_id
+#                mask = np.copy(segm_mask_support == max_segm_id)
+#                mask_tmp = mask[ymin:ymax,xmin:xmax] # [TODOOOO]
+#                ZZ.append({'bbox': bbox, 'mask': mask_tmp})
+#                id_segments.append(max_segm_id)
+##                print (id1, id2, len(ZZ)-1)
+##                W = hierarchy.dendrogram(Z)
+##                pl.show() 
+#            # visualize
+#            import pylab as pl
+#            pl.subplot(141)
+#            pl.imshow(image)
+#            pl.subplot(142)
+#            pl.imshow(segm_mask, interpolation='nearest')
+#            patches = []
+#            confid = []
+#            for bbox in ZZ:
+#                confid.append(bbox['bbox'].confidence)
+#            idx_sort = np.argsort(np.array(confid))[::-1]
+#            for i in range(30):
+#                bbox = ZZ[idx_sort[i]]
+#                patch = pl.Rectangle((bbox['bbox'].xmin, bbox['bbox'].ymin),\
+#                           bbox['bbox'].xmax-bbox['bbox'].xmin,\
+#                           bbox['bbox'].ymax-bbox['bbox'].ymin, alpha=0.2)
+#                pl.gca().add_patch(patch)
+#            pl.subplot(143)
+#            pl.imshow(segm_mask, interpolation='nearest')
+#            labs = []
+#            for pos in feature_vec:
+#                x,y,c,id = pos
+#                pl.scatter(x,y)
+#                pl.text(x, y, str(id), fontdict={'size': 18})
+#                labs.append(str(id))
+#            pl.subplot(144)
+#            W = hierarchy.dendrogram(Z, labels = labs)
+#            pl.show()                
+#            segm_all_list.append(ZZ)
+#        return segm_all_list
 
