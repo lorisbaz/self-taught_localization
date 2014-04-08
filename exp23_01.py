@@ -36,14 +36,14 @@ if __name__ == "__main__":
     # obfuscation search params
     params.ss_version = 'fast'
     params.min_sz_segm = 5 # keep this low (because we resize!!)
-    params.alpha = 1
+    params.alpha = np.array([1/3.0, 1/3.0, 1/3.0])
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     params.input_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
-    params.run_on_anthill = False 
+    params.run_on_anthill = True 
     # list of tasks to execute
     params.task = []
     logging.info('Started')

@@ -28,6 +28,8 @@ class Params:
         # If True, we pick the first "num_classes" classes 
         #          according the official ILSVRC ordering.
         self.randomly_choose_classes = False
+        # Select the subset that you want to load ('val' or 'train')
+        self.subset = 'val'
 
 def get_filenames(params):
     """
@@ -37,6 +39,14 @@ def get_filenames(params):
     NUM_CLASSES = 1000
     conf = params.conf
     wnids = []
+    if params.subset == 'val':
+        images_set = conf.ilsvrc2012_val_images
+        labels_set = conf.ilsvrc2012_val_labels
+    elif params.subset == 'train':
+        images_set = conf.ilsvrc2012_train_images
+        labels_set = conf.ilsvrc2012_train_labels
+    else:
+        raise ValueError('Not existing subset. Select val or train.')    
     fd = open(conf.ilsvrc2012_classid_wnid_words)
     for line in fd:
         temp = line.strip().split('\t')
@@ -44,11 +54,11 @@ def get_filenames(params):
     fd.close()
     images = []
     labels_id = []
-    fd = open(conf.ilsvrc2012_val_images)
+    fd = open(images_set)
     for line in fd:
         images.append(conf.ilsvrc2012_root_images_dir + '/' + line.strip())
     fd.close()
-    fd = open(conf.ilsvrc2012_val_labels)
+    fd = open(labels_set)
     for line in fd:
         labels_id.append(int(line.strip()))
     fd.close()
@@ -124,7 +134,13 @@ def pipeline(images, outputdb, outputhtml, params):
         gt_label = image_wnid.strip()
         anno.gt_objects[gt_label] = AnnotatedObject(gt_label, 1.0)
         # read the ground truth XML file
-        xmlfile = conf.ilsvrc2012_val_box_gt + '/' \
+        if params.subset == 'val':
+            box_gt_path = conf.ilsvrc2012_val_box_gt
+        elif params.subset == 'train':
+            box_gt_path = conf.ilsvrc2012_train_box_gt
+        else:
+            raise ValueError('Not existing subset. Select val or train.')
+        xmlfile = box_gt_path + '/' \
                     + os.path.basename(image_file).replace('.JPEG', '.xml')
         xmldoc = ET.parse(xmlfile)
         annotation = xmldoc.getroot()

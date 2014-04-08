@@ -59,7 +59,7 @@ def pipeline(inputdb, outputdb, params):
                                     (net.get_input_dim(), net.get_input_dim()))
         image_resz = skimage.img_as_ubyte(image_resz) 
         # extract segments
-        segment_lists = segmenter.extract(image_resz)
+        segment_lists = segmenter.extract_greedy(image_resz)
         img_width, img_height = np.shape(image_resz)[0:2]
         # Convert the segmentation lists to BBoxes
         pred_bboxes_unnorm = segments_to_bboxes(segment_lists)
