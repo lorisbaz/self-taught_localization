@@ -70,7 +70,38 @@ class BBoxTest(unittest.TestCase):
         bflt_copy.xmin = -1
         self.assertNotEqual(self.bflt.xmin, bflt_copy.xmin)
 
-
+    def test_non_maxima_suppression(self):
+        # empty case
+        bb = bbox.BBox.non_maxima_suppression([], 0.5)
+        self.assertEqual(bb, [])
+        # None case
+        bb = bbox.BBox.non_maxima_suppression(None, 0.5)
+        self.assertEqual(bb, [])
+        # 1-bbox case
+        bboxes = [bbox.BBox(0.6, 0.8, 0.7, 0.9, confidence=0.5)]
+        bb = bbox.BBox.non_maxima_suppression(bboxes, 0.5)
+        self.assertEqual(len(bb), 1)
+        self.assertEqual(bb[0].xmin, 0.6)
+        self.assertEqual(bb[0].ymin, 0.8)
+        self.assertEqual(bb[0].xmax, 0.7)
+        self.assertEqual(bb[0].ymax, 0.9)
+        self.assertEqual(bb[0].confidence, 0.5)
+        # 3-bboxes example
+        bboxes = [bbox.BBox(0.6, 0.8, 0.7, 0.9, confidence=0.5), \
+                  bbox.BBox(0.6, 0.8, 0.7, 0.95, confidence=0.1), \
+                  bbox.BBox(0.6, 0.8, 0.75, 0.9, confidence=0.7), \
+                  bbox.BBox(0.1, 0.2, 0.4, 0.9, confidence=0.8) ]
+        bb = bbox.BBox.non_maxima_suppression(bboxes, 0.3)
+        self.assertEqual(len(bboxes), 4)
+        self.assertEqual(bboxes[0].confidence, 0.5)
+        self.assertEqual(bboxes[1].confidence, 0.1)
+        self.assertEqual(bboxes[2].confidence, 0.7)
+        self.assertEqual(bboxes[3].confidence, 0.8)        
+        self.assertEqual(len(bb), 2)
+        self.assertEqual(bb[0].confidence, 0.8)
+        self.assertEqual(bb[0].xmax, 0.4)
+        self.assertEqual(bb[1].confidence, 0.7)
+        self.assertEqual(bb[1].xmax, 0.75)
 
 #=============================================================================
 
