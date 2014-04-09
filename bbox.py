@@ -88,6 +88,34 @@ class BBox:
     def copy(self):
         return copy.deepcopy(self)
 
+    @staticmethod
+    def non_maxima_suppression(bboxes, iou_threshold):
+        """
+        Run the classic NMS procedure: the input bboxes are sorted by their
+        confidence scorse, while bboxes which have more than 'iou_threshold'
+        overlap with a higher scoring bbox are consdered near-duplicates
+        and removed.
+        The method returns a containing the remaining bboxes sorted 
+        by confidence.
+        """
+        assert iou_threshold >= 0.0
+        if not bboxes:
+            return []
+        # make a copy of the bboxes, and sort them by confidence
+        bboxes = copy.deepcopy(bboxes)
+        bboxes.sort(key=lambda bb: bb.confidence, reverse=True)
+        bboxes_out = []
+        while len(bboxes) >= 1:
+            bboxes_out.append(bboxes[0])
+            bboxes = bboxes[1:]
+            bboxes2 = []
+            for bb in bboxes:
+                if bb.jaccard_similarity(bboxes_out[-1]) <= iou_threshold:
+                    bboxes2.append(bb)
+            bboxes = bboxes2
+        return bboxes_out
+        
+
 
 
 
