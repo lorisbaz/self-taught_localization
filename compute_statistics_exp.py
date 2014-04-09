@@ -19,8 +19,8 @@ from configuration import *
 from util import *
 from stats import *
 
-class Params:
-    def __init__(self):
+class ComputeStatParams:
+    def __init__(self, input_exp, stats_suffix='stats'):
         # execute the extraction of the statistics from the images.
         # If false, we assumed that we did run the extraction before, and we
         # perform just the aggregation.
@@ -35,10 +35,40 @@ class Params:
         self.max_subwin = 0
         # calculate histogram overlap?
         self.calculate_histogram = True
+        # NMS and IoU threshold to declare two bboxes overlapping
+        self.nms_execution = False
+        self.nms_iou_threshold = 0.3
+        # experiment name
+        self.exp_name = input_exp + stats_suffix
+        # take results from here
+        self.exp_name_input = input_exp
+        # default Configuration, image and label files
+        conf = Configuration()
+        self.conf = conf
+        # Intersection over Union threshold
+        self.IoU_threshold = 0.5
+        # create also some statistics using a variable number of predictions/image
+        self.stats_using_num_pred_bboxes_image = range(1,16)
+        self.stats_using_num_pred_bboxes_image.extend([20, 30, 50, 100, 200, \
+                                                     500, 1000, 2000, 3000, 5000]) 
+        # max num of subwindows generated per image (if 0, take them all)
+        self.max_subwin = max(self.stats_using_num_pred_bboxes_image) 
+        # delete the pred_objects from the AnnotatedImages
+        self.delete_pred_objects = True
+        # input/output directory
+        self.output_dir = conf.experiments_output_directory \
+                            + '/' + self.exp_name
+        self.input_dir = conf.experiments_output_directory \
+                            + '/' + self.exp_name_input 
+        # parallelize the script on Anthill?
+        self.run_on_anthill = True
+        self.run_stat_pipeline = True
+        # Set jobname in case the process stop or crush
+        self.task = []
     
 def compute_statistics_exp(input_exp, run_on_anthill = True, \
                              run_stat_pipeline = True, stats_per_class = True,\
-                             tasks = []):
+                             tasks = [], params=None):
     """
     Computes the statistics for the exp input_exp and save in output_exp folder
     To generate the db results make sure that the run_stat_pipeline is True.
@@ -47,36 +77,18 @@ def compute_statistics_exp(input_exp, run_on_anthill = True, \
     - run_on_anthill: if you want to run on the cluster
     - run_stat_pipeline: if you want to compute the stats (first time that you
                         run the script for a new dataset this has to be = True)
+    - stats_per_class: TODO doc
+    - tasks: TODO doc
+    - params: an object of type ComputeStatParams, to use instead of the default one.
+              If params is specified, the parameters input_exp, run_on_anthill,
+              run_stat_pipeline, tasks are ignored
     """
-    # load configurations and parameters  
-    conf = Configuration()
-    params = Params()
-    # experiment name
-    params.exp_name = input_exp + 'stats'
-    # take results from here
-    params.exp_name_input = input_exp
-    # default Configuration, image and label files
-    params.conf = conf
-    # Intersection over Union threshold
-    params.IoU_threshold = 0.5
-    # create also some statistics using a variable number of predictions/image
-    params.stats_using_num_pred_bboxes_image = range(1,16)
-    params.stats_using_num_pred_bboxes_image.extend([20, 30, 50, 100, 200, \
-                                                 500, 1000, 2000, 3000, 5000]) 
-    # max num of subwindows generated per image (if 0, take them all)
-    params.max_subwin = max(params.stats_using_num_pred_bboxes_image) 
-    # delete the pred_objects from the AnnotatedImages
-    params.delete_pred_objects = True
-    # input/output directory
-    params.output_dir = conf.experiments_output_directory \
-                        + '/' + params.exp_name
-    params.input_dir = conf.experiments_output_directory \
-                        + '/' + params.exp_name_input 
-    # parallelize the script on Anthill?
-    params.run_on_anthill = run_on_anthill
-    params.run_stat_pipeline = run_stat_pipeline
-    # Set jobname in case the process stop or crush
-    params.task = tasks
+    # load configurations and parameters
+    if not params:
+        params = ComputeStatParams(input_exp)
+        params.run_on_anthill = run_on_anthill
+        params.run_stat_pipeline = run_stat_pipeline
+        params.tasks = tasks
     logging.info('Started')
     # RUN THE EXPERIMENT
     if stats_per_class:
@@ -109,6 +121,10 @@ def pipeline(inputdb, outputdb, params):
         for classifier in anno.pred_objects.keys():
             pred_bboxes, pred_lab = Stats.flat_anno_bboxes( \
                                     anno.pred_objects[classifier])
+            # execute NMS, if requested
+            if params.nms_execution:
+                pred_bboxes = BBox.non_maxima_suppression( \
+                                     pred_bboxes, params.nms_iou_threshold)
             # Extract stats 
             stat_obj = Stats()
             stat_obj.compute_stats(pred_bboxes, gt_bboxes, \
@@ -257,6 +273,10 @@ def pipeline_per_class(inputdb, outputdb, params):
             # Get estimated bboxes 
             pred_bboxes, pred_lab = Stats.flat_anno_bboxes( \
                                     anno.pred_objects[classifier])
+            # execute NMS, if requested
+            if params.nms_execution:
+                pred_bboxes = BBox.non_maxima_suppression( \
+                                     pred_bboxes, params.nms_iou_threshold)            
             # Extract stats for all the GT bboxes -> special keywords 'ALL'
             stat_obj['ALL'] = Stats()
             stat_obj['ALL'].compute_stats(pred_bboxes, gt_bboxes, \
