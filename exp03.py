@@ -80,11 +80,29 @@ def get_filenames(params):
     # return only the correct labels, and at most num_images_per_class
     out = []
     for i in range(len(images)):
-        num_images_classes[labels_id[i]-1] += 1
-        if labels_id[i] not in classes_to_keep \
-              or num_images_classes[labels_id[i]-1] > num_images_per_class:
-            continue
-        out.append( (wnids[labels_id[i]-1], images[i]) )
+        # Check that the GT XML is present
+        if params.subset == 'val':
+            xmlfile = conf.ilsvrc2012_val_box_gt + '/' \
+                    + os.path.basename(images[i]).replace('.JPEG', '.xml') 
+        elif params.subset == 'train':
+            xmlfile = conf.ilsvrc2012_train_box_gt + '/' + \
+                    wnids[labels_id[i]-1] + '/' \
+                    + os.path.basename(images[i]).replace('.JPEG', '.xml')
+        else:
+            raise ValueError('Not existing subset. Select val or train.') 
+        if os.path.exists(xmlfile) == True:
+            num_images_classes[labels_id[i]-1] += 1
+            if labels_id[i] not in classes_to_keep \
+                or num_images_classes[labels_id[i]-1] > num_images_per_class:
+                continue
+            out.append( (wnids[labels_id[i]-1], images[i]) )
+    # check if a class is with low num of images
+    for i in range(len(num_images_classes)):
+        if num_images_classes[i] < num_images_per_class and \
+            i in classes_to_keep:
+            logging.info('Class {0} with number of images per class lower' \
+                            ' than {1}.'.format(wnids[i]), \
+                            params.num_images_per_class)
     return out
 
 def visualize_annotated_image(anno):
@@ -135,55 +153,68 @@ def pipeline(images, outputdb, outputhtml, params):
         anno.gt_objects[gt_label] = AnnotatedObject(gt_label, 1.0)
         # read the ground truth XML file
         if params.subset == 'val':
-            box_gt_path = conf.ilsvrc2012_val_box_gt
+            xmlfile = conf.ilsvrc2012_val_box_gt + '/' \
+                    + os.path.basename(image_file).replace('.JPEG', '.xml') 
         elif params.subset == 'train':
-            box_gt_path = conf.ilsvrc2012_train_box_gt
+            xmlfile = conf.ilsvrc2012_train_box_gt + '/' + gt_label + '/' \
+                    + os.path.basename(image_file).replace('.JPEG', '.xml')
         else:
             raise ValueError('Not existing subset. Select val or train.')
-        xmlfile = box_gt_path + '/' \
-                    + os.path.basename(image_file).replace('.JPEG', '.xml')
-        xmldoc = ET.parse(xmlfile)
-        annotation = xmldoc.getroot()
-        size_width = int(annotation.find('size').find('width').text)
-        assert size_width == original_img.shape[1]
-        size_height = int(annotation.find('size').find('height').text)
-        assert size_height == original_img.shape[0]
-        objects = annotation.findall('object')
-        #anno_objects_dict = {} # dictionary label --> AnnoObject
-        for obj in objects:
-            label = obj.find('name').text.strip()
-            if label not in anno.gt_objects:
-                # Note: this situation should never happen, and this code is
-                # here for future usages. We add the AnnotatedObject, but set
-                # the confidence to zero, so to differentiate this object anno
-                # from the full-image object annotation (which has conf=1.0).
-                anno.gt_objects[label] = AnnotatedObject(label, 0.0)
-            bboxes = obj.findall('bndbox')
-            for bbox in bboxes:
-                xmin = int(bbox.find('xmin').text)
-                ymin = int(bbox.find('ymin').text)
-                xmax = int(bbox.find('xmax').text)
-                ymax = int(bbox.find('ymax').text)
-                bb = BBox(xmin-1, ymin-1, xmax, ymax)
-                bb.normalize_to_outer_box(bbox_center_crop)
-                bb.intersect(BBox(0.0, 0.0, 1.0, 1.0))
-                # it can happen that the gt bbox is outside the center bbox
-                if bb.area() > 0.0:
-                    anno.gt_objects[label].bboxes.append(bb)
-        # make sure that anno.gt_objects has exactly one element
-        assert len(anno.gt_objects) == 1
-        logging.info(str(anno))
-        # visualize the annotation (just for debugging)
-        if params.visualize_annotated_images:
-            visualize_annotated_image(anno)
-        # visualize the annotation to a HTML row
-        htmlres.add_annotated_image_embedded(anno)
-        # adding the AnnotatedImage to the database
-        logging.info('Adding the record to the database')
-        key = os.path.basename(image_file).strip()
-        value = pickle.dumps(anno, protocol=2)
-        db[key] = value
-        logging.info('End record')
+        # Check if XML file exists
+        if os.path.exists(xmlfile) == True:
+            xmldoc = ET.parse(xmlfile)
+            annotation = xmldoc.getroot()
+            size_width = int(annotation.find('size').find('width').text)
+            assert size_width == original_img.shape[1]
+            size_height = int(annotation.find('size').find('height').text)
+            assert size_height == original_img.shape[0]
+            objects = annotation.findall('object')
+            #anno_objects_dict = {} # dictionary label --> AnnoObject
+            error_flag = False
+            for obj in objects:
+                label = obj.find('name').text.strip()
+                if label not in anno.gt_objects:
+                    # Note: this situation should never happen, and this code is
+                    # here for future usages. We add the AnnotatedObject, but 
+                    # set the confidence to zero, so to differentiate 
+                    # this object anno from the full-image object annotation 
+                    # (which has conf=1.0).
+                    #anno.gt_objects[label] = AnnotatedObject(label, 0.0)
+                    logging.info('Warning: Label not present in the label list'\
+                                    ' {0} '.format(xmlfile))
+                    error_flag = True
+                    continue
+                bboxes = obj.findall('bndbox')
+                for bbox in bboxes:
+                    xmin = int(bbox.find('xmin').text)
+                    ymin = int(bbox.find('ymin').text)
+                    xmax = int(bbox.find('xmax').text)
+                    ymax = int(bbox.find('ymax').text)
+                    bb = BBox(xmin-1, ymin-1, xmax, ymax)
+                    bb.normalize_to_outer_box(bbox_center_crop)
+                    bb.intersect(BBox(0.0, 0.0, 1.0, 1.0))
+                    # it can happen that the gt bbox is outside the center bbox
+                    if bb.area() > 0.0:
+                        anno.gt_objects[label].bboxes.append(bb)
+            # make sure that anno.gt_objects has exactly one element
+            assert len(anno.gt_objects) == 1
+            logging.info(str(anno))
+            if error_flag:            
+                logging.info('Warning: Image {0} not included'.format(xmlfile))
+            else:
+                # visualize the annotation (just for debugging)
+                if params.visualize_annotated_images:
+                    visualize_annotated_image(anno)
+                # visualize the annotation to a HTML row
+                htmlres.add_annotated_image_embedded(anno)
+                # adding the AnnotatedImage to the database
+                logging.info('Adding the record to the database')
+                key = os.path.basename(image_file).strip()
+                value = pickle.dumps(anno, protocol=2)
+                db[key] = value
+                logging.info('End record')            
+        else:
+            logging.info('No XML file of GT bbox provided.')
     # write the database
     logging.info('Writing file ' + outputdb)
     db.sync()

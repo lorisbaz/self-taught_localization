@@ -85,7 +85,7 @@ class Configuration:
             self.ilsvrc2012_val_images = ilsvrc2012_root + '/val_images.txt'
             self.ilsvrc2012_train_labels = ilsvrc2012_root + '/train_labels.txt'
             self.ilsvrc2012_val_labels = ilsvrc2012_root + '/val_labels.txt'
-             self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/bbox_train'
+            self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/bbox_train'
             self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/bbox_val'
             self.ilsvrc2012_classid_wnid_words = \
                 ilsvrc2012_root + '/classid_wnid_words.txt'
