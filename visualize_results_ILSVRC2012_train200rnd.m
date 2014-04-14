@@ -13,6 +13,7 @@ plot_defs;
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
 params.save_output_files = 1;
 params.prefix_output_files = 'results_ILSVRC2012train200rnd';
+params.set_log_scale = 1;
 
 % create the figure for the mean recall per class
 figure;
@@ -75,6 +76,12 @@ for i=1:numel(params.exps)
   h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 end
 
+% Log scale
+if params.set_log_scale
+    set(h_mean_recall, 'XScale', 'log')
+    set(h_mean_mabo, 'XScale', 'log')
+    set(h_precision, 'XScale', 'log')
+end
 
 % *** save figures
 if params.save_output_files
