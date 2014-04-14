@@ -5,21 +5,25 @@ import os.path
 import skimage.io
 from vlg.util.parfun import *
 
-from compute_statistics_exp import *
+from heatmap import *
+from network import *
 from configuration import *
-import exp22
+from imgsegmentation import *
+from heatextractor import *
+from compute_statistics_exp import *
+from htmlreport import *
+import exp14
 
 if __name__ == "__main__":
     # load configurations and parameters  
     conf = Configuration()
-    params = exp22.Params()
+    params = exp14.Params()
     # experiment name
-    params.exp_name = 'exp22_05'
-    # take results from here
-    params.exp_name_input = 'exp06_19'
-    # select classifier
-    params.classifier = 'CAFFE'
-    params.center_only = True
+    params.exp_name = 'exp14_07'
+    # input (GT AnnotatatedImages for ILSVRC-train-200rnd)
+    params.exp_name_input = 'exp03_07'
+    # selective search version
+    params.ss_version = 'fast'
     # default Configuration, image and label files
     params.conf = conf
     # input/output directory
@@ -29,20 +33,10 @@ if __name__ == "__main__":
                         + '/' + params.exp_name_input 
     # parallelize the script on Anthill?
     params.run_on_anthill = True
-    # Set jobname in case the process stop or crush
+    # list of tasks to execute
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    if 1:
-        exp22.run_exp(params)
+    exp14.run_exp(params)
     # RUN THE STATISTICS PIPELINE
-    if 1:
-        compute_statistics_exp(input_exp=params.exp_name)
-    # RUN THE STATISTICS PIPELINE WITH NMS
-    if 1:
-        # NMS=0.5
-        params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_05')
-        params_stats.nms_execution = True
-        params_stats.nms_iou_threshold = 0.5
-        compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
-    
+    compute_statistics_exp(input_exp=params.exp_name)

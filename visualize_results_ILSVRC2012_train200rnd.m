@@ -1,4 +1,4 @@
-function visualize_results_ILSVRC2012_val200rnd()
+function visualize_results_ILSVRC2012_train200rnd()
 % This script plots results for ILSVRC 2012 - validation (200 classes).
 %
 %
@@ -11,17 +11,18 @@ plot_defs;
 
 % parameters
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
-params.save_output_files = 0;
+params.save_output_files = 1;
+params.prefix_output_files = 'results_ILSVRC2012train200rnd';
 
 % create the figure for the mean recall per class
 figure;
 h_mean_recall = gca;
 hold on;
 grid on;
-axis([1, 200, 0, 1]);
+axis([1, 50, 0, 1]);
 xlabel('Num subwindows')
 ylabel('Mean recall per class')
-title('Results on ILSVRC2012-val-200rnd')
+title('Results on ILSVRC2012-train-200rnd')
 
 % create the figure for the MABO score
 figure;
@@ -31,7 +32,7 @@ grid on;
 axis([1, 50, 0, 1]);
 xlabel('Num subwindows')
 ylabel('MABO')
-title('Results on ILSVRC2012-val-200rnd')
+title('Results on ILSVRC2012-train-200rnd')
 
 % create the figure for the Precision
 figure;
@@ -41,28 +42,22 @@ grid on;
 axis([1, 50, 0, 0.5]);
 xlabel('Num subwindows')
 ylabel('Precision')
-title('Results on ILSVRC2012-val-200rnd')
+title('Results on ILSVRC2012-train-200rnd')
 
 % *** our experiments
 % params.exps is list of cells of 2-elements-cells {experiment_name, legend}
 
 % SOME STANDARD EXPERIMENTS
-params.prefix_output_files = 'results_ILSVRC2012val200rnd';
-params.exps = {{'exp06_19stats','exp06_19 (GrayBox, topC=5)'}, ...
-               {'exp06_20stats','exp06_20 (GraySegm, topC=5)'}, ...
-               {'exp21_03stats','exp21_03 (GraySegm+GrayBox, topC=5)'}, ...
+params.exps = {{'exp06_22stats', 'exp06_22stats (GrayBox, topC=5)'}, ...
+               {'exp06_22stats_NMS_05', 'exp06_22stats_NMS_05 (GrayBox, topC=5)'}, ...
+               {'exp06_22stats_NMS_09', 'exp06_22stats_NMS_09 (GrayBox, topC=5)'}, ...
+               {'exp06_23stats', 'exp06_23stats (GraySegm, topC=5)'}, ...
+               {'exp06_23stats_NMS_05', 'exp06_23stats_NMS_05 (GraySegm, topC=5)'}, ...
+               {'exp06_23stats_NMS_09', 'exp06_23stats_NMS_09 (GraySegm, topC=5)'}, ...
+               {'exp14_07stats', 'exp14_07stats (SelectiveSearch, fast)'}, ...               
                };
 
-% % NMS EXPERIMENTS
-% params.prefix_output_files = 'results_ILSVRC2012val200rnd_NMS';
-% params.exps = { ...
-%                {'exp14_05stats','exp14_05 (SelectiveSearch, fast)'}, ...
-%                {'exp22_06stats','exp22_06 (Re-rank GraySegm+GrayBox, topC=5)'}, ...
-%                {'exp22_06stats_NMS_03','exp22_06 (Re-rank GraySegm+GrayBox, topC=5, NMS=0.3)'}, ...
-%                {'exp22_06stats_NMS_05','exp22_06 (Re-rank GraySegm+GrayBox, topC=5, NMS=0.5)'}, ...               
-%                {'exp22_06stats_NMS_09','exp22_06 (Re-rank GraySegm+GrayBox, topC=5, NMS=0.9)'}, ...
-%                };
-             
+
 for i=1:numel(params.exps)
   % load the experiment results
   S=load([params.exp_dir '/' params.exps{i}{1} '/mat/recall_vs_numPredBboxesImage.mat']);  
@@ -89,3 +84,4 @@ if params.save_output_files
 end
   
 end
+
