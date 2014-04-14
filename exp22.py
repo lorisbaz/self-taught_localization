@@ -24,6 +24,10 @@ class Params:
         # If false, we assumed that we did run the extraction before, and we
         # perform just the aggregation.
         self.run_stat_pipeline = True
+        # Re-ranking variables: use the full-img classification score and 
+        self.full_img_class = False
+        # ... consider the classication score given the GT label
+        self.rerank_with_GT_label = False
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -55,10 +59,16 @@ def pipeline(inputdb, outputdb, params):
         logging.info('***** Elaborating ' + os.path.basename(anno.image_name)) 
         # Get img
         img = anno.get_image()  
+        # set GT
+        if params.rerank_with_GT_label:
+            GT_label =  anno.get_gt_label()
+        else:
+            GT_label = None
         for classifier in anno.pred_objects.keys():
             pred_objects = anno.pred_objects[classifier]
             anno.pred_objects[classifier] = reRank_pred_objects(pred_objects,\
-                                            img, net)
+                                            img, net, params.full_img_class,\
+                                            GT_label)
         # adding object  to the database
         value = pickle.dumps(anno, protocol=2)
         db_output[image_key] = value                 

@@ -744,7 +744,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         conf = self.obfuscation_confidence_(image, segm_mask_support, \
                                     max_segm_id, caffe_rep_full, class_guess)
         # create bbox object
-        bbox = BBox(xmin, ymin, xmax, ymax, max(conf, 0.0))
+        bbox = BBox(xmin, ymin, xmax, ymax, conf)
         # save output structure
         segment = {'bbox': bbox, 'mask': mask_tmp, 'id': max_segm_id}
 
@@ -772,11 +772,13 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         caffe_rep_obf = self.net_.evaluate(image_obf)
         # Given the class of the image, select the confidence
         if self.topC_ == 0:
-            confidence = caffe_rep_full[class_guess] - \
-                            caffe_rep_obf[class_guess]
-        else: ### TODOOOOOOOOOOOOOOOOO ###
-            raise NotImplementedError()
-
+            confidence = max(caffe_rep_full[class_guess] - \
+                            caffe_rep_obf[class_guess], 0.0)
+        else:
+            idx_sort = np.argsort(caffe_rep_full)[::-1]
+            idx_sort = idx_sort[0:self.topC_]
+            confidence = max(np.sum(caffe_rep_full[idx_sort] - \
+                                    caffe_rep_obf[idx_sort]), 0.0)
         return confidence
 
 

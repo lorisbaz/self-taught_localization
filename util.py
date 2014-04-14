@@ -220,7 +220,8 @@ def selective_search(images, ss_version):
     return bboxes_all
 
 
-def reRank_pred_objects(pred_objects, image, net):
+def reRank_pred_objects(pred_objects, image, net, full_img_class = False, \
+                        GT_label = None):
     """
     Re-rank the confidence score of the pred_objects accordingly to the
     classification result of the bbox.
@@ -228,6 +229,19 @@ def reRank_pred_objects(pred_objects, image, net):
     img_sz = np.shape(image)
     height = img_sz[0]
     width = img_sz[1]
+    if full_img_class:
+        image_rz = np.copy(image) 
+        # Resize crop
+        image_rz = skimage.transform.resize(image_rz, \
+                            (net.get_input_dim(), net.get_input_dim()))
+        image_rz = skimage.img_as_ubyte(image_rz)
+        # Compute Net max score 
+        net_feature_full = net.evaluate(image_rz)
+        # Max
+        if GT_label==None:
+            id_max = np.argmax(net_feature_full)
+        else:
+            id_gt = net.get_label_id(GT_label)
     for label in pred_objects.keys():
         # Do it for each BBox 
         for b in range(len(pred_objects[label].bboxes)):
@@ -244,7 +258,15 @@ def reRank_pred_objects(pred_objects, image, net):
             image_crop = skimage.img_as_ubyte(image_crop)
             # Compute Net max score 
             net_feature_vector = net.evaluate(image_crop)
-            confidence = np.max(net_feature_vector)
+            if full_img_class:
+                if GT_label==None:
+                    confidence = max(net_feature_full[id_max] - \
+                                net_feature_vector[id_max], 0.0)
+                else:
+                    confidence = max(net_feature_full[id_gt] - \
+                                net_feature_vector[id_gt], 0.0) 
+            else:
+                confidence = np.max(net_feature_vector)
             # Overwrite the old confidence value
             pred_objects[label].bboxes[b].confidence = confidence
 
