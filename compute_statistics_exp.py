@@ -160,7 +160,7 @@ def run_exp(params):
     parfun = None
     if params.run_on_anthill:
         jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
-        parfun = ParFunAnthill(pipeline, time_requested=1, \
+        parfun = ParFunAnthill(pipeline, time_requested=2, \
             memory_requested=1, job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline)
@@ -321,7 +321,7 @@ def run_exp_per_class(params):
     parfun = None
     if params.run_on_anthill:
         jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
-        parfun = ParFunAnthill(pipeline_per_class, time_requested=1, \
+        parfun = ParFunAnthill(pipeline_per_class, time_requested=2, \
             memory_requested=1, job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline_per_class)

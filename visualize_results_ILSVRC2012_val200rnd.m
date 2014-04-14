@@ -11,16 +11,16 @@ plot_defs;
 
 % parameters
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
-params.save_output_files = 1;
 params.set_log_scale = 1;
-params.eps_thr = 0.001; % do not visualize the curve when the improvement is less than eps_thr
+params.save_output_files = 0;
+
 
 % create the figure for the mean recall per class
 figure;
 h_mean_recall = gca;
 hold on;
 grid on;
-axis([1, 70, 0, 1]);
+axis([1, 200, 0, 1]);
 xlabel('Num subwindows')
 ylabel('Mean recall per class')
 title('Results on ILSVRC2012-val-200rnd')
@@ -51,12 +51,8 @@ title('Results on ILSVRC2012-val-200rnd')
 % SOME STANDARD EXPERIMENTS
 params.prefix_output_files = 'results_ILSVRC2012val200rnd';
 params.exps = {{'exp06_19stats','exp06_19 (GrayBox, topC=5)'}, ...
-               {'exp14_05stats','exp14_05 (SelectiveSearch, fast)'}, ...
                {'exp06_20stats','exp06_20 (GraySegm, topC=5)'}, ...
-               {'exp06_21stats','exp06_21 (SlidingWindow, topC=5)'}, ...
                {'exp21_03stats','exp21_03 (GraySegm+GrayBox, topC=5)'}, ...
-               {'exp22_05stats','exp22_05 (Re-rank GrayBox, topC=5)'}, ...
-               {'exp22_06stats','exp22_06 (Re-rank GraySegm+GrayBox, topC=5)'}, ...
                };
            
 
@@ -74,16 +70,16 @@ for i=1:numel(params.exps)
   % load the experiment results
   S=load([params.exp_dir '/' params.exps{i}{1} '/mat/recall_vs_numPredBboxesImage.mat']);  
   % plot the mean recall per class
-  [S.x_values2, S.mean_recall2] = cut_off_curve(S.x_values, S.mean_recall, params.eps_thr);
-  plot(h_mean_recall, S.x_values2, S.mean_recall2, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
+  [X, Y] = cut_tail_with_equal_values(S.x_values, S.mean_recall);
+  plot(h_mean_recall, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the MABO
-  [S.x_values2, S.mean_ABO2] = cut_off_curve(S.x_values, S.mean_ABO, params.eps_thr);
-  plot(h_mean_mabo, S.x_values2, S.mean_ABO2, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
+  [X, Y] = cut_tail_with_equal_values(S.x_values, S.mean_ABO);
+  plot(h_mean_mabo, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the Precision
-  [S.x_values2, S.precision2] = cut_off_curve(S.x_values, S.precision, params.eps_thr);
-  plot(h_precision, S.x_values2, S.precision2, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
+  [X, Y] = cut_tail_with_equal_values(S.x_values, S.precision);
+  plot(h_precision, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 end
 

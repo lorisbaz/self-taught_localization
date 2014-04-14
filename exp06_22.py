@@ -19,9 +19,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp06.Params()
     # experiment name
-    params.exp_name = 'exp06_16'
+    params.exp_name = 'exp06_22'
     # take results from here
-    params.exp_name_input = 'exp16_04'
+    params.exp_name_input = 'exp16_07'
     # extract heat heatmaps from AVG heatmap and INDIVIDUAL heats
     params.extract_bbox_from_avg_heatmap = True
     params.extract_bbox_from_individual_heatmaps = True
@@ -47,10 +47,10 @@ if __name__ == "__main__":
     # specify task to debug 
     logging.info('Started')
     # RUN THE EXPERIMENT
-    if 0:
+    if 1:
         exp06.run_exp(params)
     # RUN THE STATISTICS PIPELINE
-    if 0:
+    if 1:
         compute_statistics_exp(input_exp=params.exp_name)
     # RUN THE STATISTICS PIPELINE WITH NMS
     if 1:
@@ -59,13 +59,17 @@ if __name__ == "__main__":
         params_stats.nms_execution = True
         params_stats.nms_iou_threshold = 0.3
         compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
+    if 1:
         # NMS=0.5
         params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_05')
         params_stats.nms_execution = True
         params_stats.nms_iou_threshold = 0.5
         compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
+    if 1:
         # NMS=0.9
         params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_09')
         params_stats.nms_execution = True
         params_stats.nms_iou_threshold = 0.9
         compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
+
+

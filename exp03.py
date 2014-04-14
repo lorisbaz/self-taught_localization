@@ -1,6 +1,7 @@
 import cPickle as pickle
 import bsddb
 import logging
+import itertools
 import numpy as np
 import os
 import os.path
@@ -30,6 +31,56 @@ class Params:
         self.randomly_choose_classes = False
         # Select the subset that you want to load ('val' or 'train')
         self.subset = 'val'
+
+
+def check_xmls(images, wnids, params, conf):
+    """
+    Make sure that the XML file specs are valid.
+    Returns a vector of len(images) elements, with 1 if the XML is correct
+    or 0 otherwise.
+    """
+    image_is_valid = [False]*len(images) 
+    for i in range(len(images)):
+        image = images[i][0]
+        label_id = images[i][1]
+        if params.subset == 'val':
+            xmlfile = conf.ilsvrc2012_val_box_gt + '/' \
+                    + os.path.basename(image).replace('.JPEG', '.xml')
+        elif params.subset == 'train':
+            xmlfile = conf.ilsvrc2012_train_box_gt + '/' + \
+                    wnids[label_id-1] + '/' \
+                    + os.path.basename(image).replace('.JPEG', '.xml')
+        else:
+            raise ValueError('Not existing subset. Select val or train.')
+        # Check that the GT XML is present
+        if not os.path.exists(xmlfile):
+            logging.info('Warning: XML does not exist: {0}'.format(xmlfile))            
+            continue
+        # make sure the XML contains a single, valid label
+        xmldoc = ET.parse(xmlfile)
+        annotation = xmldoc.getroot()
+        objects = annotation.findall('object')
+        error_flag = False
+        labels_for_this_image = {}
+        for obj in objects:
+            ll = obj.find('name').text.strip()
+            labels_for_this_image[ll] = True
+            # check if the label is valid
+            if ll not in wnids:
+                logging.info('Warning: Label not present in the label list'\
+                                ' {0} '.format(xmlfile))
+                error_flag = True
+        # check that there is exactly one label
+        if len(labels_for_this_image) != 1:
+            logging.info('Warning: The number of labels is {0} for {1}'.format(\
+                         len(labels_for_this_image), xmlfile))
+            error_flag = True
+        # declare this image valid or not
+        if not error_flag:
+            image_is_valid[i] = True
+    # return
+    return image_is_valid
+            
 
 def get_filenames(params):
     """
@@ -63,6 +114,31 @@ def get_filenames(params):
         labels_id.append(int(line.strip()))
     fd.close()
     assert len(images) == len(labels_id)
+    # create a list of (image, label)
+    image_labels = []
+    for i in range(len(images)):
+        image_labels.append( (images[i], labels_id[i]) )
+    assert len(images) == len(image_labels)
+    # HACK DUE TO BUGS IN THE IMAGENET XML SPECS
+    if params.subset == 'train':
+        image_chunks = split_list(image_labels, params.num_chunks)
+        parfun = None
+        if params.run_on_anthill:
+            parfun = ParFunAnthill(check_xmls, time_requested=2, job_name='JobTEMP')
+        else:
+            parfun = ParFunDummy(check_xmls)
+        idx_to_process = range(len(image_chunks))
+        for i in idx_to_process:
+            parfun.add_task(image_chunks[i], wnids, params, conf)
+        out = parfun.run()
+        # join the responces
+        valid = list(itertools.chain(*out))
+        assert len(valid)==len(images)
+        images2 = [images[i] for i in range(len(images)) if valid[i]]
+        labels_id2 = [labels_id[i] for i in range(len(labels_id)) if valid[i]]
+        images = images2
+        labels_id = labels_id2
+        assert len(images) == len(labels_id)
     # define how many and which classes to keep, and how many imgs per class
     num_images_classes = [0]*NUM_CLASSES
     num_classes = params.num_classes
@@ -80,27 +156,16 @@ def get_filenames(params):
     # return only the correct labels, and at most num_images_per_class
     out = []
     for i in range(len(images)):
-        # Check that the GT XML is present
-        if params.subset == 'val':
-            xmlfile = conf.ilsvrc2012_val_box_gt + '/' \
-                    + os.path.basename(images[i]).replace('.JPEG', '.xml') 
-        elif params.subset == 'train':
-            xmlfile = conf.ilsvrc2012_train_box_gt + '/' + \
-                    wnids[labels_id[i]-1] + '/' \
-                    + os.path.basename(images[i]).replace('.JPEG', '.xml')
-        else:
-            raise ValueError('Not existing subset. Select val or train.') 
-        if os.path.exists(xmlfile) == True:
-            num_images_classes[labels_id[i]-1] += 1
-            if labels_id[i] not in classes_to_keep \
-                or num_images_classes[labels_id[i]-1] > num_images_per_class:
-                continue
-            out.append( (wnids[labels_id[i]-1], images[i]) )
+        num_images_classes[labels_id[i]-1] += 1
+        if labels_id[i] not in classes_to_keep \
+            or num_images_classes[labels_id[i]-1] > num_images_per_class:
+            continue
+        out.append( (wnids[labels_id[i]-1], images[i]) )
     # check if a class is with low num of images
     for i in range(len(num_images_classes)):
         if num_images_classes[i] < num_images_per_class and \
             i in classes_to_keep:
-            logging.info('Class {0} with number of images per class lower' \
+            logging.info('Warning. Class {0} with number of images per class lower' \
                             ' than {1}.'.format(wnids[i]), \
                             params.num_images_per_class)
     return out
@@ -174,15 +239,12 @@ def pipeline(images, outputdb, outputhtml, params):
             for obj in objects:
                 label = obj.find('name').text.strip()
                 if label not in anno.gt_objects:
-                    # Note: this situation should never happen, and this code is
-                    # here for future usages. We add the AnnotatedObject, but 
-                    # set the confidence to zero, so to differentiate 
-                    # this object anno from the full-image object annotation 
-                    # (which has conf=1.0).
+                    # HACKS DUE TO SOME BUGS IN THE IMAGENET XML SPECS
                     #anno.gt_objects[label] = AnnotatedObject(label, 0.0)
                     logging.info('Warning: Label not present in the label list'\
                                     ' {0} '.format(xmlfile))
                     error_flag = True
+                    assert 0 # THIS SHOULD NEVER HAPPEN
                     continue
                 bboxes = obj.findall('bndbox')
                 for bbox in bboxes:
@@ -229,8 +291,10 @@ def run_exp(params):
     if os.path.exists(params.output_dir) == False:
         os.makedirs(params.output_dir)
     # load the filenames of the the images
+    logging.info('Get the filenames')
     images = get_filenames(params)
     # we organize the images by class, and split the list into chunks
+    logging.info('Create the chunks')
     images = sorted(images, key=lambda x: x[0])
     image_chunks = split_list(images, params.num_chunks)
     # run the pipeline

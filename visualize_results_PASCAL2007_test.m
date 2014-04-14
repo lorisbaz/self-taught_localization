@@ -13,7 +13,7 @@ plot_defs;
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
 params.save_output_files = 1;
 params.set_log_scale = 1;
-params.eps_thr = 0.001; % do not visualize the curve when the improvement is less than eps_thr
+
 
 % create the figure for the mean recall per class
 figure;
@@ -63,16 +63,16 @@ for i=1:numel(params.exps)
   % load the experiment results
   S=load([params.exp_dir '/' params.exps{i}{1} '/mat/recall_vs_numPredBboxesImage.mat']);  
   % plot the mean recall per class
-  [S.x_values2, S.mean_recall2] = cut_off_curve(S.x_values, S.mean_recall, params.eps_thr);
-  plot(h_mean_recall, S.x_values2, S.mean_recall2, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
+  [X, Y] = cut_tail_with_equal_values(S.x_values, S.mean_recall);
+  plot(h_mean_recall, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the MABO
-  [S.x_values2, S.mean_ABO2] = cut_off_curve(S.x_values, S.mean_ABO, params.eps_thr);
-  plot(h_mean_mabo, S.x_values2, S.mean_ABO2, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
+  [X, Y] = cut_tail_with_equal_values(S.x_values, S.mean_ABO);
+  plot(h_mean_mabo, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the Precision
-  [S.x_values2, S.precision2] = cut_off_curve(S.x_values, S.precision, params.eps_thr);
-  plot(h_precision, S.x_values2, S.precision2, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
+  [X, Y] = cut_tail_with_equal_values(S.x_values, S.precision);
+  plot(h_precision, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 end
      
