@@ -63,7 +63,8 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
     """
     def __init__(self, network, segment, confidence_tech = 'full_obf', \
                  area_normalization = True, image_transform = 'original', \
-                 num_pred = 0, quantile_pred=1.0, min_num_pred=0):
+                 num_pred = 0, quantile_pred=1.0, min_num_pred=0, \
+                 obfuscate_bbox = False):
         """
         segment is of type ImgSegm.
         confidence_tech is the type of extracted confidence which can be:
@@ -85,6 +86,10 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                          the number of labels).
         min_num_pred: the minimum number of labels to keep.
                       if num_pred==0, this parameter is ignored
+        obfuscate_bbox: Instead of obuscating the segment, we obfuscate the 
+                    bbox sorrounding the segment. This remove the object shape
+                    having a better drop-off in classification when obfuscation
+                    occurs.
         """
         self.network_ = network
         self.segment_ = segment
@@ -94,7 +99,8 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
         self.num_pred_ = num_pred
         self.quantile_pred_ = quantile_pred
         self.min_num_pred = min_num_pred
-        
+        self.obfuscate_box_ = obfuscate_bbox
+
     def extract(self, image, label = ''):
         """
         Perform segmentation-based obfuscation and returns a set of heatmaps 
@@ -134,6 +140,10 @@ class HeatmapExtractorSegm_List(HeatmapExtractor):
                 # obfuscation
                 box = segment_i['bbox'] 
                 mask = segment_i['mask']
+                # If ON, instead of using the segment, we obfuscate the bbox
+                # surrouding the segment 
+                if self.obfuscate_box_:
+                    mask[:,:] = True 
                 image_crop = np.copy(image_obf[box.ymin:box.ymax,\
                                                box.xmin:box.xmax])
                 if np.shape(image.shape)[0]>2: # RGB images

@@ -24,6 +24,9 @@ class Params:
         self.include_gt_label_heatmap = True
         # scores quantile
         self.quantile_pred = 1.0
+        # If ON, instead of obuscating the segment, we obfuscate the 
+        #  bbox sorrounding the segment.
+        self.obfuscate_bbox = False
 
 def pipeline(inputdb, outputdb, params):
     """
@@ -48,7 +51,8 @@ def pipeline(inputdb, outputdb, params):
                 confidence_tech = params.heatextractor_confidence_tech, \
                 area_normalization = params.heatextractor_area_normalization,\
                 image_transform = params.segm_type_load, \
-                num_pred = params.topC, quantile_pred=params.quantile_pred)
+                num_pred = params.topC, quantile_pred=params.quantile_pred,\
+                obfuscate_bbox = params.obfuscate_bbox)
     print outputdb
     db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')

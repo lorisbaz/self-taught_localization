@@ -22,8 +22,10 @@ from network import *
 
 class Params:
     def __init__(self):
-        pass
-
+       # If ON, instead of obuscating the segment, we obfuscate the 
+       #  bbox sorrounding the segment. 
+       self.obfuscate_bbox = False
+ 
 def pipeline(inputdb, outputdb, params):
     # Instantiate some objects, and open the database
     conf = params.conf
@@ -40,7 +42,8 @@ def pipeline(inputdb, outputdb, params):
                            center_only = params.center_only)
     segmenter = ImgSegm_ObfuscationSearch(net, params.ss_version, \
                                    params.min_sz_segm, topC = params.topC,\
-                                   alpha = params.alpha)
+                                   alpha = params.alpha, \
+                                   obfuscate_bbox = params.obfuscate_bbox)
     # retrieve all the AnnotatedImages and images from the database
     logging.info('Opening ' + inputdb)
     db_input = bsddb.btopen(inputdb, 'r')
