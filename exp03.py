@@ -124,7 +124,7 @@ def get_filenames(params):
         image_chunks = split_list(image_labels, params.num_chunks)
         parfun = None
         if params.run_on_anthill:
-            parfun = ParFunAnthill(check_xmls, time_requested=2, job_name='JobTEMP')
+            parfun = ParFunAnthill(check_xmls, time_requested=2)
         else:
             parfun = ParFunDummy(check_xmls)
         idx_to_process = range(len(image_chunks))
@@ -152,7 +152,7 @@ def get_filenames(params):
         idxperm = randperm_deterministic(NUM_CLASSES)
         classes_to_keep = \
            [classes_to_keep[idxperm[i]] for i in range(NUM_CLASSES)]
-    classes_to_keep = classes_to_keep[0:params.num_classes]
+    classes_to_keep = classes_to_keep[0:num_classes]
     # return only the correct labels, and at most num_images_per_class
     out = []
     for i in range(len(images)):
@@ -163,11 +163,11 @@ def get_filenames(params):
         out.append( (wnids[labels_id[i]-1], images[i]) )
     # check if a class is with low num of images
     for i in range(len(num_images_classes)):
-        if num_images_classes[i] < num_images_per_class and \
-            i in classes_to_keep:
+        if (num_images_classes[i] < num_images_per_class) and \
+            (num_images_per_class != sys.maxint) and (i in classes_to_keep):
             logging.info('Warning. Class {0} with number of images per class lower' \
-                            ' than {1}.'.format(wnids[i]), \
-                            params.num_images_per_class)
+                            ' than {1}.'.format(wnids[i], \
+                            params.num_images_per_class))
     return out
 
 def visualize_annotated_image(anno):
@@ -208,7 +208,8 @@ def pipeline(images, outputdb, outputhtml, params):
             bbox_center_crop = get_center_crop(original_img)
             img = crop_image_center(img)
         elif params.image_transformation == 'original':
-            bbox_center_crop = BBox(0, 0, img.shape[1], img.shape[0])
+            bbox_center_crop = BBox(0, 0, original_img.shape[1], \
+                                    original_img.shape[0])
         else:
             raise ValueError('params.image_transformation not valid')
         anno.set_image(img)
@@ -292,7 +293,16 @@ def run_exp(params):
         os.makedirs(params.output_dir)
     # load the filenames of the the images
     logging.info('Get the filenames')
-    images = get_filenames(params)
+    filenames_file = params.output_dir + '/list_filenames.pkl'
+    if os.path.exists(filenames_file):
+        fd = open(filenames_file, 'r')
+        images = pickle.load(fd)
+        fd.close()
+    else:
+        images = get_filenames(params)
+        fd = open(filenames_file, 'w')
+        pickle.dump(images, fd)
+        fd.close()
     # we organize the images by class, and split the list into chunks
     logging.info('Create the chunks')
     images = sorted(images, key=lambda x: x[0])

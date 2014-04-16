@@ -48,10 +48,10 @@ if __name__ == "__main__":
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    if 0:
+    if 1:
         exp23.run_exp(params)
     # RUN THE STATISTICS PIPELINE
-    if 0:
+    if 1:
         compute_statistics_exp(input_exp=params.exp_name)
     # RUN THE STATISTICS PIPELINE WITH NMS
     if 1:

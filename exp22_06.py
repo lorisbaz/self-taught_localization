@@ -36,7 +36,7 @@ if __name__ == "__main__":
     if 0:
         exp22.run_exp(params)
     # RUN THE STATISTICS PIPELINE
-    if 0:
+    if 1:
         compute_statistics_exp(input_exp=params.exp_name)
     # RUN THE STATISTICS PIPELINE WITH NMS
     if 1:
