@@ -57,8 +57,16 @@ params.exps = {{'exp06_13stats','exp06_13 (GrayBox, topC=5)'}, ...
                {'exp21_02stats', 'exp21_02 (GrayBox+GraySegm, topC=5)'}, ...
                {'exp22_03stats', 'exp22_03 (Re-ranked GrayBox, topC=5)'}, ...
                {'exp22_04stats', 'exp22_04 (Re-ranked GrayBox+GraySegm, topC=5)'}, ...
+               {'exp23_07stats', 'exp23_07 (ObfuscationSearch, topC=5)'}, ...
                };
 
+% params.exps = {{'exp06_13stats_NMS_05','exp06_13_NMS_05 (GrayBox, topC=5)'}, ...
+%                {'exp06_25stats_NMS_05', 'exp06_25_NMS_05 (GraySegm, topC=5)'}, ...
+%                {'exp14_04stats', 'exp14_04 (SelectiveSearch, fast)'}, ...              
+%                {'exp23_07stats_NMS_05', 'exp23_07_NMS_05 (ObfuscationSearch, topC=5)'}, ...
+%                };
+           
+           
 for i=1:numel(params.exps)
   % load the experiment results
   S=load([params.exp_dir '/' params.exps{i}{1} '/mat/recall_vs_numPredBboxesImage.mat']);  
@@ -75,13 +83,13 @@ for i=1:numel(params.exps)
   plot(h_precision, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 end
-     
+x_values = S.x_values;     
 
 % *** SS (from BING paper)
 if 1
 S=load('plot_defs_Cheng_CVPR14.mat');
-plot(h_mean_recall, [1:numel(S.SS_IJCV13)], S.SS_IJCV13, '-o', 'DisplayName', 'SS_IJCV13', 'Color', MATLAB.Color.green);
-h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none');
+plot(h_mean_recall, x_values, S.SS_IJCV13(x_values), '-o', 'DisplayName', 'SS_IJCV13', 'Color', MATLAB.Color.green);
+h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 end
 
 % *** BING BING_RGB_HSV_Gray_CVPR14
@@ -89,11 +97,11 @@ if 1
 % load the results
 S=load('plot_defs_Cheng_CVPR14.mat');
 % plot the mean recall per class
-plot(h_mean_recall, [1:numel(S.BING_RGB_HSV_Gray_CVPR14)], S.BING_RGB_HSV_Gray_CVPR14, '-o', 'DisplayName', 'BING_RGB_HSV_Gray_CVPR14', 'Color', MATLAB.Color.greenDark);
-h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none');
+plot(h_mean_recall, x_values, S.BING_RGB_HSV_Gray_CVPR14(x_values), '-o', 'DisplayName', 'BING_RGB_HSV_Gray_CVPR14', 'Color', MATLAB.Color.greenDark);
+h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 % plot the MABO
-plot(h_mean_mabo, [1:numel(S.MABO)], S.MABO, '-o', 'DisplayName', 'BING (?)', 'Color', MATLAB.Color.greenDark);
-h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none');
+plot(h_mean_mabo, x_values, S.MABO(x_values), '-o', 'DisplayName', 'BING (?)', 'Color', MATLAB.Color.greenDark);
+h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
 end
 
 if params.set_log_scale

@@ -12,7 +12,7 @@ plot_defs;
 % parameters
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
 params.set_log_scale = 1;
-params.save_output_files = 0;
+params.save_output_files = 1;
 
 
 % create the figure for the mean recall per class
@@ -55,7 +55,7 @@ params.exps = {{'exp06_19stats','exp06_19 (GrayBox, topC=5)'}, ...
                {'exp21_03stats','exp21_03 (GraySegm+GrayBox, topC=5)'}, ...
                };
            
-
+           
 % % NMS EXPERIMENTS
 % params.prefix_output_files = 'results_ILSVRC2012val200rnd_NMS';
 % params.exps = { ...
