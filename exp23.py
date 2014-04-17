@@ -22,10 +22,13 @@ from network import *
 
 class Params:
     def __init__(self):
-       # If ON, instead of obuscating the segment, we obfuscate the 
-       #  bbox sorrounding the segment. 
-       self.obfuscate_bbox = False
- 
+        # If ON, instead of obuscating the segment, we obfuscate the 
+        #  bbox sorrounding the segment. 
+        self.obfuscate_bbox = False       
+        # Use the GT label instead of the set of topC labels predicted
+        # by the classifier
+        self.use_fullimg_GT_label = False
+                
 def pipeline(inputdb, outputdb, params):
     # Instantiate some objects, and open the database
     conf = params.conf
@@ -62,7 +65,11 @@ def pipeline(inputdb, outputdb, params):
                                     (net.get_input_dim(), net.get_input_dim()))
         image_resz = skimage.img_as_ubyte(image_resz) 
         # extract segments
-        segment_lists = segmenter.extract_greedy(image_resz)
+        if not params.use_fullimg_GT_label:
+            segment_lists = segmenter.extract_greedy(image_resz)
+        else:
+            GT_label = anno.get_gt_label()
+            segment_lists = segmenter.extract_greedy(image_resz, label=GT_label)
         img_width, img_height = np.shape(image_resz)[0:2]
         # Convert the segmentation lists to BBoxes
         pred_bboxes_unnorm = segments_to_bboxes(segment_lists)
