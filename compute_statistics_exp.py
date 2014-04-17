@@ -28,9 +28,6 @@ class ComputeStatParams:
         # list containing the desired number of subwindows per image to use
         # for the various plots that require this information.
         self.stats_using_num_pred_bboxes_image = []
-        # delete the pred_objects from the AnnotatedImages, to save storage
-        # and speed-up the unpickling
-        self.delete_pred_objects = False
         # max num of subwindows generated per image (if 0, take them all)
         self.max_subwin = 0
         # calculate histogram overlap?
@@ -53,7 +50,8 @@ class ComputeStatParams:
                                                      500, 1000, 2000, 3000, 5000]) 
         # max num of subwindows generated per image (if 0, take them all)
         self.max_subwin = max(self.stats_using_num_pred_bboxes_image) 
-        # delete the pred_objects from the AnnotatedImages
+        # delete the pred_objects from the AnnotatedImages, to save storage
+        # and speed-up the unpickling
         self.delete_pred_objects = True
         # input/output directory
         self.output_dir = conf.experiments_output_directory \

@@ -1,3 +1,4 @@
+import copy
 import sys
 
 import util
@@ -130,4 +131,46 @@ class AnnotatedImage:
             else: # add the key
                 self.pred_objects[classifier][eachkey] = \
                                     anno.pred_objects[classifier][eachkey]
+
+    def export_pred_bboxes_to_text(self, name_pred_objects, \
+                                   max_num_bboxes = sys.maxint):
+        """
+        Export the predicted bboxes to a text representation with multi lines,
+        each line, with the following tab-separated fields:
+        <image_name image_width image_height label full_image_confidence  ...
+               xmin ymin xmax ymax bbox_confidence>
+
+        If max_num_bboxes is set, for each image and class label
+        we sort the bboxes by 
+        confidence and we export only the top-max_num_bboxes bboxes per label.
+        """
+        assert name_pred_objects in self.pred_objects
+        out = ''
+        # for each AnnotatedObject ....
+        for label in self.pred_objects[name_pred_objects]:
+            anno_object = self.pred_objects[name_pred_objects][label]
+            full_image_confidence = anno_object.confidence
+            try: # if the conf is not a number, set it to zero
+                full_image_confidence = float(full_image_confidence)
+            except:
+                full_image_confidence = -sys.float_info.max
+            # for each bbox ...
+            bboxes = copy.deepcopy(anno_object.bboxes)
+            for bb in bboxes:
+                try: # if the conf is not a number, set it to zero
+                    bb.confidence = float(bb.confidence)
+                except:
+                    bb.confidence = -sys.float_info.max
+            bboxes = sorted(bboxes, key = lambda bb: -bb.confidence)
+            bboxes = bboxes[0:min(max_num_bboxes, len(bboxes))]
+            for bbox in bboxes:
+                bbox_confidence = bbox.confidence
+                line = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\n'\
+                       .format( \
+                       self.image_name, self.image_width, self.image_height, \
+                       anno_object.label, full_image_confidence, \
+                       bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax, \
+                       bbox_confidence)
+                out = out + line
+        return out
 
