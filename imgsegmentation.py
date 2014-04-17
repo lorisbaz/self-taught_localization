@@ -409,11 +409,12 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         return bboxes 
 
 
-    def extract_greedy(self, image):
+    def extract_greedy(self, image, label=''):
         """
         Compute segmentation using matlab function, parse the mat files 
-        perform segment merging accordingly to the classification score
-        and returns a list of dictionaries
+        perform segment merging accordingly to the obfuscation score and
+        other similarities. It returns a list of dictionaries.
+        The GT label can also be provided as input if available.
 
         RETURNS:
         - a list of dictionaries {'bbox': BBox, 'mask': int nd.array, 
@@ -461,7 +462,11 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
         segm_masks = segm_mat.get('blobIndIm')
         # classify full img
         caffe_rep_full = self.net_.evaluate(image)
-        class_guess = np.argmax(caffe_rep_full)
+        if label=='':
+            class_guess = np.argmax(caffe_rep_full)
+        else: # if the label is provided, we use the GT!
+            class_guess = self.net_.get_label_id(label)
+            self.topC_ = 0 # hack to force the use of the class_guess
         # Our Obfuscation Search---
         segm_all_list = []
         image_sz = np.shape(image)[0:2]
