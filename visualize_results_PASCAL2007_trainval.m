@@ -1,5 +1,5 @@
-function visualize_results_PASCAL2007_test()
-% This script plots results for PASCAL VOC 2007 - TEST set.
+function visualize_results_PASCAL2007_trainval()
+% This script plots results for PASCAL VOC 2007 - TRAINVAL set.
 %
 %
 
@@ -13,7 +13,7 @@ plot_defs;
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
 params.save_output_files = 1;
 params.set_log_scale = 1;
-params.prefix_output_files = 'results_PASCAL2007test';
+params.prefix_output_files = 'results_PASCAL2007trainval';
 
 % create the figure for the mean recall per class
 figure;
@@ -23,7 +23,7 @@ grid on;
 axis([1, 70, 0, 1]);
 xlabel('Num subwindows')
 ylabel('Mean recall per class')
-title('Results on PASCAL-2007-test')
+title('Results on PASCAL-2007-trainval')
 
 % create the figure for the MABO score
 figure;
@@ -33,7 +33,7 @@ grid on;
 axis([1, 70, 0, 1]);
 xlabel('Num subwindows')
 ylabel('MABO')
-title('Results on PASCAL-2007-test')
+title('Results on PASCAL-2007-trainval')
 
 % create the figure for the Precision
 figure;
@@ -43,7 +43,7 @@ grid on;
 axis([1, 70, 0, 0.5]);
 xlabel('Num subwindows')
 ylabel('Precision')
-title('Results on PASCAL-2007-test')
+title('Results on PASCAL-2007-trainval')
 
 % *** our experiments
 % this is list of cells of 2-elements-cells {experiment_name, legend}
@@ -58,9 +58,10 @@ title('Results on PASCAL-2007-test')
 %                {'exp22_04stats', 'exp22_04 (Re-ranked GrayBox+GraySegm, topC=5)'}, ...
 %                };
 
-params.exps = {{'exp06_13stats_NMS_05','exp06_13_NMS_05 (GrayBox, topC=5)'}, ...
-               {'exp06_15stats_NMS_05', 'exp06_15_NMS_05 (GraySegm, topC=5)'}, ...
-               {'exp14_04stats', 'exp14_04 (SelectiveSearch, fast)'}, ...
+params.exps = {{'exp06_26stats_NMS_05','exp06_26_NMS_05 (GrayBox, topC=5)'}, ...
+               {'exp06_27stats_NMS_05', 'exp06_27_NMS_05 (GraySegm, topC=5)'}, ...
+               {'exp14_08stats', 'exp14_08 (SelectiveSearch, fast)'}, ... 
+               {'exp23_08stats_NMS_05', 'exp23_08_NMS_05 (ObfuscationSearch, topC=5)'}, ...
                };
 % params.exps = {{'exp06_13stats_NMS_05','exp06_13_NMS_05 (GrayBox, topC=5)'}, ...
 %                {'exp06_25stats_NMS_05', 'exp06_25_NMS_05 (GraySegm, topC=5)'}, ...
@@ -95,7 +96,7 @@ h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location
 end
 
 % *** BING BING_RGB_HSV_Gray_CVPR14
-if 1
+if 0
 % load the results
 S=load('plot_defs_Cheng_CVPR14.mat');
 % plot the mean recall per class
