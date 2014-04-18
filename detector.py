@@ -51,7 +51,7 @@ class Detector:
         OUTPUT:
          Spred: ndarray of size [n_samples,] with the predicted scores
         """
-        assert isinstance(Xval, np.ndarray)
+        assert isinstance(Xtest, np.ndarray)
         assert self.n_features == Xtest.shape[1]
 
 # --------------------------------------------------------------
@@ -88,13 +88,14 @@ class DetectorLinearSVM(Detector):
                 Spred = svm.decision_function(Xval)
                 ap = sklearn.metrics.average_precision_score(Yval, Spred)
             # cross-validation mode
-            else:            
+            else:
+		svm = self.build_svm_(C)
                 n_samples = Ytrain.shape[0]
                 cv_mode = sklearn.cross_validation.KFold( \
                                n_samples, n_folds=self.numCV, \
                                shuffle=True, random_state=0)
                 cv_scores = sklearn.cross_validation.cross_val_score( \
-                                self.svm, Xtrain, Ytrain,
+                                svm, Xtrain, Ytrain,
                                 scoring='average_precision', cv=cv_mode)
                 ap = np.mean(cv_scores)
             # keep the best ap
@@ -109,13 +110,14 @@ class DetectorLinearSVM(Detector):
         # check the input
         Detector.predict(self, Xtest)
         # predict
-        Spred = svm.decision_function(Xtest)
+        Spred = self.svm.decision_function(Xtest)
+	return Spred
 
     @staticmethod
     def build_svm_(C):
         svm = sklearn.svm.LinearSVC( \
                 penalty='l2', loss='l1', dual=True, tol=0.0001,
                 C=C, fit_intercept=True, intercept_scaling=1, \
-                class_weight='auto', verbose=1, random_state=None)
+                class_weight='auto', verbose=1, random_state=0)
         return svm
     

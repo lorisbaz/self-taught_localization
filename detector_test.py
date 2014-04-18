@@ -10,28 +10,27 @@ class DetectorLinearSVMTest(unittest.TestCase):
     def setUp(self):
         db = sklearn.datasets.load_iris()
         self.Xtrain = db.data.copy()
-        self.Ytrain = db.target.copy()
+        self.Ytrain = db.target.copy()	
         for i in range(len(self.Ytrain)):
             if self.Ytrain[i] == 0:
                 self.Ytrain[i] = 1
             else:
-                self.Ytrain[i] = -1
-        self.Xval = db.data.copy()
-        self.Yval = db.target.copy()
-        for i in range(len(self.Yval)):
-            if self.Yval[i] == 0:
-                self.Yval[i] = 1
-            else:
-                self.Yval[i] = -1
+                self.Ytrain[i] = -1		
+        self.Xval = self.Xtrain.copy()
+        self.Yval = self.Ytrain.copy()
         
     def tearDown(self):
         pass
 
-    def test_train(self):
+    def test_train_val(self):
         det = DetectorLinearSVM()
         det.train(self.Xtrain, self.Ytrain, self.Xval, self.Yval)
-        det.train(self.Xtrain, self.Ytrain)
+	Spred = det.predict(self.Xval)
 
+    def test_train_cv(self):
+        det = DetectorLinearSVM()
+        det.train(self.Xtrain, self.Ytrain)
+    
 #=============================================================================
 
 if __name__ == '__main__':
