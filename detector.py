@@ -1,0 +1,121 @@
+import logging
+import numpy as np
+import sklearn
+import sklearn.cross_validation
+from sklearn.cross_validation import KFold
+import sklearn.svm
+import sklearn.metrics
+import sys
+
+class Detector:
+    """
+    This class implement a generic Object Detector.
+    """
+    def __init__(self):
+        raise NotImplementedError()
+
+    def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
+        """
+        INPUT:
+         Xtrain: ndarray of size [n_samples, n_features]
+         Ytrain: ndarray of size [n_samples,], with the class labels {1, -1}
+         Xval: this is optional
+         Yval: this is optional
+        """
+        assert isinstance(Xtrain, np.ndarray)
+        assert isinstance(Ytrain, np.ndarray)
+        assert Xtrain.shape[0] == Ytrain.shape[0]
+        self.n_features = Xtrain.shape[1]
+        numYtrain = [0, 0]
+        for y in Ytrain:
+            assert y==1 or y==-1
+            numYtrain[(y+1)/2] += 1
+        assert numYtrain[0] > 0, 'No negative train labels -1'
+        assert numYtrain[1] > 0, 'No positive train labels +1'
+        if len(Xval) or len(Yval):
+            assert isinstance(Xval, np.ndarray)
+            assert isinstance(Yval, np.ndarray)
+            assert Xval.shape[0] == Yval.shape[0]
+            assert Xtrain.shape[1] == Xval.shape[1]
+            numYval = [0, 0]
+            for y in Yval:
+                assert y==1 or y==-1
+                numYval[(y+1)/2] += 1
+            assert numYval[0] > 0, 'No negative val labels -1'
+            assert numYval[1] > 0, 'No positive val labels +1'      
+
+    def predict(self, Xtest):
+        """
+        INPUT:
+         Xtest: ndarray of size [n_samples, n_features] with the test examples
+        OUTPUT:
+         Spred: ndarray of size [n_samples,] with the predicted scores
+        """
+        assert isinstance(Xval, np.ndarray)
+        assert self.n_features == Xtest.shape[1]
+
+# --------------------------------------------------------------
+
+class DetectorLinearSVM(Detector):
+    """
+    Simple implementation of a detector: L2-L1 Batch Linear SVM.
+    We use the Average Precision for model selection.
+    If the validation set is not specifyed, we do Cross-Validation.
+    """
+    def __init__(self, Call=[10**x for x in range(-4, 4)], numCV=5):
+        """
+        INPUT:
+         Call: list of hyperparameters C for the SVM
+         numCV: number of CV fold to execute (if at training time the
+                validation set is not specifyed)
+        """
+        self.Call = Call
+        self.numCV = numCV
+        self.svm = None
+                
+    def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
+        # check the input
+        Detector.train(self, Xtrain, Ytrain, Xval, Yval)
+        # for each hyperparameter:
+        bestAP = -sys.float_info.max
+        bestC = None
+        for C in self.Call:
+            logging.info('Train C={0}'.format(C))
+            # validation mode            
+            if len(Xval) and len(Yval):
+                svm = self.build_svm_(C)
+                svm.fit(Xtrain, Ytrain)
+                Spred = svm.decision_function(Xval)
+                ap = sklearn.metrics.average_precision_score(Yval, Spred)
+            # cross-validation mode
+            else:            
+                n_samples = Ytrain.shape[0]
+                cv_mode = sklearn.cross_validation.KFold( \
+                               n_samples, n_folds=self.numCV, \
+                               shuffle=True, random_state=0)
+                cv_scores = sklearn.cross_validation.cross_val_score( \
+                                self.svm, Xtrain, Ytrain,
+                                scoring='average_precision', cv=cv_mode)
+                ap = np.mean(cv_scores)
+            # keep the best ap
+            if ap > bestAP:
+                bestAP = ap
+                bestC = C
+        # re-train the SVM on the whole dataset using the best C
+        self.svm = self.build_svm_(bestC)
+        self.svm.fit(Xtrain, Ytrain)
+                                
+    def predict(self, Xtest):
+        # check the input
+        Detector.predict(self, Xtest)
+        # predict
+        Spred = svm.decision_function(Xtest)
+
+    @staticmethod
+    def build_svm_(C):
+        svm = sklearn.svm.LinearSVC( \
+                penalty='l2', loss='l1', dual=True, tol=0.0001,
+                C=C, fit_intercept=True, intercept_scaling=1, \
+                class_weight='auto', verbose=1, random_state=None)
+        return svm
+    
