@@ -22,7 +22,7 @@ class FeatureExtractorNetworkTest(unittest.TestCase):
         img_anno.pred_objects['C1']['label1'] = obj1
         img_anno.pred_objects['C1']['label2'] = obj2
         img_anno.pred_objects['C2'] = {}
-        img = np.asarray(io.imread('ILSVRC2012_val_00000001_n01751748.JPEG'))
+        img = np.asarray(io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG'))
         width = 100
         height = 200
         img = skimage.transform.resize(img, (height, width))

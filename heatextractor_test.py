@@ -26,7 +26,7 @@ class HeatmapExtractorBoxCaffe(unittest.TestCase):
         self.heatext = None
 
     def test_extract_img(self):
-        img = imread('ILSVRC2012_val_00000001_n01751748.JPEG')
+        img = imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         img = resize(img, (100,100)) # resize fo faster computation
         img = skimage.img_as_ubyte(img)
         print 'Heatmap computation using gray box may take ' + \
@@ -63,7 +63,7 @@ class HeatmapExtractorSlidingCaffe(unittest.TestCase):
         self.heatext = None
 
     def test_extract_img(self):
-        img = imread('ILSVRC2012_val_00000001_n01751748.JPEG')
+        img = imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         img = resize(img, (100,100)) # resize fo faster computation
         img = skimage.img_as_ubyte(img)
         print 'Heatmap computation using gray box may take ' + \
@@ -103,7 +103,7 @@ class HeatmapExtractorSlidingCaffe(unittest.TestCase):
 #         self.heatext = None
 
 #     def test_extract_img(self):
-#         img = imread('ILSVRC2012_val_00000001_n01751748.JPEG')
+#         img = imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
 #         img = resize(img, (100,100)) # resize fo faster computation
 #         img = skimage.img_as_ubyte(img)
 #         print 'Heatmap computation using segmentation may ' + \

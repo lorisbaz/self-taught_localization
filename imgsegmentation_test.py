@@ -19,7 +19,7 @@ class ImgSegmFelzen(unittest.TestCase):
         self.segmenter2 = None
 
     def test_extract(self):
-        img = imread('ILSVRC2012_val_00000001_n01751748.JPEG')
+        img = imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         segm_mask = self.segmenter1.extract(img)
         self.assertEqual(segm_mask[0][100,10], 127)
         self.assertEqual(segm_mask[0][100,100], 0)

@@ -20,7 +20,7 @@ class UtilTest(unittest.TestCase):
         # put a breakpoint before the save, and do
         # bboxes = [bboxes(:,1)-1 , bboxes(:,2)-1 , bboxes(:,3) , bboxes(:,4)]
         # bboxes = [bboxes(:,1)./img_width , bboxes(:,2)./img_height , bboxes(:,3)./img_width , bboxes(:,4)./img_height]
-        image = skimage.io.imread('ILSVRC2012_val_00000001_n01751748.JPEG')
+        image = skimage.io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         images = [image]
         bboxes = util.selective_search(images, ss_version='quality')        
         self.assertAlmostEqual(len(bboxes[0]), 5290)
@@ -38,7 +38,7 @@ class UtilTest(unittest.TestCase):
         self.assertAlmostEqual(bboxes[0][1].confidence, -0.003873535513487)        
 
     def test_selective_search2(self):
-        image = skimage.io.imread('ILSVRC2012_val_00000001_n01751748.JPEG')
+        image = skimage.io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         images = [image, image]
         bboxes = util.selective_search(images, ss_version='fast')        
         self.assertAlmostEqual(len(bboxes[0]), 834)

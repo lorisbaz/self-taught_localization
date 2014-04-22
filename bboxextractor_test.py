@@ -61,8 +61,8 @@ class GrabCutBBoxExtractor(unittest.TestCase):
         np.testing.assert_equal(mask, mask_excepted)
 
     def test_extract(self):
-        test_image = 'ILSVRC2012_val_00000001_n01751748.JPEG'
-        test_mask = 'ILSVRC2012_val_00000001_n01751748_test_mask.png'
+        test_image = 'test_data/ILSVRC2012_val_00000001_n01751748.JPEG'
+        test_mask = 'test_data/ILSVRC2012_val_00000001_n01751748_test_mask.png'
         mask = cv2.imread(test_mask)
         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
         img = cv2.imread(test_image)

@@ -30,7 +30,7 @@ class AnnotatedImageTest(unittest.TestCase):
         self.img_anno = None
 
     def test_set_image(self):
-        img = skimage.io.imread('ILSVRC2012_val_00000001_n01751748.JPEG')
+        img = skimage.io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         skimage.io.imshow(img)
         self.img_anno.set_image(img)
         img2 = self.img_anno.get_image()

@@ -35,7 +35,7 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertEqual(labels[999], 'n03961711')
 
     def test_evaluate(self):
-        img = np.asarray(io.imread('ILSVRC2012_val_00000001_n01751748.JPEG'))
+        img = np.asarray(io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG'))
         scores = self.net.evaluate(img, layer_name = 'softmax')
         self.assertAlmostEqual(scores[0], 8.4301e-09, places=5)
         self.assertAlmostEqual(scores[999], 2.26509e-08, places=5)
@@ -81,7 +81,7 @@ class NetworkCaffeTest(unittest.TestCase):
         self.assertEqual(labels[999], 'n15075141')
 
     def test_evaluate(self):
-        img = np.asarray(io.imread('ILSVRC2012_val_00000001_n01751748.JPEG'))
+        img = np.asarray(io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG'))
         scores = self.net.evaluate(img, layer_name = 'softmax')
         self.assertAlmostEqual(scores[0], 5.41017e-06, places=5)
         self.assertAlmostEqual(scores[999], 8.32369e-09, places=5)
