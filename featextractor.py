@@ -8,11 +8,8 @@ class FeatureExtractorParams():
     The subclass must have the field 'name'.
     """
     def __init__(self):
-        """
-        Name of the FeatureExtractor subclass to instantiate.
-        """
-        self.name = 'FeatureExtractor'
-
+        raise NotImplementedError()
+        
 class FeatureExtractor():
     """
     Extractor features from an AnnotatedImage.
@@ -24,6 +21,7 @@ class FeatureExtractor():
         """
         The constructors for all the FeatureExtractors is private.
         """
+        self.name = 'FeatureExtractor' # mandatory field
         raise NotImplementedError()
 
     def extract(self, bboxes):
@@ -41,23 +39,24 @@ class FeatureExtractor():
         raise NotImplementedError()
 
     @staticmethod
-    def create_feature_extractor(anno_image, feature_extractor_params):
+    def create_feature_extractor(anno_image, params):
         """
-        Factory for the FeatureExtractors
+        Factory for the FeatureExtractors, taking an AnnotatedImage and a
+        FeatureExtractorParams instance as input
         """
-        assert isinstance(feature_extractor_params, FeatureExtractorParams)
-        if feature_extractor_params.name == 'FeatureExtractorNetwork':
-            return FeatureExtractorNetwork(anno_image, feature_extractor_params)
-        elif feature_extractor_params.name == 'FeatureExtractorFake':
+        assert isinstance(params, FeatureExtractorParams)
+        if isinstance(params, FeatureExtractorNetworkParams):
+            return FeatureExtractorNetwork(anno_image, params)
+        elif isinstance(params, FeatureExtractorFakeParams):
             return FeatureExtractorFake()
         else:
-            raise ValueError('feature_extractor_params.name not recognized')
+            raise ValueError('FeatureExtractorParams instance not recognized')
     
 #=============================================================================
 
 class FeatureExtractorFakeParams(FeatureExtractorParams):
     def __init__(self):
-        self.name = 'FeatureExtractorFake'
+        pass
         
 class FeatureExtractorFake(FeatureExtractor):
     """
@@ -65,6 +64,7 @@ class FeatureExtractorFake(FeatureExtractor):
     """
 
     def __init__(self):
+        """  *** PRIVATE CONSTRUCTOR *** """
         self.name = 'FeatureExtractorFake'
         self.num_feats = 5
     
@@ -81,7 +81,6 @@ class FeatureExtractorFake(FeatureExtractor):
 
 class FeatureExtractorNetworkParams(FeatureExtractorParams):
     def __init__(self):
-        self.name = 'FeatureExtractorNetwork'
         self.layer = 'softmax'
         self.net = None
         self.cache_features = True
@@ -112,12 +111,13 @@ class FeatureExtractorNetwork(FeatureExtractor):
 
     def __init__(self, anno_image, params):
         """
+        *** PRIVATE CONSTRUCTOR *** 
+        
         Input: AnnotatedImage and FeatureExtractorNetworkParams
         """
         assert isinstance(anno_image, AnnotatedImage)
         assert isinstance(params, FeatureExtractorNetworkParams)
-        assert params.name == 'FeatureExtractorNetwork'
-        self.name = params.name        
+        self.name = 'FeatureExtractorNetwork'
         self.anno_image = anno_image
         self.img = anno_image.get_image() # just for efficiency
         assert self.img.shape[0] == self.anno_image.image_height
@@ -130,7 +130,7 @@ class FeatureExtractorNetwork(FeatureExtractor):
         else:
             FeatureExtractorNetwork.network_ = self.params.net
         # inizialize the cache
-        modulename = params.name
+        modulename = self.name
         name = self.params.get_id_desc()
         if hasattr(self.anno_image.features, modulename):
             self.cache = self.anno_image.features[modulename]

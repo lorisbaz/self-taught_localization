@@ -23,12 +23,14 @@ class DetectorLinearSVMTest(unittest.TestCase):
         pass
 
     def test_train_val(self):
-        det = DetectorLinearSVM()
+        params = DetectorLinearSVMParams()
+        det = DetectorLinearSVM(params)
         det.train(self.Xtrain, self.Ytrain, self.Xval, self.Yval)
-	Spred = det.predict(self.Xval)
+        Spred = det.predict(self.Xval)
 
     def test_train_cv(self):
-        det = DetectorLinearSVM()
+        params = DetectorLinearSVMParams()
+        det = DetectorLinearSVM(params)
         det.train(self.Xtrain, self.Ytrain)
     
 #=============================================================================
