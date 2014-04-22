@@ -29,13 +29,12 @@ class BBox:
             return 'bbox: [{0} {1} {2} {3}] conf: {4:.5} .'\
             .format(self.xmin, self.ymin, self.xmax, self.ymax, self.confidence)
 
-
     def area(self):
         return np.abs(self.xmax-self.xmin)*np.abs(self.ymax-self.ymin)
 
     def normalize_to_outer_box(self, outer_box):
         """
-        Normalize the rectangle defining the bbox to have
+        Normalize the current integer rectangle defining the bbox to have
         0.0 <= width/height/area <= 1.0, relative to the given BBox.
         Note: confidence is not modified.
         It returns self.
@@ -48,6 +47,28 @@ class BBox:
         self.ymax = (self.ymax - outer_box.ymin) / out_box_height
         return self
 
+    def rescale_to_outer_box(self, width, height):
+	"""
+	It converts the current 0-1 normalized Bbox, to
+	absolute coordinates according the given rectangle.
+	It returns self.
+	"""
+	self.xmin *= float(width)
+	self.ymin *= float(height)
+	self.xmax *= float(width)
+	self.ymax *= float(height)
+	return self
+
+    def convert_coordinates_to_integers(self):
+	"""
+	It returns self.
+	"""
+	self.xmin = int(self.xmin)
+	self.ymin = int(self.ymin)
+	self.xmax = int(self.xmax)
+	self.ymax = int(self.ymax)
+	return self
+	
     def translate(self, x, y):
         """
         Translate the coordinates of the box, that will have

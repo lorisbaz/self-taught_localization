@@ -89,7 +89,7 @@ class DetectorLinearSVM(Detector):
                 ap = sklearn.metrics.average_precision_score(Yval, Spred)
             # cross-validation mode
             else:
-		svm = self.build_svm_(C)
+                svm = self.build_svm_(C)
                 n_samples = Ytrain.shape[0]
                 cv_mode = sklearn.cross_validation.KFold( \
                                n_samples, n_folds=self.numCV, \
