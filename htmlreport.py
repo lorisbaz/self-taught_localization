@@ -29,7 +29,8 @@ class HtmlReport():
             '</body>'\
             '</html>'
 
-    def add_annotated_image_embedded(self, anno, img_max_size = -1):
+    def add_annotated_image_embedded(self, anno, img_max_size = -1, \
+                                        heatmaps_view=True):
         """
         Displays in a row all the information contained in the given
         AnnotatedImage object: GT information, PRED information, etc..
@@ -79,25 +80,26 @@ class HtmlReport():
                             text = desc, bboxes = np_bbox, \
                             isgt = False) # predicted bboxes
                 # Add the heatmaps
-                heatmaps = []
-                max_value = sys.float_info.min
-                for heat in ann_pred.heatmaps:
-                    max_value = max(max_value, heat.heatmap.max())
-                visual_factor = 1.0 / max_value
-                for j in range(len(ann_pred.heatmaps)):
-                    heatmaps.append(ann_pred.heatmaps[j].heatmap)
-                    desc = 'Heatmap:{0}'.format(j)
-                    self.add_image_embedded( \
-                                   heatmaps[j]*visual_factor, \
-                                   max_size = img_max_size, \
-                                   text = desc)
-                # Add also the Average heatmap
-                heatmap_avg = np.sum(heatmaps, axis=0)/np.shape(heatmaps)[0]
-                desc = 'AVG heatmap'
-                self.add_image_embedded(heatmap_avg*visual_factor, \
-                             max_size = img_max_size, \
-                             text = desc)
-
+                if heatmaps_view:
+                    heatmaps = []
+                    max_value = sys.float_info.min
+                    for heat in ann_pred.heatmaps:
+                        max_value = max(max_value, heat.heatmap.max())
+                    visual_factor = 1.0 / max_value
+                    for j in range(len(ann_pred.heatmaps)):
+                        heatmaps.append(ann_pred.heatmaps[j].heatmap)
+                        desc = 'Heatmap:{0}'.format(j)
+                        self.add_image_embedded( \
+                                       heatmaps[j]*visual_factor, \
+                                       max_size = img_max_size, \
+                                       text = desc)
+                    # Add also the Average heatmap
+                    heatmap_avg = np.sum(heatmaps, axis=0)/np.shape(heatmaps)[0]
+                    desc = 'AVG heatmap'
+                    self.add_image_embedded(heatmap_avg*visual_factor, \
+                                 max_size = img_max_size, \
+                                 text = desc)
+    
 
     def add_image_embedded(self, img_o, proportion = 1.0, max_size = -1, \
                            text = '', bboxes = [], isgt = False):

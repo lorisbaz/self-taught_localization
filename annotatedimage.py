@@ -139,7 +139,8 @@ class AnnotatedImage:
                                     anno.pred_objects[classifier][eachkey]
 
     def export_pred_bboxes_to_text(self, name_pred_objects, \
-                                   max_num_bboxes = sys.maxint):
+                                   max_num_bboxes = sys.maxint,\
+                                   output_filtered_pred_obj = False):
         """
         Export the predicted bboxes to a text representation with multi lines,
         each line, with the following tab-separated fields:
@@ -152,6 +153,7 @@ class AnnotatedImage:
         """
         assert name_pred_objects in self.pred_objects
         out = ''
+        output_object = {}
         # for each AnnotatedObject ....
         for label in self.pred_objects[name_pred_objects]:
             anno_object = self.pred_objects[name_pred_objects][label]
@@ -169,6 +171,8 @@ class AnnotatedImage:
                     bb.confidence = -sys.float_info.max
             bboxes = sorted(bboxes, key = lambda bb: -bb.confidence)
             bboxes = bboxes[0:min(max_num_bboxes, len(bboxes))]
+            output_object[label] = copy.deepcopy(anno_object)
+            output_object[label].bboxes = bboxes
             for bbox in bboxes:
                 bbox_confidence = bbox.confidence
                 line = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\n'\
@@ -178,7 +182,10 @@ class AnnotatedImage:
                        bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax, \
                        bbox_confidence)
                 out = out + line
-        return out
+        if output_filtered_pred_obj:        
+            return out, output_object
+        else:
+            return out
 
     def extract_features(self, bboxes):
         """
