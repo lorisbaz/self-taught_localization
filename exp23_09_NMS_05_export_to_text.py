@@ -20,7 +20,7 @@ if __name__ == "__main__":
     conf = Configuration()
     params.conf = conf
     # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp23_08stats_NMS_05'
+    params.exp_name_input = 'exp23_09stats_NMS_05'
     params.generate_htmls = True
     params.html_max_img_size = 300
     # output textfile
