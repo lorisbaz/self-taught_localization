@@ -1,0 +1,193 @@
+from annotatedimage import *
+from bbox import *
+from network import *
+
+class FeatureExtractorParams():
+    """
+    Base class for the parameters.
+    The subclass must have the field 'name'.
+    """
+    def __init__(self):
+        """
+        Name of the FeatureExtractor subclass to instantiate.
+        """
+        self.name = 'FeatureExtractor'
+
+class FeatureExtractor():
+    """
+    Extractor features from an AnnotatedImage.
+    You must construct the objects through the method 'create_instance',
+    and extract the features using the method 'extract'
+    """
+
+    def __init__(self):
+        """
+        The constructors for all the FeatureExtractors is private.
+        """
+        raise NotImplementedError()
+
+    def extract(self, bboxes):
+        """
+        The base method to extract the features.
+        Normally, it should return a ndarray of size [len(bboxes), num_features]
+        """
+        raise NotImplementedError()
+
+    def get_cache(self):
+        """
+        Returns a Python object containing feature-dependent data, useful
+        to speed-up future feature extraction calls.
+        """
+        raise NotImplementedError()
+
+    @staticmethod
+    def create_feature_extractor(anno_image, feature_extractor_params):
+        """
+        Factory for the FeatureExtractors
+        """
+        assert isinstance(feature_extractor_params, FeatureExtractorParams)
+        if feature_extractor_params.name == 'FeatureExtractorNetwork':
+            return FeatureExtractorNetwork(anno_image, feature_extractor_params)
+        elif feature_extractor_params.name == 'FeatureExtractorFake':
+            return FeatureExtractorFake()
+        else:
+            raise ValueError('feature_extractor_params.name not recognized')
+    
+#=============================================================================
+
+class FeatureExtractorFakeParams(FeatureExtractorParams):
+    def __init__(self):
+        self.name = 'FeatureExtractorFake'
+        
+class FeatureExtractorFake(FeatureExtractor):
+    """
+    Fake feature extractor module, for debugging purposes.
+    """
+
+    def __init__(self):
+        self.name = 'FeatureExtractorFake'
+        self.num_feats = 5
+    
+    def extract(self, bboxes):
+        """
+        Return a matrix of ones.
+        """
+        return np.ones(shape=(len(bboxes), self.num_feats), dtype=float)
+
+    def get_cache(self):
+        return 123
+    
+#=============================================================================
+
+class FeatureExtractorNetworkParams(FeatureExtractorParams):
+    def __init__(self):
+        self.name = 'FeatureExtractorNetwork'
+        self.layer = 'softmax'
+        self.net = None
+        self.cache_features = True
+    
+    def get_id_desc(self):
+        return 'name:{0}-layer:{1}'.format( \
+                  self.net.__class__, self.layer)
+
+class FeatureExtractorNetwork(FeatureExtractor):
+    """
+    Extract features using a Network object.
+    
+    The cached features are saved in a dictionary field of key
+    FeatureExtractorNetworkParams.get_id_desc(), which is a dictionary
+    with the following fields:
+      featdata: ndarray of size [num_bboxes, num_features]
+      featidx: {bbox_key -> idx}
+          where bbox_key is a string 'xmin-ymin-xmax-ymax' and idx
+          refers to the idx in featdata
+
+    NOTE: for efficiency reason and simplicitly, the current implementation
+          allows only one type of network during the entire life of
+          this class.          
+    """
+    
+    # network to use during the life of any FeatureExtractorCaffe object
+    network_ = None
+
+    def __init__(self, anno_image, params):
+        """
+        Input: AnnotatedImage and FeatureExtractorNetworkParams
+        """
+        assert isinstance(anno_image, AnnotatedImage)
+        assert isinstance(params, FeatureExtractorNetworkParams)
+        assert params.name == 'FeatureExtractorNetwork'
+        self.name = params.name        
+        self.anno_image = anno_image
+        self.img = anno_image.get_image() # just for efficiency
+        assert self.img.shape[0] == self.anno_image.image_height
+        assert self.img.shape[1] == self.anno_image.image_width
+        self.params = params
+        if FeatureExtractorNetwork.network_:
+            assert FeatureExtractorNetwork.network_ == self.params.net, \
+                'Only a single network is allowed during the life of '\
+                'FeatureExtractorNetwork'
+        else:
+            FeatureExtractorNetwork.network_ = self.params.net
+        # inizialize the cache
+        modulename = params.name
+        name = self.params.get_id_desc()
+        if hasattr(self.anno_image.features, modulename):
+            self.cache = self.anno_image.features[modulename]
+        else:
+            self.cache = {} 
+        if not hasattr(self.cache, name):
+            self.cache[name] = {}
+            self.cache[name]['featdata'] = None
+            self.cache[name]['featidx'] = {}
+        
+    def extract(self, bboxes):
+        # for each bbox:
+        width = self.anno_image.image_width
+        height = self.anno_image.image_height
+        feats = None
+        for idx_bbox, bbox in enumerate(bboxes):
+            # convert the bbox to absolute, integer values
+            bb = bbox.copy().rescale_to_outer_box(width, height)
+            bb.convert_coordinates_to_integers()
+            modulename = self.name
+            name = self.params.get_id_desc()
+            key = '{0}-{1}-{2}-{3}'.format(bb.xmin, bb.ymin, bb.xmax, bb.ymax)
+            try:
+                # try to see if in the cache there are the features we want
+                netfeat = self.cache[name]
+                feat = netfeat['featdata'][netfeat['featidx'][key], :]
+            except:
+                # the features are not present :-( we extract them
+                img = self.img.copy()
+                img = img[bb.ymin:bb.ymax, bb.xmin:bb.xmax]
+                feat = FeatureExtractorNetwork.network_.evaluate( \
+                              img, layer_name=self.params.layer)
+                feat = np.atleast_2d(feat)
+                if feat.shape[0] > 1:
+                    feat = feat.T  # feat must be a horizontal vector
+                assert feat.shape[0] == 1
+                # save the feature in the cache, if requested
+                if self.params.cache_features:
+                    if self.cache[name]['featdata'] == None:
+                        self.cache[name]['featdata'] = feat                    
+                    else:
+                        self.cache[name]['featdata'] = \
+                               np.vstack([self.cache[name]['featdata'], feat])
+                    self.cache[name]['featidx'][key] = \
+                               self.cache[name]['featdata'].shape[0] - 1
+            # copy the features
+            if feats == None:
+                feats = np.ndarray(shape=(len(bboxes), feat.size), dtype=float)
+            feats[idx_bbox, :] = feat.copy()
+        # return
+        assert feats.shape[0] == len(bboxes)
+        assert feats.shape[1] > 0
+        return feats
+
+    def get_cache(self):
+        return self.cache
+    
+
+
+

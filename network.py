@@ -69,6 +69,44 @@ class Network:
 
 #=============================================================================
 
+class NetworkFake:
+    """Fake Network class for debugging purposes"""
+
+    def __init__(self):
+        pass
+
+    def evaluate(self, img, layer_name = 'softmax'):
+        if img == 'image0':
+            return np.zeros(shape=(1,1000), dtype=float)
+        elif img == 'image1':
+            return np.ones(shape=(1,1000), dtype=float)
+        else:
+            return np.multiply(np.ones(shape=(1,1000), dtype=float), 99.0)
+
+    def get_mean_img(self):
+        raise NotImplementedError()
+
+    def get_input_dim(self):
+        return 227
+
+    def get_label_id(self, label):
+        if label == 'label0':
+            return 0
+        elif label == 'label1':
+            return 1
+        elif label == 'label2':
+            return 2
+        else:
+            NotImplementedError()
+        
+    def get_label_desc(self, label):
+        return 'DESCRIPTION' + label
+        
+    def get_labels(self):
+        return ['label0', 'label1', 'label2']
+        
+#=============================================================================
+
 class NetworkDecaf(Network):
     """
     Implementation for the Decaf library.

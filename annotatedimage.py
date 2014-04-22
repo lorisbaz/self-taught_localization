@@ -1,7 +1,10 @@
 import copy
+import numpy as np
 import sys
 
 import util
+from featextractor import *
+from bbox import *
 
 class AnnotatedHeatmap:
     """
@@ -62,6 +65,8 @@ class AnnotatedImage:
     - segmentation_name: string, denoting the unique name of the segmentation
                          mask used for this image.
     - stats: dictionary {'name'} -> ({'label'} -> Stats)
+    - features: {'feat_extractor_module'} -> data where data is
+                   a private feature-dependent object.
     """
     def __init__(self):
         self.image_jpeg = ''
@@ -73,6 +78,7 @@ class AnnotatedImage:
         self.crop_description = ''
         self.segmentation_name = ''
         self.stats = {}
+        self.features = {}
 
     def __str__(self):
         out = '{0}:[{1} x {2}]\n'.format(self.image_name, \
@@ -180,4 +186,54 @@ class AnnotatedImage:
             return out, output_object
         else:
             return out
+
+    def extract_features(self, bboxes):
+        """
+        It extracts the feature vectors from the given list of bbboxes.
+        It returns a np.ndarray matrix of size [num_bboxes, num_dims].
+        Note that you must register a FeatureExtractor module first,
+        using the register_feature_extractor() method.
+        """
+        # check input
+        assert hasattr(self, 'feature_extractor_') and self.feature_extractor_, \
+            'You must register a FeatureExtractor module'
+        assert isinstance(bboxes, list)
+        for bb in bboxes:
+            assert isinstance(bb, BBox)
+        # extract the features using the registered module
+        feats = self.feature_extractor_.extract(bboxes)
+        if self.save_features_cache_:
+            self.features[self.feature_extractor_.name] = \
+                     self.feature_extractor_.get_cache()
+        # check the output and return
+        assert isinstance(feats, np.ndarray)
+        assert feats.shape[0] == len(bboxes)
+        return feats
+
+    def register_feature_extractor(self, feature_extractor_params, \
+                                   save_features_cache = False):
+        """
+        Build and register a FeatureExtractor module, that will be
+        used to extract the features from the image.
+        The input must be a subclass of FeatureExtractorParams
+        If save_features is True, the cache of the feature extractor
+        module will be saved in the features field.
+        """
+        # check the input
+        assert isinstance(feature_extractor_params, FeatureExtractorParams)
+        if not hasattr(self, 'features'):
+            self.features = {}
+        if not hasattr(self.features, feature_extractor_params.name):
+            self.features[feature_extractor_params.name] = {}
+        if not hasattr(self, 'feature_extractor_'):
+            self.feature_extractor_ = None
+        assert not self.feature_extractor_, 'Already present a FeatExtractor'
+        # register
+        self.feature_extractor_ = FeatureExtractor.create_feature_extractor( \
+                    self, feature_extractor_params)
+        self.save_features_cache_ = save_features_cache
+
+
+    
+	
 
