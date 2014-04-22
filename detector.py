@@ -7,11 +7,16 @@ import sklearn.svm
 import sklearn.metrics
 import sys
 
+class DetectorParams:
+    def __init__(self):
+        raise NotImplementedError()
+
 class Detector:
     """
     This class implement a generic Object Detector.
     """
     def __init__(self):
+        self.name = 'Detector' # mandatory field
         raise NotImplementedError()
 
     def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
@@ -54,7 +59,26 @@ class Detector:
         assert isinstance(Xtest, np.ndarray)
         assert self.n_features == Xtest.shape[1]
 
+    @staticmethod
+    def create_detector(params):
+        assert isinstance(params, DetectorParams)
+        if isinstance(params, DetectorLinearSVMParams):
+            return DetectorLinearSVM(params)
+        else:
+            raise ValueError('DetectorParams instance not recognized')        
+
 # --------------------------------------------------------------
+
+class DetectorLinearSVMParams(DetectorParams):
+    def __init__(self):
+        """
+        INPUT:
+         Call: list of hyperparameters C for the SVM
+         numCV: number of CV fold to execute (if at training time the
+                validation set is not specifyed)
+        """
+        self.Call = [10**x for x in range(-4, 4)]
+        self.numCV = 5
 
 class DetectorLinearSVM(Detector):
     """
@@ -62,15 +86,10 @@ class DetectorLinearSVM(Detector):
     We use the Average Precision for model selection.
     If the validation set is not specifyed, we do Cross-Validation.
     """
-    def __init__(self, Call=[10**x for x in range(-4, 4)], numCV=5):
-        """
-        INPUT:
-         Call: list of hyperparameters C for the SVM
-         numCV: number of CV fold to execute (if at training time the
-                validation set is not specifyed)
-        """
-        self.Call = Call
-        self.numCV = numCV
+    def __init__(self, params):
+        """ *** PRIVATE CONSTRUCTOR *** """
+        self.Call = params.Call
+        self.numCV = params.numCV
         self.svm = None
                 
     def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):

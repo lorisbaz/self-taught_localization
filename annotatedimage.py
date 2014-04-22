@@ -223,8 +223,6 @@ class AnnotatedImage:
         assert isinstance(feature_extractor_params, FeatureExtractorParams)
         if not hasattr(self, 'features'):
             self.features = {}
-        if not hasattr(self.features, feature_extractor_params.name):
-            self.features[feature_extractor_params.name] = {}
         if not hasattr(self, 'feature_extractor_'):
             self.feature_extractor_ = None
         assert not self.feature_extractor_, 'Already present a FeatExtractor'
