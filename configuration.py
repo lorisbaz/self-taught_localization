@@ -94,16 +94,16 @@ class Configuration:
             self.ilsvrc2012_decaf_model = \
                 ilsvrc2012_root +'/decaf_model_131205/imagenet.decafnet.epoch90'
             self.ilsvrc2012_caffe_model_spec = \
-                '/home/anthill/vlg/caffe/examples'\
-                '/imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                './imagenet_deploy_GRAYOBFUSCATION.prototxt'
             self.ilsvrc2012_caffe_model = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/caffe_reference_imagenet_model'
             self.ilsvrc2012_caffe_avg_image = \
-                '/home/anthill/vlg/caffe/python/caffe/imagenet'\
+                ilsvrc2012_root + '/caffe_model_131211'\
                 '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
-                '/home/anthill/vlg/caffe_131211/caffe/examples/synset_words.txt'
+                ilsvrc2012_root + '/caffe_model_131211'\
+                '/synset_words.txt'
        	    self.ilsvrc2012_segm_results_dir = \
                  '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'\
                  '/segment_ILSVRC2012' 
