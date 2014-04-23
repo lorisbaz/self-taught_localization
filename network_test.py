@@ -2,8 +2,9 @@ import os
 from network import *
 from configuration import *
 import unittest
+import numpy as np
 
-
+#@unittest.skip("Decaf Skip")
 class NetworkDecafTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()
@@ -87,6 +88,21 @@ class NetworkCaffeTest(unittest.TestCase):
         self.assertAlmostEqual(scores[999], 8.32369e-09, places=5)
         self.assertAlmostEqual(max(scores), 0.640054, places=5)
 
+    def test_evaluate_layers(self):
+        img = np.asarray(io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG'))
+        features = self.net.evaluate(img, layer_name = 'fc7')
+        self.assertAlmostEqual(features[0], 0.0, places=5)
+        self.assertAlmostEqual(features[4095], 0.0, places=5)
+        self.assertAlmostEqual(max(features), 10.250695, places=5)
+        features = self.net.evaluate(img, layer_name = 'pool5')
+        self.assertAlmostEqual(features[0,0,0], 4.2559791, places=5)
+        self.assertAlmostEqual(features[255,5,5], 0.0, places=5)
+        self.assertAlmostEqual(np.max(features), 77.13868, places=5)
+        features = self.net.evaluate(img, layer_name = 'conv2')
+        self.assertAlmostEqual(features[0,0,0], 0.0, places=5)
+        self.assertAlmostEqual(features[255,10,10], 0.0, places=5)
+        self.assertAlmostEqual(np.max(features), 335.69110, places=5)
+        
 #=============================================================================
 
 if __name__ == '__main__':

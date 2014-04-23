@@ -235,7 +235,15 @@ class NetworkCaffe(Network):
         # mean of 3 channels
         self.net_.mean_img = np.mean(np.mean(self.net_.mean_img,axis=1),axis=0) 
         # it is in BGR convert in RGB
-        self.net_.mean_img = self.net_.mean_img[::-1] 
+        self.net_.mean_img = self.net_.mean_img[::-1]
+        # extract the list of layers
+        try:
+            self.layer_list = [k for k, dummy in \
+                                    self.net_.caffenet.blobs.items()]
+        except:
+            print 'Warning: Old version of Caffe, please install a more ' \
+                                'recent version (23 April 2014) or only ' \
+                                'softmax output layer is supported.'
 
     def get_mean_img(self):
         return self.net_.mean_img
@@ -253,6 +261,18 @@ class NetworkCaffe(Network):
         return self.labels_
 
     def evaluate(self, img, layer_name = 'softmax'):
+        """
+        Evaluates an image with caffe and extracts features at the layer_name.
+        layer_name can assume different values dependengly on the network 
+        architecture that you are using.
+        Most common names are:
+        - 'prob' or 'softmax' (default): for the last layer representation 
+            usually used for classitication
+        - 'fc<N>', <N> is the level number: the fully connected layers
+        - 'conv<N>': the convolutional layers
+        - 'pool<N>': the pooling layers
+        - 'norm<N>': the fully connected layers 
+        """
         # if the image in in grayscale, we make it to 3-channels
         if img.ndim == 2:
             img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
@@ -276,6 +296,25 @@ class NetworkCaffe(Network):
         num_output=1000
         output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
         self.net_.caffenet.Forward(input_blob, output_blobs)
-        scores = output_blobs[0].mean(0).flatten()
-        assert layer_name == 'softmax', 'layer_name not supported'
+        #assert layer_name == 'softmax', 'layer_name not supported'
+        # NOTE: decaf and caffe have different name conventions (keep softmax
+        #       for back-compatibility)
+        if layer_name == 'softmax':
+            layer_name = 'prob'
+        try:
+            net_representation = {k: output for k, output in \
+                                    self.net_.caffenet.blobs.items()}
+            if net_representation.has_key(layer_name):
+                scores = net_representation[layer_name].data[0] 
+                assert np.shape(net_representation[layer_name].data)[0] == 1
+                # Done for back-compatibility (remove single dimentions)
+                if np.shape(scores)[1]==1 and np.shape(scores)[2]==1:
+                    scores = scores.flatten()
+            else:    
+                raise ValueError('layer_name not supported')
+        except:
+            scores = output_blobs[0].mean(0).flatten()
+            print 'Warning: Old version of Caffe, please install a more ' \
+                                'recent version (23 April 2014). The softmax' \
+                                'layer is now output of this function.'
         return scores
