@@ -80,10 +80,11 @@ class FeatureExtractorFake(FeatureExtractor):
 #=============================================================================
 
 class FeatureExtractorNetworkParams(FeatureExtractorParams):
-    def __init__(self):
-        self.layer = 'softmax'
-        self.net = None
-        self.cache_features = True
+    def __init__(self, network = None, layer = 'softmax', \
+                        cache_features = True):
+        self.layer = layer
+        self.net = network
+        self.cache_features = cache_features
     
     def get_id_desc(self):
         return 'name:{0}-layer:{1}'.format( \
@@ -115,6 +116,7 @@ class FeatureExtractorNetwork(FeatureExtractor):
         
         Input: AnnotatedImage and FeatureExtractorNetworkParams
         """
+        from annotatedimage import * # HACK: known circular import problem 
         assert isinstance(anno_image, AnnotatedImage)
         assert isinstance(params, FeatureExtractorNetworkParams)
         self.name = 'FeatureExtractorNetwork'
@@ -140,7 +142,12 @@ class FeatureExtractorNetwork(FeatureExtractor):
             self.cache[name] = {}
             self.cache[name]['featdata'] = None
             self.cache[name]['featidx'] = {}
-        
+    
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        del d['params']
+        return d
+            
     def extract(self, bboxes):
         # for each bbox:
         width = self.anno_image.image_width
