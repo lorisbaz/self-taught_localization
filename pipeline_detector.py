@@ -14,6 +14,7 @@ import tempfile
 from vlg.util.parfun import *
 
 from detector import *
+from featextractor import *
 from heatextractor import *
 from util import *
 from stats import *
@@ -25,6 +26,9 @@ class PipelineDetectorParams:
         Default parameters.
         Note: all the parameters "None" are mandatory and must be filled out.
         """
+
+        # *******************  MANDATORY PARAMETERS TO SET *******************
+
         # Input directory, containing the AnnotatedImages in Pickle2 format.
         # The pipeline expects a file for each <key> (i.e. <key>.pkl).
         # The AnnotatedImages might contain the features as well.
@@ -56,6 +60,8 @@ class PipelineDetectorParams:
         # negative set. We expect the selected dictionary to have a single
         # class.
         self.field_name_for_pred_objects_in_AnnotatedImage = None
+
+        # *******************  OPTIONAL PARAMETERS TO SET *******************
         
         # Run the script on Anthill
         self.run_on_anthill = False
@@ -81,6 +87,11 @@ class PipelineDetectorParams:
 
 class PipelineImage:
     def __init__(self, key, label, fname, feature_extractor_params):
+        # check input
+        assert isinstance(key, str)
+        assert isinstance(label, int)
+        assert isinstance(fname, str)
+        assert isinstance(feature_extractor_params, FeatureExtractorParams)
         # the key of the image
         self.key = key
         # the label (+1, -1)
@@ -91,8 +102,8 @@ class PipelineImage:
         self.feature_extractor_params = feature_extractor_params
         # The list of bounding boxes to use for prediction
         # (as well as for the neg set)
-        # Each element of this list is tuple of the format:
-        # (Bbox, True/False) where the confidence value of the Bbox indicates
+        # Each element of this list is 2-elements-list of the format:
+        # [Bbox, True/False] where the confidence value of the Bbox indicates
         # the confidence of the bbox given the model learned in the
         # previous iteration, and boolean value indicates whether
         # or not the bbox has been already used as a negative example.
@@ -105,15 +116,24 @@ class PipelineImage:
         Returns the associated AnnotatedImage.
         """
         if not self.ai_:
-            self.ai_ = pickle.load(self.fname)
-        self.ai_.register_feature_extractor(feature_extractor_params)
+            # load the image from the disk
+            fd = open(self.fname, 'r')
+            self.ai_ = pickle.load(fd)
+            fd.close()
+            # TODO. This is a pure hack. The AnnotatedImage.feature_extractor_
+            #       should not be pickled.
+            self.ai_.feature_extractor_ = None
+            # register the feature extractor
+            self.ai_.register_feature_extractor(self.feature_extractor_params)
         return self.ai_
 
     def save_ai(self):
         """
         Dump the AnnotatedImage to the disk, overwriting the old one.
         """
-        pickle.dump(self.ai_, self.fname, protocol=2)
+        fd = open(self.fname, 'wb')
+        pickle.dump(self.ai_, fd, protocol=2)
+        fd.close()
 
     def clear_ai(self):
         """
@@ -131,6 +151,19 @@ def pipeline_single_detector(cl, params):
     
 class PipelineDetector:
     def __init__(self, category, params):
+        # check the input parameters
+        assert isinstance(category, str)
+        assert isinstance(params, PipelineDetectorParams)
+        # check that all the mandatory PipelineDetectorParams were set
+        params.input_dir != None
+        params.output_dir != None
+        params.exp_name != None
+        params.categories_file != None
+        params.splits_dir != None
+        params.feature_extractor_params != None
+        params.detector_params != None
+        params.field_name_for_pred_objects_in_AnnotatedImage != None
+        # init
         self.category = category
         self.params = params
         self.train_set = None
@@ -138,6 +171,8 @@ class PipelineDetector:
         self.detector_output_dir = '{0}/{1}'.format(params.output_dir, category)
         self.iteration = 0
         self.detector = Detector.create_detector(params.detector_params)
+
+    def init(self):
         # create output directory for this detector
         if os.path.exists(self.detector_output_dir) == False:
             os.makedirs(self.detector_output_dir)           
@@ -157,7 +192,7 @@ class PipelineDetector:
             if not os.path.exists(pi.fname):
                 error = True
                 logging.info('The file {0} does not exist'.format(pi.fname))
-        assert not error, 'Some required files were not found. Abort.'
+        assert not error, 'Some required files were not found. Abort.'        
 
     def train_evaluate(self):
         for iteration in range(self.params.num_iterations):
@@ -211,8 +246,9 @@ class PipelineDetector:
                 # *********  POSITIVE IMAGE  ********
                 pos_bboxes = ai.gt_objects[self.category]
                 if self.iteration == 0:
-                    self.mark_bboxes_sligtly_overlapping_with_pos_bboxes_(\
-                        pos_bboxes, pi.bboxes)
+                    self.mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
+                        pos_bboxes, pi.bboxes, \
+                        self.params.num_neg_bboxes_per_pos_image_during_init)
                 else:
                     # TODO. add negative examples from the positive image?
                     #       For now, do nothing.
@@ -269,20 +305,68 @@ class PipelineDetector:
             ai2.features = None
             # TODO complete it with Loris
         return Stats()
+    
+    def create_train_buffer_(self, num_dims):
+        """ Create an appropriate matrix that will be able to contain
+        for sure the entire training set for the detector.
+        It return Xtrain, Ytrain"""
+        MAX_NUM_POS_BBOXES_PER_IMAGE = 30
+        num_pos_images = len([pi for pi in self.train_set if pi.label==1])
+        buffer_size = num_pos_images*MAX_NUM_POS_BBOXES_PER_IMAGE \
+                    + self.params.max_num_neg_bbox_per_image*len(self.train_set)
+        Xtrain = np.ndarray(shape=(buffer_size,num_dims), dtype=float)
+        Ytrain = np.ndarray(shape=(buffer_size,1), dtype=float)
+        return Xtrain, Ytrain
 
-    def select_bboxes_sligtly_overlapping_with_pos_bboxes_(self, \
-                                                 pos_bboxes, bboxes):
-        """ Select the bboxes that sligtly overlap with a GT bbox.
-        Note that this function will zero-out the .confidence score of
-        the bboxes. """
-        max_num_bboxes = self.params.num_neg_bboxes_per_pos_image_during_init
+    def load(self, fname):
+        """ Load from a Pickled file, and substitute the current fields """
+        fd = open(fname, 'r')
+        pd = pickle.load(fd)
+        fd.close()
+        assert self.category == pd.category
+        self.params = pd.params
+        self.train_set = pd.train_set
+        self.test_set = pd.test_set
+        assert self.detector_output_dir == pd.detector_output_dir
+        self.iteration = pd.iteration
+        self.detector = pd.detector
+        
+    def save(self, fname):
+        """ Pickle and save the current object to a file """
+        fd = open(fname, 'wb')
+        pickle.dump(self, fd, protocol=2)
+        fd.close()
+
+    @staticmethod
+    def mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
+                            pos_bboxes, bboxes, max_num_bboxes):
+        """
+        Mark the bboxes that sligtly overlap with the pos bboxes.
+        If there are too many bboxes, we
+        randomly-chosen subset of 'max_num_bboxes' bboxes.
+        Input: pos_bboxes: is a list of BBox objects.
+               bboxes: is a list of [BBox, False] 2-elems-lists
+        Output: Nothing.
+        """
+        # check input
+        for bb in pos_bboxes:
+            assert isinstance(bb, BBox)
+        for bb in bboxes:
+            assert isinstance(bb, list)
+            assert isinstance(bb[0], BBox)
+            assert bb[1] == False
+        assert max_num_bboxes > 0
         out = []
+        MIN_OVERLAP = 0.2
+        MAX_OVERLAP = 0.5
+        MAX_OVERLAP_WITH_POS = 0.5
+        NMS_OVERLAP = 0.7
         # select the bboxes that have an overlap between 0.2 and 0.5
         # with any positive
         for bb in bboxes:
             for pos_bb in pos_bboxes:
                 overlap = bb[0].jaccard_similarity(pos_bb)
-                if (overlap >= 0.2) and (overlap <= 0.5):
+                if (overlap >= MIN_OVERLAP) and (overlap <= MAX_OVERLAP):
                     out.append(bb)
                     break
         # remove the bboxes that overlap too much with a positive
@@ -292,62 +376,34 @@ class PipelineDetector:
             remove_bb = False
             for pos_bb in pos_bboxes:
                 overlap = bb[0].jaccard_similarity(pos_bb)
-                if overlap > 0.5:
-                    remove_bb = True
-                    break
-            if not remove_bb:
-                out2.append(bb)
-        out = out2
-        # remove near-duplicates
-        out2 = []
-        for bb in out:
-            remove_bb = False
-            for bb2 in out:
-                if (bb != bb2) and (bb[0].jaccard_similarity(bb2[0]) > 0.7):
+                if overlap > MAX_OVERLAP_WITH_POS:
                     remove_bb = True
                     break
             if not remove_bb:
                 out2.append(bb)
         out = out2
         # randomly shuffle 
-        out = [out[i] for i in util.randperm_deterministic(len(out))]
+        out = [out[i] for i in util.randperm_deterministic(len(out))]        
+        # remove near-duplicates
+        out2 = []
+        while len(out) > 0:
+            bb = out.pop()
+            out2.append(bb)
+            out = [bb2 for bb2 in out \
+                   if bb[0].jaccard_similarity(bb2[0]) <= NMS_OVERLAP]
+        out = out2
         # mark the bboxes to keep
         for i in range(min(len(out), max_num_bboxes)):
             out[i][1] = True
-    
-    def create_train_buffer_(self, num_dims):
-        """ Create an appropriate matrix that will be able to contain
-        for sure the entire training set for the detector.
-        It return Xtrain, Ytrain"""
-        MAX_NUM_POS_BBOXES_PER_IMAGE = 30
-        num_pos_image = len([pi for pi in self.train_set if pi.label==1])
-        buffer_size = num_pos_images*MAX_NUM_POS_BBOXES_PER_IMAGE \
-                    + self.params.max_num_neg_bbox_per_image*len(self.train_set)
-        Xtrain = np.ndarray(shape=(buffer_size,num_dims), dtype=float)
-        Ytrain = np.ndarray(shape=(buffer_size,1), dtype=float)
-        return Xtrain, Ytrain
-
-    def load(self, fname):
-        """ Load from a Pickled file, and substitute the current fields """
-        pd = pickle.load(fname)
-        assert self.category == pd.category
-        self.params = pd.params
-        self.train_set = pd.train_set
-        self.test_set = pd.test_set
-        assert self.detector_output_dir == pd.detector_output_dir
-        self.iteration = pd.iteration
-        self.detector = pd.detector
-        
-    def dump(self, fname):
-        """ Pickle and save the current object to a file """
-        pickle.dump(self, fname, protocol=2)
-        
+                
     @staticmethod
     def create_pipeline_images_(key_label_list, params):
         """
-        Input: list of (key, label), and PipelineDetectorParams.
+        Input: list of (<key>, <+1/-1>), and PipelineDetectorParams.
         Output: list of PipelineImage
         """
+        assert isinstance(key_label_list, list)
+        assert isinstance(params, PipelineDetectorParams)
         out = []
         for key_label in key_label_list:
             key, label = key_label
@@ -357,11 +413,10 @@ class PipelineDetector:
             # bboxes field
             name = params.field_name_for_pred_objects_in_AnnotatedImage
             ai = pi.get_ai()
-            assert len(ai.pred_objects['name']) == 1
-            for label in ai.pred_objects['name']:
-                for bb in ai.pred_objects['name'][label].bboxes:
-                    bb.confidence = 0.0
-                    pi.bboxes.append( (bb, False) )
+            assert len(ai.pred_objects[name]) == 1
+            for label in ai.pred_objects[name]:
+                for bb in ai.pred_objects[name][label].bboxes:
+                    pi.bboxes.append( [bb, False] )
             # append the PipelineImage
             out.append(pi)
         return out
@@ -371,34 +426,37 @@ class PipelineDetector:
         """
         Read a text file each line being '<key> <+1/-1>'.
         We select randomly at most max_pos_examples and max_neg_examples.
-        Returns a list of tuples (key, label)
+        Returns a list of tuples (<key>, <+1/-1>) where key is a string.
         The list is randomly shuffled.
         """
+        assert isinstance(fname, str)
+        assert max_pos_examples >= 0
+        assert max_neg_examples >= 0
         out = []
         # read the file
         pos_set = []
         neg_set = []        
         fd = open(fname, 'r')
         for line in fd:
-            elems = line.split(' ')
+            elems = line.strip().split()
             assert len(elems)==2
             key, label = elems
             if int(label) == 1:
-                pos_set = key
-            if int(label) == -1:
-                neg_set = key
+                pos_set.append(key)
+            elif int(label) == -1:
+                neg_set.append(key)
             else:
                 raise ValueError('The label {0} is not recognized'.format(label))
         fd.close()
-        # sunbsample randomly the set
+        # subsample randomly the set
         idx_pos = randperm_deterministic(len(pos_set))
         idx_pos = idx_pos[0:min(len(idx_pos), max_pos_examples)]
         idx_neg = randperm_deterministic(len(neg_set))
         idx_neg = idx_neg[0:min(len(idx_neg), max_neg_examples)]
         for i in idx_pos:
-            out.append(pos_set[i])
+            out.append( (pos_set[i], 1) )
         for i in idx_neg:
-            out.append(neg_set[i])
+            out.append( (neg_set[i], -1) )
         # shuffle randomly the set
         idxperm = randperm_deterministic(len(out))
         return [out[i] for i in idxperm]

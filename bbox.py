@@ -48,27 +48,27 @@ class BBox:
         return self
 
     def rescale_to_outer_box(self, width, height):
-	"""
-	It converts the current 0-1 normalized Bbox, to
-	absolute coordinates according the given rectangle.
-	It returns self.
-	"""
-	self.xmin *= float(width)
-	self.ymin *= float(height)
-	self.xmax *= float(width)
-	self.ymax *= float(height)
-	return self
-
+        """
+        It converts the current 0-1 normalized Bbox, to
+        absolute coordinates according the given rectangle.
+        It returns self.
+        """
+        self.xmin *= float(width)
+        self.ymin *= float(height)
+        self.xmax *= float(width)
+        self.ymax *= float(height)
+        return self
+        
     def convert_coordinates_to_integers(self):
-	"""
-	It returns self.
-	"""
-	self.xmin = int(self.xmin)
-	self.ymin = int(self.ymin)
-	self.xmax = int(self.xmax)
-	self.ymax = int(self.ymax)
-	return self
-	
+        """
+        It returns self.
+        """
+        self.xmin = int(self.xmin)
+        self.ymin = int(self.ymin)
+        self.xmax = int(self.xmax)
+        self.ymax = int(self.ymax)
+        return self
+        
     def translate(self, x, y):
         """
         Translate the coordinates of the box, that will have

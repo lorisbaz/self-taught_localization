@@ -62,11 +62,36 @@ class Detector:
     @staticmethod
     def create_detector(params):
         assert isinstance(params, DetectorParams)
-        if isinstance(params, DetectorLinearSVMParams):
+        if isinstance(params, DetectorFakeParams):
+            return DetectorFake(params)
+        elif isinstance(params, DetectorLinearSVMParams):
             return DetectorLinearSVM(params)
         else:
             raise ValueError('DetectorParams instance not recognized')        
 
+# --------------------------------------------------------------
+        
+class DetectorFakeParams(DetectorParams):
+    def __init__(self):
+        pass
+    
+class DetectorFake(Detector):
+    def __init__(self, params):
+        """ *** PRIVATE CONSTRUCTOR *** """
+        pass
+                        
+    def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
+        # check the input
+        Detector.train(self, Xtrain, Ytrain, Xval, Yval)
+        pass
+    
+    def predict(self, Xtest):
+        # check the input
+        Detector.predict(self, Xtest)
+        # predict
+        Spred = np.ones(shape=(Xtest.shape[0],1), dtype=float)
+        return Spred
+        
 # --------------------------------------------------------------
 
 class DetectorLinearSVMParams(DetectorParams):

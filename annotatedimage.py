@@ -220,7 +220,9 @@ class AnnotatedImage:
         module will be saved in the features field.
         """
         # check the input
-        assert isinstance(feature_extractor_params, FeatureExtractorParams)
+        # TODO: super-hack due to a circular import.
+        from featextractor import *
+        #assert isinstance(feature_extractor_params, FeatureExtractorParams)
         if not hasattr(self, 'features'):
             self.features = {}
         if not hasattr(self, 'feature_extractor_'):
