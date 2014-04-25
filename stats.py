@@ -117,6 +117,8 @@ class Stats:
         """
         Returns a Stats object that contains the aggregated statistics and the 
         histogram of overlapped regions.
+          stats_aggr: Stats obj
+          hist_overlap: ndarray of n_bins size
         """
         hist_overlap = np.zeros(n_bins)
         stats_aggr = Stats() # aggregate stats
