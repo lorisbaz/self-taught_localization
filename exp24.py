@@ -29,6 +29,8 @@ class Params:
         self.task = []
 
 def pipeline(inputdb, output_dir, params):
+    # Display info machine for debugging purposes
+    logging.info(os.uname())
     # Instantiate some objects, and open the database
     conf = params.conf
     if params.classifier=='CAFFE':
@@ -52,8 +54,12 @@ def pipeline(inputdb, output_dir, params):
     db_keys = db_input.keys()
     # loop over the images
     for image_key in db_keys:
-        # create a file for each image 
-        pkl_filename = output_dir + '/' + image_key.replace('JPEG','pkl')
+        # create a file for each image
+        if ('JPEG' in image_key) or ('png' in image_key): 
+            pkl_filename = image_key.replace('JPEG','pkl')
+        else:
+            pkl_filename = image_key + '.pkl'
+        pkl_filename = output_dir + '/' + pkl_filename
         pkl_file = open(pkl_filename, 'wb')
         # get database entry
         anno = pickle.loads(db_input[image_key])
@@ -64,10 +70,11 @@ def pipeline(inputdb, output_dir, params):
         anno.register_feature_extractor(feature_extractor_params, \
                                         params.save_features_cache)
         # Filter the ouput pred bboxes (textout is NOT used!)
-        textout, pred_objects = anno.export_pred_bboxes_to_text( \
-               params.name_pred_objects, params.max_num_bboxes, \
-               output_filtered_pred_obj = True)
-        anno.pred_objects[params.name_pred_objects] = pred_objects
+        if params.max_num_bboxes>0:
+            textout, pred_objects = anno.export_pred_bboxes_to_text( \
+                params.name_pred_objects, params.max_num_bboxes, \
+                output_filtered_pred_obj = True)
+            anno.pred_objects[params.name_pred_objects] = pred_objects
         # extract features for pred_objects and GT
         anno_pred_GT = [anno.pred_objects[params.name_pred_objects], \
                         anno.gt_objects]
