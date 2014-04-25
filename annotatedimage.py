@@ -189,7 +189,8 @@ class AnnotatedImage:
 
     def extract_features(self, bboxes):
         """
-        It extracts the feature vectors from the given list of bbboxes.
+        It extracts the feature vectors from the given list of bbboxes
+        or a single bbox.
         It returns a np.ndarray matrix of size [num_bboxes, num_dims].
         Note that you must register a FeatureExtractor module first,
         using the register_feature_extractor() method.
@@ -197,7 +198,8 @@ class AnnotatedImage:
         # check input
         assert hasattr(self, 'feature_extractor_') and self.feature_extractor_, \
             'You must register a FeatureExtractor module'
-        assert isinstance(bboxes, list)
+        if not isinstance(bboxes, list):
+            bboxes = [bboxes]
         for bb in bboxes:
             assert isinstance(bb, BBox)
         # extract the features using the registered module

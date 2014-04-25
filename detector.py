@@ -29,6 +29,7 @@ class Detector:
         """
         assert isinstance(Xtrain, np.ndarray)
         assert isinstance(Ytrain, np.ndarray)
+        assert np.issubdtype(Ytrain.dtype, np.integer)
         assert Xtrain.shape[0] == Ytrain.shape[0]
         self.n_features = Xtrain.shape[1]
         numYtrain = [0, 0]

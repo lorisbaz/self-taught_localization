@@ -86,7 +86,8 @@ class PipelineDetectorParams:
 #==============================================================================
 
 class PipelineImage:
-    def __init__(self, key, label, fname, feature_extractor_params):
+    def __init__(self, key, label, fname, feature_extractor_params, \
+                 field_name_for_pred_objects_in_AnnotatedImage=None):
         # check input
         assert isinstance(key, str)
         assert isinstance(label, int)
@@ -110,7 +111,19 @@ class PipelineImage:
         self.bboxes = []
         # the annotated image
         self.ai_ = None
-
+        # fill-out self.bboxes
+        if field_name_for_pred_objects_in_AnnotatedImage != None:
+            name = field_name_for_pred_objects_in_AnnotatedImage            
+            ai = self.get_ai()
+            assert len(ai.pred_objects[name]) == 1
+            for label in ai.pred_objects[name]:
+                for bb in ai.pred_objects[name][label].bboxes:
+                    self.bboxes.append( [bb, False] )
+            if len(self.bboxes) <= 0:
+                logging.warning('Warning. The AnnotatedImage {0} '\
+                    'does not contain bboxes under the pred_objects[{1}] field'\
+                    .format(fname, name))
+        
     def get_ai(self):
         """
         Returns the associated AnnotatedImage.
@@ -120,6 +133,7 @@ class PipelineImage:
             fd = open(self.fname, 'r')
             self.ai_ = pickle.load(fd)
             fd.close()
+            assert self.ai_.image_name == self.key
             # TODO. This is a pure hack. The AnnotatedImage.feature_extractor_
             #       should not be pickled.
             self.ai_.feature_extractor_ = None
@@ -240,47 +254,27 @@ class PipelineDetector:
                 for bb in pi.bboxes:
                     feat = ai.extract_features(bb[0])
                     bb[0].confidence = self.detector.predict(feat)
-            # sample positive and negative bboxes
+            # select pos and neg bboxes that will compose our train set
             pos_bboxes = []
             if pi.label == 1:
-                # *********  POSITIVE IMAGE  ********
-                pos_bboxes = ai.gt_objects[self.category]
-                if self.iteration == 0:
-                    self.mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
-                        pos_bboxes, pi.bboxes, \
-                        self.params.num_neg_bboxes_per_pos_image_during_init)
-                else:
-                    # TODO. add negative examples from the positive image?
-                    #       For now, do nothing.
-                    pass
+                # elaborate POSITIVE image
+                pos_bboxes = self.train_elaborate_pos_example_(pi)
             elif pi.label == -1:
-                # ********* NEGATIVE IMAGE **********
-                nmax = self.params.num_neg_bboxes_to_add_per_image_per_iter
-                if self.iteration == 0:
-                    # we pick a bunch of randomly-selected bboxes
-                    idxperm = util.randperm_deterministic(len(pi.bboxes))
-                    for i in range(min(len(idxperm), nmax)):
-                        pi.bboxes[idxperm[i]][1] = True
-                else:
-                    # we sort the bboxes by confidence score
-                    pi.bboxes = sorted(pi.bboxes, \
-                                         key=lambda x: -x[0].confidence)
-                    # we pick the top ones that have not been already selected
-                    num_neg_bboxes = len([1 for x in pi.bboxes if x[1]==True])
-                    # REMOVE num_neg_bboxes = len(filter(pi.bboxes, lambda x: x[1]))
-                    nmax -= num_neg_bboxes
-                    n = 0
-                    for bb in pi.bboxes:
-                        if (n < nmax) and (not bb[1]):
-                            bb[1] = True
-                            n += 1
-            # add the features
+                # elaborate NEGATIVE image
+                self.train_elaborate_neg_example_(pi)
+            # extract the features
             for bb in pos_bboxes:
-                Xtrain[idx, :] = ai.extract_features(bb)
+                feat = ai.extract_features(bb)                
+                if Xtrain == None:
+                    Xtrain, Ytrain = self.create_train_buffer_(feat.size)
+                Xtrain[idx, :] = feat
                 Ytrain[idx] = 1
                 idx += 1
             for bb in [b for b in pi.bboxes if b[1]]:
-                Xtrain[idx, :] = ai.extract_features(bb[0])
+                feat = ai.extract_features(bb[0])                
+                if Xtrain == None:
+                    Xtrain, Ytrain = self.create_train_buffer_(feat.size)
+                Xtrain[idx, :] = feat
                 Ytrain[idx] = -1
                 idx += 1
             # clear the AnnotatedImage
@@ -306,18 +300,6 @@ class PipelineDetector:
             # TODO complete it with Loris
         return Stats()
     
-    def create_train_buffer_(self, num_dims):
-        """ Create an appropriate matrix that will be able to contain
-        for sure the entire training set for the detector.
-        It return Xtrain, Ytrain"""
-        MAX_NUM_POS_BBOXES_PER_IMAGE = 30
-        num_pos_images = len([pi for pi in self.train_set if pi.label==1])
-        buffer_size = num_pos_images*MAX_NUM_POS_BBOXES_PER_IMAGE \
-                    + self.params.max_num_neg_bbox_per_image*len(self.train_set)
-        Xtrain = np.ndarray(shape=(buffer_size,num_dims), dtype=float)
-        Ytrain = np.ndarray(shape=(buffer_size,1), dtype=float)
-        return Xtrain, Ytrain
-
     def load(self, fname):
         """ Load from a Pickled file, and substitute the current fields """
         fd = open(fname, 'r')
@@ -337,6 +319,61 @@ class PipelineDetector:
         pickle.dump(self, fd, protocol=2)
         fd.close()
 
+    def train_elaborate_pos_example_(self, pi):
+        """ Elaborate a positive example during the training phase.
+        It marks eventual pi.bboxes as negatives.
+        It returns the set of positive BBox. """
+        assert pi.label == 1
+        ai = pi.get_ai()
+        pos_bboxes = ai.gt_objects[self.category].bboxes
+        if self.iteration == 0:
+            self.mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
+                pos_bboxes, pi.bboxes, \
+                self.params.num_neg_bboxes_per_pos_image_during_init)
+        else:
+            # TODO. add negative examples from the positive image?
+            #       For now, do nothing.
+            pass
+        return pos_bboxes
+
+    def train_elaborate_neg_example_(self, pi):
+        """ Elaborate a negative example during the training phase.
+        It marks pi.bboxes as negatives. It returns void """
+        niter = self.params.num_neg_bboxes_to_add_per_image_per_iter
+        if self.iteration == 0:
+            # check the input
+            for bb in pi.bboxes:
+                assert bb[1]==False
+            # we pick a bunch of randomly-selected bboxes
+            idxperm = util.randperm_deterministic(len(pi.bboxes))
+            for i in range(min(len(idxperm), niter)):
+                pi.bboxes[idxperm[i]][1] = True
+        else:
+            # we sort the bboxes by confidence score
+            pi.bboxes = sorted(pi.bboxes, \
+                                 key=lambda x: -x[0].confidence)
+            # we pick the top ones that have not been already selected
+            num_neg_bboxes = len([x for x in pi.bboxes if x[1]==True])
+            nmax = self.params.max_num_neg_bbox_per_image - num_neg_bboxes
+            niter = min(nmax, niter)
+            n = 0
+            for bb in pi.bboxes:
+                if (n < nmax) and (not bb[1]):
+                    bb[1] = True
+                    n += 1       
+
+    def create_train_buffer_(self, num_dims):
+        """ Create an appropriate matrix that will be able to contain
+        for sure the entire training set for the detector.
+        It return Xtrain, Ytrain"""
+        MAX_NUM_POS_BBOXES_PER_IMAGE = 30
+        num_pos_images = len([pi for pi in self.train_set if pi.label==1])
+        buffer_size = num_pos_images*MAX_NUM_POS_BBOXES_PER_IMAGE \
+                    + self.params.max_num_neg_bbox_per_image*len(self.train_set)
+        Xtrain = np.ndarray(shape=(buffer_size,num_dims), dtype=float)
+        Ytrain = np.ndarray(shape=(buffer_size,1), dtype=int)
+        return Xtrain, Ytrain        
+
     @staticmethod
     def mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
                             pos_bboxes, bboxes, max_num_bboxes):
@@ -349,6 +386,8 @@ class PipelineDetector:
         Output: Nothing.
         """
         # check input
+        assert isinstance(pos_bboxes, list)
+        assert isinstance(bboxes, list)
         for bb in pos_bboxes:
             assert isinstance(bb, BBox)
         for bb in bboxes:
@@ -407,16 +446,11 @@ class PipelineDetector:
         out = []
         for key_label in key_label_list:
             key, label = key_label
+            # create the PipelineImage
             pi = PipelineImage( \
                     key, label, '{0}/{1}.pkl'.format(params.input_dir, key), \
-                    params.feature_extractor_params)
-            # bboxes field
-            name = params.field_name_for_pred_objects_in_AnnotatedImage
-            ai = pi.get_ai()
-            assert len(ai.pred_objects[name]) == 1
-            for label in ai.pred_objects[name]:
-                for bb in ai.pred_objects[name][label].bboxes:
-                    pi.bboxes.append( [bb, False] )
+                    params.feature_extractor_params, \
+                    params.field_name_for_pred_objects_in_AnnotatedImage)
             # append the PipelineImage
             out.append(pi)
         return out
