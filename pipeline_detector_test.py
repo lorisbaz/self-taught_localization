@@ -32,7 +32,7 @@ class PipelineDetectorTest(unittest.TestCase):
         params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
         pt = PipelineDetector(category, params)
         pt.init()
-        pt.train()
+        pt.train_evaluate()
 
     def test_train(self):
         category = self.category

@@ -215,7 +215,7 @@ class PipelineDetector:
             logging.info('Iteration {0}'.format(iteration))
             # check if we already trained the model for this iteration
             fname = '{0}/iter{1}.pkl'.format(self.detector_output_dir, iteration)
-            if os.path.exists(fname):                
+            if os.path.exists(fname):
                 # load the current detector
                 logging.info('The model for the iteration {0} already exists.'\
                              'We load it: {1}'.format(iteration, fname))
@@ -231,6 +231,8 @@ class PipelineDetector:
             # check if we have already evaluated the model for this iteration
             fname = '{0}/iter_stats{1}.pkl'.format( \
                     self.detector_output_dir, iteration)
+            fname_mat = '{0}/iter_stats{1}.mat'.format( \
+                    self.detector_output_dir, iteration)                    
             if os.path.exists(fname):
                 logging.info('The stats file for iteration {0} already '\
                              'exists: {1}'.format(iteration, fname))
@@ -238,7 +240,8 @@ class PipelineDetector:
                 logging.info('Evaluation the model of iteration {0}'.format( \
                              iteration))
                 stats = self.evaluate()
-                pickle.dump(fname, stats)
+                stats.save(fname)
+                stats.save_mat(fname_mat)
 
     def train(self):
         """ Train an iteration of the detector """

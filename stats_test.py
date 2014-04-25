@@ -43,6 +43,12 @@ class StatsTest(unittest.TestCase):
         self.assertEqual(stat_single.NPOS, 2)
         #print str(stat_single)
 
+    def test_save_mat(self):
+        stat_single = stats.Stats()
+        stat_single.compute_stats(self.pred_bboxes['dog'], \
+                                  self.gt_bboxes['dog'])
+        stat_single.save_mat('TEST_MAT.mat')
+        
     def test_aggregator(self):
         stats_list = []
         stat_1 = stats.Stats()
