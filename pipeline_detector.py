@@ -40,8 +40,6 @@ class PipelineDetectorParams:
         #     ...         // completed iterations.
         #     iter5.pkl        
         self.output_dir = None
-        # experiment name. used for the job names
-        self.exp_name = None
         # Text file, containing the classes to elaborate.
         self.categories_file = None
         # Directory containing the splits. It is expected to contain
@@ -67,6 +65,8 @@ class PipelineDetectorParams:
         self.run_on_anthill = False
         # Number of cores
         self.num_cores = 1
+        # experiment name. used for the job names
+        self.exp_name = None        
 
         # number of iterations to perform
         self.num_iterations = 3 
@@ -160,6 +160,7 @@ class PipelineImage:
 
 def pipeline_single_detector(cl, params):        
     detector = PipelineDetector(cl, params)
+    detector.init()
     detector.train_evaluate()
     return 0
     
@@ -169,14 +170,12 @@ class PipelineDetector:
         assert isinstance(category, str)
         assert isinstance(params, PipelineDetectorParams)
         # check that all the mandatory PipelineDetectorParams were set
-        params.input_dir != None
-        params.output_dir != None
-        params.exp_name != None
-        params.categories_file != None
-        params.splits_dir != None
-        params.feature_extractor_params != None
-        params.detector_params != None
-        params.field_name_for_pred_objects_in_AnnotatedImage != None
+        assert params.input_dir != None
+        assert params.output_dir != None
+        assert params.splits_dir != None
+        assert params.feature_extractor_params != None
+        assert params.detector_params != None
+        assert params.field_name_for_pred_objects_in_AnnotatedImage != None
         # init
         self.category = category
         self.params = params
@@ -187,19 +186,21 @@ class PipelineDetector:
         self.detector = Detector.create_detector(params.detector_params)
 
     def init(self):
+        logging.info('Initializing the detector for {0}'.format(self.category))
         # create output directory for this detector
         if os.path.exists(self.detector_output_dir) == False:
             os.makedirs(self.detector_output_dir)           
         # read the training set
-        fname = '{0}/{1}_train.txt'.format(params.splits_dir, category)
+        fname = '{0}/{1}_train.txt'.format(self.params.splits_dir, self.category)
         key_label_list = self.read_key_label_file_( \
-                              fname, params.max_train_pos_images_per_category, \
-                              params.max_train_neg_images_per_category)
-        self.train_set = self.create_pipeline_images_(key_label_list, params)
+                    fname, self.params.max_train_pos_images_per_category, \
+                    self.params.max_train_neg_images_per_category)
+        self.train_set = self.create_pipeline_images_( \
+                    key_label_list, self.params)
         # read the test set
-        fname = '{0}/{1}_test.txt'.format(params.splits_dir, category)
+        fname = '{0}/{1}_test.txt'.format(self.params.splits_dir, self.category)
         key_label_list = self.read_key_label_file_(fname, sys.maxint, sys.maxint)
-        self.test_set = self.create_pipeline_images_(key_label_list, params)
+        self.test_set = self.create_pipeline_images_(key_label_list, self.params)
         # check: make sure all the files exists
         error = False
         for pi in (self.train_set + self.test_set):
@@ -522,7 +523,9 @@ class PipelineDetector:
         # run the pipeline
         parfun = None
         if params.run_on_anthill:
-            jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
+            jobname = None
+            if params.exp_name != None:
+                jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
             parfun = ParFunAnthill(pipeline, time_requested=10, \
                                    memory_requested=4, job_name=jobname)
         else:

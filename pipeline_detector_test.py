@@ -5,24 +5,38 @@ from pipeline_detector import *
 
 class PipelineDetectorTest(unittest.TestCase):
     def setUp(self):
-        pass
-    
+        self.category = 'cat'
+        params = PipelineDetectorParams()
+        params.input_dir = 'test_data'
+        params.output_dir = 'TEMP_TEST'
+        params.splits_dir = 'test_data'
+        params.feature_extractor_params = FeatureExtractorFakeParams()
+        params.detector_params = DetectorFakeParams()
+        params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
+        params.max_num_neg_bbox_per_image = 5
+        params.num_neg_bboxes_per_pos_image_during_init = 1
+        self.params = params
+        self.pt = PipelineDetector(self.category, self.params)
+            
     def tearDown(self):
         pass
 
-    def test_init(self):
-        category = 'label1'
-        params = PipelineDetectorParams()
-        params.feature_extractor_params = FeatureExtractorFakeParams()
-        params.detector_params = DetectorFakeParams()
+    def test___init(self):
+        pt = PipelineDetector(self.category, self.params)
+
+    def test_init_train_evaluate(self):
+        category = self.category
+        params = self.params
         params.max_num_neg_bbox_per_image = 5
-        pt = PipelineDetector(category, params)        
+        params.num_neg_bboxes_per_pos_image_during_init = 1
+        params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
+        pt = PipelineDetector(category, params)
+        pt.init()
+        pt.train()
 
     def test_train(self):
-        category = 'cat'
-        params = PipelineDetectorParams()
-        params.feature_extractor_params = FeatureExtractorFakeParams()
-        params.detector_params = DetectorFakeParams()
+        category = self.category
+        params = self.params
         params.max_num_neg_bbox_per_image = 5
         params.num_neg_bboxes_per_pos_image_during_init = 1
         pt = PipelineDetector(category, params)
@@ -35,10 +49,8 @@ class PipelineDetectorTest(unittest.TestCase):
         pt.train()
 
     def test_evaluate(self):
-        category = 'cat'
-        params = PipelineDetectorParams()
-        params.feature_extractor_params = FeatureExtractorFakeParams()
-        params.detector_params = DetectorFakeParams()
+        category = self.category
+        params = self.params
         params.max_num_neg_bbox_per_image = 5
         params.num_neg_bboxes_per_pos_image_during_init = 1
         pt = PipelineDetector(category, params)
@@ -54,10 +66,8 @@ class PipelineDetectorTest(unittest.TestCase):
         
     def test_train_elaborate_pos_example(self):
         # PipelineImage and Detector
-        category = 'cat'
-        params = PipelineDetectorParams()
-        params.feature_extractor_params = FeatureExtractorFakeParams()
-        params.detector_params = DetectorFakeParams()
+        category = self.category
+        params = self.params
         params.max_num_neg_bbox_per_image = 5
         params.num_neg_bboxes_per_pos_image_during_init = 3
         pt = PipelineDetector(category, params)
@@ -88,10 +98,8 @@ class PipelineDetectorTest(unittest.TestCase):
                   [BBox(0.50, 0.60, 0.85, 0.85, 0.9), False], \
                   [BBox(0.51, 0.61, 0.86, 0.86, 0.5), False]]
         # PipelineImage and Detector
-        category = 'cat'
-        params = PipelineDetectorParams()
-        params.feature_extractor_params = FeatureExtractorFakeParams()
-        params.detector_params = DetectorFakeParams()
+        category = self.category
+        params = self.params
         params.num_neg_bboxes_to_add_per_image_per_iter = 2
         params.max_num_neg_bbox_per_image = 2
         pt = PipelineDetector(category, params)
@@ -117,9 +125,7 @@ class PipelineDetectorTest(unittest.TestCase):
                                              
     def test_create_train_buffer(self):
         category = 'label1'
-        params = PipelineDetectorParams()
-        params.feature_extractor_params = FeatureExtractorFakeParams()
-        params.detector_params = DetectorFakeParams()
+        params = self.params
         params.max_num_neg_bbox_per_image = 5
         pt = PipelineDetector(category, params)
         pt.train_set = [ \
