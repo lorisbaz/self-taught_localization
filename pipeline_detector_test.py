@@ -35,8 +35,22 @@ class PipelineDetectorTest(unittest.TestCase):
         pt.train()
 
     def test_evaluate(self):
-        # TODO        
-        pass
+        category = 'cat'
+        params = PipelineDetectorParams()
+        params.feature_extractor_params = FeatureExtractorFakeParams()
+        params.detector_params = DetectorFakeParams()
+        params.max_num_neg_bbox_per_image = 5
+        params.num_neg_bboxes_per_pos_image_during_init = 1
+        pt = PipelineDetector(category, params)
+        pt.iteration = 0
+        pt.test_set = [ \
+            PipelineImage('000044', 1, 'test_data/000044.pkl', \
+                          FeatureExtractorFakeParams(), 'SELECTIVESEARCH'), \
+            PipelineImage('000012', -1, 'test_data/000012.pkl', \
+                          FeatureExtractorFakeParams(), 'SELECTIVESEARCH')]
+        pt.train_set = pt.test_set
+        pt.train()
+        stats = pt.evaluate()
         
     def test_train_elaborate_pos_example(self):
         # PipelineImage and Detector

@@ -286,19 +286,28 @@ class PipelineDetector:
         self.detector.train(Xtrain, Ytrain)
         
     def evaluate(self):
+        # calculate the stats for each image
+        stats_all = []
         for pi in self.test_set:
             logging.info('Elaborating test key: {0}'.format(pi.key))
-            # get the AnnotatedImage
-            ai = pi.get_ai()
-            # evaluate the learned model
+            # evaluate the learned model            
             for bb in pi.bboxes:
                 feat = pi.get_ai().extract_features(bb[0])
                 bb[0].confidence = self.detector.predict(feat)
-            # create a dummy AnnotatedImage, without features
-            ai2 = copy.deepcopy(ai)
-            ai2.features = None
-            # TODO complete it with Loris
-        return Stats()
+            # calculate the Stats
+            pred_bboxes = [bb[0].copy() for bb in pi.bboxes]
+            if self.category in pi.get_ai().gt_objects:
+                gt_bboxes = pi.get_ai().gt_objects[self.category].bboxes
+            else:
+                gt_bboxes = []
+            stats = Stats()
+            stats.compute_stats(pred_bboxes, gt_bboxes)
+            pi.clear_ai()
+            stats_all.append(stats)
+        assert len(stats_all)==len(self.test_set)
+        # aggregate the stats for this detector
+        stats, hist_overlap = Stats.aggregate_results(stats_all)
+        return stats
     
     def load(self, fname):
         """ Load from a Pickled file, and substitute the current fields """
