@@ -217,7 +217,8 @@ class PipelineDetector:
             if not os.path.exists(pi.fname):
                 error = True
                 logging.info('The file {0} does not exist'.format(pi.fname))
-        assert not error, 'Some required files were not found. Abort.'        
+        assert not error, 'Some required files were not found. Abort.'
+        logging.info('Initialization complete')       
 
     def train_evaluate(self):
         for iteration in range(self.params.num_iterations):
@@ -469,6 +470,7 @@ class PipelineDetector:
         out = []
         for key_label in key_label_list:
             key, label = key_label
+            logging.info('Elaborating {0}'.format(key))
             # create the PipelineImage
             pi = PipelineImage( \
                     key, label, '{0}/{1}.pkl'.format(params.input_dir, key), \
@@ -528,7 +530,7 @@ class PipelineDetector:
             os.makedirs(params.output_dir)        
         # read the list of classes to elaborate
         classes = []
-        fd = open(params.classes_file, 'r')
+        fd = open(params.categories_file, 'r')
         for line in fd:
             classes.append(line.strip())
         fd.close()
