@@ -47,6 +47,7 @@ class PipelineDetectorParams:
         #   <class>_train.txt   defining the training set
         #   <class>_test.txt    defining the test set
         # Each line of these two textfiles is in the format '<key> <+1/-1>'.
+        # The suffix 'train' and 'test' can be changed, see options below.
         self.splits_dir = None
 
         # FeatureExtractor module to use (parameters object)
@@ -66,8 +67,15 @@ class PipelineDetectorParams:
         # Number of cores
         self.num_cores = 1
         # experiment name. used for the job names
-        self.exp_name = None        
+        self.exp_name = None
+        # categories to learn (None means everything)
+        self.categories_to_process = None
 
+        # name of the split for the training set
+        self.split_train_name = 'train'
+        # name of the split for the testing set
+        self.split_test_name = 'test'
+        
         # number of iterations to perform
         self.num_iterations = 3 
         # max total number of negative bbox per image
@@ -191,14 +199,16 @@ class PipelineDetector:
         if os.path.exists(self.detector_output_dir) == False:
             os.makedirs(self.detector_output_dir)           
         # read the training set
-        fname = '{0}/{1}_train.txt'.format(self.params.splits_dir, self.category)
+        fname = '{0}/{1}_{2}.txt'.format(self.params.splits_dir, self.category,\
+                                         self.params.split_train_name)
         key_label_list = self.read_key_label_file_( \
                     fname, self.params.max_train_pos_images_per_category, \
                     self.params.max_train_neg_images_per_category)
         self.train_set = self.create_pipeline_images_( \
                     key_label_list, self.params)
         # read the test set
-        fname = '{0}/{1}_test.txt'.format(self.params.splits_dir, self.category)
+        fname = '{0}/{1}_{2}.txt'.format(self.params.splits_dir, self.category, \
+                                         self.params.split_test_name)
         key_label_list = self.read_key_label_file_(fname, sys.maxint, sys.maxint)
         self.test_set = self.create_pipeline_images_(key_label_list, self.params)
         # check: make sure all the files exists
@@ -523,6 +533,9 @@ class PipelineDetector:
             classes.append(line.strip())
         fd.close()
         logging.info('Loaded {0} classes'.format(len(classes)))
+        # select the categories to process
+        if params.categories_to_process:
+            classes = [classes[i] for i in params.categories_to_process]
         # run the pipeline
         parfun = None
         if params.run_on_anthill:
