@@ -134,11 +134,11 @@ class FeatureExtractorNetwork(FeatureExtractor):
         # inizialize the cache
         modulename = self.name
         name = self.params.get_id_desc()
-        if hasattr(self.anno_image.features, modulename):
+        if modulename in self.anno_image.features:
             self.cache = self.anno_image.features[modulename]
         else:
             self.cache = {} 
-        if not hasattr(self.cache, name):
+        if name not in self.cache:
             self.cache[name] = {}
             self.cache[name]['featdata'] = None
             self.cache[name]['featidx'] = {}

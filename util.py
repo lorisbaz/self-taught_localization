@@ -3,6 +3,7 @@ import logging
 logging.basicConfig(level=logging.INFO, \
               format='[%(asctime)s %(filename)s:%(lineno)d] %(message)s', \
               datefmt='%m/%d/%Y %H:%M:%S')
+import cPickle as pickle
 import numpy as np
 import os
 import os.path
@@ -293,3 +294,19 @@ def randperm_deterministic(n):
     random.shuffle(perm)
     return perm
 
+def dump_obj_to_file_using_pickle(obj, fname, mode='binary'):
+    """ mode can be either 'binary' or 'txt' """
+    fd = open(fname, 'wb')
+    if mode == 'binary':
+        pickle.dump(obj, fd, protocol=2)
+    elif mode == 'txt':
+        pickle.dump(obj, fd, protocol=0)
+    else:
+        raise ValueError('mode {0} not recognized'.format(mode))
+    fd.close()
+
+def load_obj_from_file_using_pickle(fname):
+    fd = open(fname, 'r')
+    obj = pickle.load(fd)
+    fd.close()
+    return obj

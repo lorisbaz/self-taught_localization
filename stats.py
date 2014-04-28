@@ -54,7 +54,8 @@ class Stats:
                   'TP': self.TP, 'FP': self.FP, 'NPOS': self.NPOS, \
                   'precision': self.precision, 'recall': self.recall, \
                   'ABO': self.ABO, 'average_prec': self.average_prec, \
-                  'detection_rate': self.detection_rate })
+                  'detection_rate': self.detection_rate }, \
+                  oned_as='row')
 
     def compute_stats(self, pred_bboxes, gt_bboxes, IoU_threshold = 0.5, \
                       fp_overlap_zero = False, max_subwin = 0):
@@ -112,18 +113,6 @@ class Stats:
             self.TP = self.TP[idx_sort]
             self.confidence = np.array(self.confidence)[idx_sort].tolist()
             # it is a list to keep compatibility
-
-    def save(fname):
-        fd = open(fname, 'w')
-        pickle.dump(self, fd)
-        fd.close()
-
-    @staticmethod
-    def load(fname):
-        fd = open(fname, 'r')
-        stats = pickle.load(fd)
-        fd.close()
-        return stats
             
     @staticmethod
     def flat_anno_bboxes(bboxes):

@@ -268,7 +268,7 @@ class PipelineDetector:
                 logging.info('Evaluation the model of iteration {0}'.format( \
                              iteration))
                 stats = self.evaluate()
-                stats.save(fname)
+                dump_obj_to_file_using_pickle(stats, fname, 'binary')
                 stats.save_mat(fname_mat)
 
     def train(self):
@@ -284,7 +284,7 @@ class PipelineDetector:
             ai = pi.get_ai()
             # evaluate the model learned in the previous iteration
             if self.iteration > 0:
-                for bb in pi.bboxes():
+                for bb in pi.bboxes:
                     feat = ai.extract_features(bb[0])
                     bb[0].confidence = self.detector.predict(feat)
             # select pos and neg bboxes that will compose our train set
@@ -321,8 +321,9 @@ class PipelineDetector:
     def evaluate(self):
         # calculate the stats for each image
         stats_all = []
-        for pi in self.test_set:
-            logging.info('Elaborating test key: {0}'.format(pi.key))
+        for idx_pi, pi in enumerate(self.test_set):
+            logging.info('Elaborating test key: {0} ({1}/{2})'.format( \
+                         pi.key, idx_pi, len(self.test_set)))
             # evaluate the learned model
             pi.get_ai()
             Xtest = None
@@ -369,10 +370,8 @@ class PipelineDetector:
         pass
         # TODO. fix RuntimeError: Pickling of "caffe.pycaffe.Net" instances
         #       is not enabled
-        #fd = open(fname, 'wb')
-        #pickle.dump(self, fd, protocol=2)
-        #fd.close()
-
+        #dump_obj_to_file_using_pickle(self, fname, 'binary')
+        
     def train_elaborate_pos_example_(self, pi):
         """ Elaborate a positive example during the training phase.
         It marks eventual pi.bboxes as negatives.
@@ -500,11 +499,12 @@ class PipelineDetector:
         out = []
         for idx, key_label in enumerate(key_label_list):
             key, label = key_label
-            logging.info('Create PipelineImage {0} ({1}/{2})'.format( \
-                         key, idx, len(key_label_list)))
+            fname = '{0}/{1}.pkl'.format(input_dir, key)
+            logging.info('Create PipelineImage for {0} ({1}/{2})'.format( \
+                         fname, idx, len(key_label_list)))
             # create the PipelineImage
             pi = PipelineImage( \
-                    key, label, '{0}/{1}.pkl'.format(input_dir, key), \
+                    key, label, fname, \
                     params.feature_extractor_params, \
                     params.field_name_for_pred_objects_in_AnnotatedImage)
             # append the PipelineImage
