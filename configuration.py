@@ -74,7 +74,15 @@ class Configuration:
     """
 
     def __init__(self):
-        if os.uname()[1] == 'anthill.cs.dartmouth.edu':
+        hostname = os.uname()[1]        
+        if  'anthill' in hostname or \
+            'bokken' in hostname or \
+            'ennead' in hostname or \
+            'gridiron' in hostname or \
+            'katana' in hostname or \
+            'killington' in hostname or \
+            'nodachi' in hostname or \
+            'tanto' in hostname:            
             # ***** ILSVRC 2012 *****
             ilsvrc2012_root = '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
@@ -126,7 +134,7 @@ class Configuration:
             # ***** GRAYOBFUSCATION PROJECT *****
             self.experiments_output_directory = \
                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'
-	elif os.uname()[1] == 'alessandro-Linux':
+	elif hostname == 'alessandro-Linux':
             # ***** ILSVRC 2012 *****
             ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
@@ -179,7 +187,7 @@ class Configuration:
             # ***** GRAYOBFUSCATION PROJECT *****
             self.experiments_output_directory = \
                 '/home/alessandro/Data_projects/grayobfuscation'
-	elif os.uname()[1] == 'lbazzani-desk':
+	elif hostname == 'lbazzani-desk':
             # ***** ILSVRC 2012 *****
             ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
