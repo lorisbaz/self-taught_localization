@@ -15,6 +15,10 @@ except:
 
 import util
 
+class NetworkParams:
+    """ Parameters for the Network class """
+    def __init__(self):
+        raise NotImplementedError()
 
 class Network:
     """Network class"""
@@ -67,12 +71,31 @@ class Network:
         """
         raise NotImplementedError()
 
+    @staticmethod
+    def create_network(params):
+        """
+        Factory for the Network, taking a NetoworkParams as input.
+        """
+        assert isinstance(params, NetworkParams)
+        if isinstance(params, NetworkFakeParams):
+            return NetworkFake(params)
+        elif isinstance(params, NetworkDecafParams):
+            return NetworkDecaf(params)
+        elif isinstance(params, NetworkCaffeParams):
+            return NetworkCaffe(params)        
+        else:
+            raise ValueError('NetworkParams instance not recognized')    
+
 #=============================================================================
 
-class NetworkFake:
+class NetworkFakeParams(NetworkParams):
+    def __init__(self):
+        pass
+
+class NetworkFake(Network):
     """Fake Network class for debugging purposes"""
 
-    def __init__(self):
+    def __init__(self, params):
         pass
 
     def evaluate(self, img, layer_name = 'softmax'):
@@ -107,12 +130,35 @@ class NetworkFake:
         
 #=============================================================================
 
+class NetworkDecafParams(NetworkParams):
+    def __init__(self, model_spec_filename, model_filename,\
+                 wnid_words_filename, center_only = False):
+        self.model_spec_filename = model_spec_filename
+        self.model_filename = model_filename
+        self.wnid_words_filename = wnid_words_filename
+        self.center_only = center_only
+
 class NetworkDecaf(Network):
     """
     Implementation for the Decaf library.
     """
-    def __init__(self, model_spec_filename, model_filename,\
-                 wnid_words_filename, center_only = False):
+    def __init__(self, model_spec_filename, model_filename=None,\
+                 wnid_words_filename=None, center_only=False):
+        """
+        *** PRIVATE CONSTRUCTOR ***
+        """
+        # the following is just an hack to allow retro-compatibility
+        # with existing code
+        if isinstance(model_spec_filename, NetworkDecafParams):
+            params = model_spec_filename
+            model_spec_filename = params.model_spec_filename
+            model_filename = params.model_filename
+            wnid_words_filename = params.wnid_words_filename
+            center_only = params.center_only
+        else:
+            assert isinstance(model_spec_filename, str)
+            assert model_filename != None
+            assert wnid_words_filename != None
         # load Decaf model
         self.net_ = DecafNet(model_filename, model_spec_filename)
         self.center_only_ = center_only
@@ -194,13 +240,42 @@ class NetworkDecaf(Network):
 
 #=============================================================================
 
+class NetworkCaffeParams(NetworkParams):
+    def __init__(self, model_spec_filename, model_filename,\
+                 wnid_words_filename, mean_img_filename,
+                 caffe_mode='cpu', center_only=False):
+        self.model_spec_filename = model_spec_filename
+        self.model_filename = model_filename
+        self.wnid_words_filename = wnid_words_filename
+        self.mean_img_filename = mean_img_filename
+        self.caffe_mode = caffe_mode
+        self.center_only = center_only
+
 class NetworkCaffe(Network):
     """
     Implementation for the Caffe library.
     """
-    def __init__(self, model_spec_filename, model_filename,\
-                 wnid_words_filename, mean_img_filename, \
-                 caffe_mode = 'cpu', center_only = False):
+    def __init__(self, model_spec_filename, model_filename=None,\
+                 wnid_words_filename=None, mean_img_filename=None, \
+                 caffe_mode='cpu', center_only=False):
+        """
+        *** PRIVATE CONSTRUCTOR ***
+        """                 
+        # the following is just an hack to allow retro-compatibility
+        # with existing code
+        if isinstance(model_spec_filename, NetworkCaffeParams):
+            params = model_spec_filename
+            model_spec_filename = params.model_spec_filename
+            model_filename = params.model_filename
+            wnid_words_filename = params.wnid_words_filename
+            mean_img_filename = params.mean_img_filename
+            caffe_mode = params.caffe_mode
+            center_only = params.center_only
+        else:
+            assert isinstance(model_spec_filename, str)
+            assert model_filename != None
+            assert wnid_words_filename != None
+            assert mean_img_filename != None             
         # for now, we support only the single full-image evaluation
         assert center_only == True
         # load Caffe model
