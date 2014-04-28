@@ -80,15 +80,15 @@ class FeatureExtractorFake(FeatureExtractor):
 #=============================================================================
 
 class FeatureExtractorNetworkParams(FeatureExtractorParams):
-    def __init__(self, network = None, layer = 'softmax', \
+    def __init__(self, netparams, layer = 'softmax', \
                         cache_features = True):
+        self.netparams = netparams
         self.layer = layer
-        self.net = network
         self.cache_features = cache_features
     
     def get_id_desc(self):
-        return 'name:{0}-layer:{1}'.format( \
-                  self.net.__class__, self.layer)
+        name = str(self.netparams.__class__).replace('Params','')
+        return 'name:{0}-layer:{1}'.format(name, self.layer)
 
 class FeatureExtractorNetwork(FeatureExtractor):
     """
@@ -109,6 +109,7 @@ class FeatureExtractorNetwork(FeatureExtractor):
     
     # network to use during the life of any FeatureExtractorCaffe object
     network_ = None
+    params_ = None
 
     def __init__(self, anno_image, params):
         """
@@ -125,12 +126,13 @@ class FeatureExtractorNetwork(FeatureExtractor):
         assert self.img.shape[0] == self.anno_image.image_height
         assert self.img.shape[1] == self.anno_image.image_width
         self.params = params
+        params_ = params
         if FeatureExtractorNetwork.network_:
-            assert FeatureExtractorNetwork.network_ == self.params.net, \
+            assert FeatureExtractorNetwork.params_ == self.params, \
                 'Only a single network is allowed during the life of '\
                 'FeatureExtractorNetwork'
         else:
-            FeatureExtractorNetwork.network_ = self.params.net
+            FeatureExtractorNetwork.params_ = self.params
         # inizialize the cache
         modulename = self.name
         name = self.params.get_id_desc()
@@ -142,12 +144,7 @@ class FeatureExtractorNetwork(FeatureExtractor):
             self.cache[name] = {}
             self.cache[name]['featdata'] = None
             self.cache[name]['featidx'] = {}
-    
-    def __getstate__(self):
-        d = dict(self.__dict__)
-        del d['params']
-        return d
-            
+                
     def extract(self, bboxes):
         # for each bbox:
         width = self.anno_image.image_width
@@ -166,8 +163,13 @@ class FeatureExtractorNetwork(FeatureExtractor):
                 feat = netfeat['featdata'][netfeat['featidx'][key], :]
             except:
                 # the features are not present :-( we extract them
+                # we crop appropriately the image
                 img = self.img.copy()
                 img = img[bb.ymin:bb.ymax, bb.xmin:bb.xmax]
+                # if the Network has never been used, we need to create it
+                if FeatureExtractorNetwork.network_ == None:
+                    FeatureExtractorNetwork.network_ = Network.create_network( \
+                              self.params.netparams)
                 feat = FeatureExtractorNetwork.network_.evaluate( \
                               img, layer_name=self.params.layer)
                 feat = np.atleast_2d(feat)

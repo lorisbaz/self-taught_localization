@@ -37,26 +37,23 @@ class FeatureExtractorNetworkTest(unittest.TestCase):
 
     def test_init(self):
         # create params
-        net = NetworkFake()
-        params = FeatureExtractorNetworkParams()
-        params.net = net
+        netparams = NetworkFakeParams()
+        params = FeatureExtractorNetworkParams(netparams)
         params.cache_features = True
         # init
         fe = FeatureExtractorNetwork(self.img_anno, params)
-        self.assertEqual(fe.network_, net)
         name = 'name:network.NetworkFake-layer:softmax'
+        self.assertTrue(name in fe.cache)
         self.assertFalse(fe.cache[name]['featdata'])
         self.assertTrue(fe.cache[name]['featidx'] == {})
 
     def test_extract(self):
         # create params
-        net = NetworkFake()
-        params = FeatureExtractorNetworkParams()
-        params.net = net
+        netparams = NetworkFakeParams()        
+        params = FeatureExtractorNetworkParams(netparams)        
         params.cache_features = True
         # init
         fe = FeatureExtractorNetwork(self.img_anno, params)
-        self.assertEqual(fe.network_, net)
         name = 'name:network.NetworkFake-layer:softmax'
         # extract
         feats = fe.extract(self.img_anno.pred_objects['C1']['label1'].bboxes)
