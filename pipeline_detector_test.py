@@ -7,7 +7,8 @@ class PipelineDetectorTest(unittest.TestCase):
     def setUp(self):
         self.category = 'cat'
         params = PipelineDetectorParams()
-        params.input_dir = 'test_data'
+        params.input_dir_train = 'test_data'
+        params.input_dir_test = 'test_data'        
         params.output_dir = 'TEMP_TEST'
         params.splits_dir = 'test_data'
         params.feature_extractor_params = FeatureExtractorFakeParams()
@@ -137,8 +138,7 @@ class PipelineDetectorTest(unittest.TestCase):
         n = 2*30 + 5*3
         self.assertEqual(X.shape[0], n)
         self.assertEqual(X.shape[1], num_dims)
-        self.assertEqual(Y.shape[0], n)
-        self.assertEqual(Y.shape[1], 1)
+        self.assertEqual(Y.size, n)
         self.assertTrue(isinstance(X, np.ndarray))
         self.assertTrue(isinstance(Y, np.ndarray))
     
@@ -174,15 +174,21 @@ class PipelineDetectorTest(unittest.TestCase):
         # run the code
         key_label_list = [('000012',-1), ('000044',1)]
         params = PipelineDetectorParams()
-        params.input_dir = 'test_data'
+        params.input_dir_train = 'test_data'
+        params.input_dir_test = 'test_data'        
         params.feature_extractor_params = FeatureExtractorFakeParams()
         params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
-        out = PipelineDetector.create_pipeline_images_(key_label_list, params)
+        out = PipelineDetector.create_pipeline_images_(key_label_list, params, \
+                                                       params.input_dir_train)
         # checks
         self.assertEqual(len(out), 2)
         for o in out:
             self.assertTrue(isinstance(o, PipelineImage))
+        out[1].get_ai()
         self.assertFalse(out[1].bboxes[0][1])
+        self.assertEqual(out[1].key, '000044')
+        self.assertEqual(out[1].label, 1)
+        self.assertEqual(out[1].fname, 'test_data/000044.pkl')
         self.assertEqual(len(out[1].bboxes), 10)
         self.assertAlmostEqual(out[1].bboxes[0][0].xmin, 0.299559471366)
         self.assertAlmostEqual(out[1].bboxes[0][0].ymin, 0.0881057268722)

@@ -29,10 +29,12 @@ class PipelineDetectorParams:
 
         # *******************  MANDATORY PARAMETERS TO SET *******************
 
-        # Input directory, containing the AnnotatedImages in Pickle2 format.
+        # Input directories, containing the AnnotatedImages in Pickle2 format.
         # The pipeline expects a file for each <key> (i.e. <key>.pkl).
         # The AnnotatedImages might contain the features as well.
-        self.input_dir = None
+        # For differentiating the directories for training and test, see below.
+        self.input_dir_train = None
+        self.input_dir_test = None
         # Output directory for the pipeline. The output directory contains
         # the following elements:
         #   category_dog/ // a directory for each category
@@ -83,7 +85,7 @@ class PipelineDetectorParams:
         # num of negative bbox per image to add during the iterations
         self.num_neg_bboxes_to_add_per_image_per_iter = 1
         # num of negative bboxes from a positive image to add during the init
-        self.num_neg_bboxes_per_positive_image_during_init = 5
+        self.num_neg_bboxes_per_pos_image_during_init = 5
         # thresholds to define duplicate boxes for the evaluation
         self.threshold_duplicates = 0.3
         # max number of positive images per category
@@ -116,28 +118,24 @@ class PipelineImage:
         # the confidence of the bbox given the model learned in the
         # previous iteration, and boolean value indicates whether
         # or not the bbox has been already used as a negative example.
-        self.bboxes = []
+        #
+        # Note: for efficiency we defer the filling of this field to later,
+        #  while loading for the first time the AnnotatedImage.
+        #  Therefore, before using this field you must have called get_ai()
+        # TODO: replace the field with set/get methods
+        self.bboxes = None
         # the annotated image
         self.ai_ = None
-        # fill-out self.bboxes
-        if field_name_for_pred_objects_in_AnnotatedImage != None:
-            name = field_name_for_pred_objects_in_AnnotatedImage            
-            ai = self.get_ai()
-            assert len(ai.pred_objects[name]) == 1
-            for label in ai.pred_objects[name]:
-                for bb in ai.pred_objects[name][label].bboxes:
-                    self.bboxes.append( [bb, False] )
-            if len(self.bboxes) <= 0:
-                logging.warning('Warning. The AnnotatedImage {0} '\
-                    'does not contain bboxes under the pred_objects[{1}] field'\
-                    .format(fname, name))
-        
+        # field_name_for_pred_objects_in_AnnotatedImage
+        self.field_name_for_pred_objects_in_AnnotatedImage = \
+                 field_name_for_pred_objects_in_AnnotatedImage
+                    
     def get_ai(self):
         """
         Returns the associated AnnotatedImage.
         """
+        # load the image from the disk, if never done it before
         if not self.ai_:
-            # load the image from the disk
             fd = open(self.fname, 'r')
             self.ai_ = pickle.load(fd)
             fd.close()
@@ -147,6 +145,23 @@ class PipelineImage:
             self.ai_.feature_extractor_ = None
             # register the feature extractor
             self.ai_.register_feature_extractor(self.feature_extractor_params)
+        # fill-out self.bboxes, if never done before
+        if self.bboxes == None:
+            if self.field_name_for_pred_objects_in_AnnotatedImage == None:
+                self.bboxes = []
+            else:
+                self.bboxes = []
+                name = self.field_name_for_pred_objects_in_AnnotatedImage            
+                ai = self.ai_
+                assert len(ai.pred_objects[name]) == 1
+                for label in ai.pred_objects[name]:
+                    for bb in ai.pred_objects[name][label].bboxes:
+                        self.bboxes.append( [bb, False] )
+                if len(self.bboxes) <= 0:
+                    logging.warning('Warning. The AnnotatedImage {0} '\
+                        'does not contain bboxes under the pred_objects[{1}] field'\
+                        .format(fname, name))
+        # return the AnnotatedImage
         return self.ai_
 
     def save_ai(self):
@@ -178,7 +193,8 @@ class PipelineDetector:
         assert isinstance(category, str)
         assert isinstance(params, PipelineDetectorParams)
         # check that all the mandatory PipelineDetectorParams were set
-        assert params.input_dir != None
+        assert params.input_dir_train != None
+        assert params.input_dir_test != None
         assert params.output_dir != None
         assert params.splits_dir != None
         assert params.feature_extractor_params != None
@@ -205,12 +221,13 @@ class PipelineDetector:
                     fname, self.params.max_train_pos_images_per_category, \
                     self.params.max_train_neg_images_per_category)
         self.train_set = self.create_pipeline_images_( \
-                    key_label_list, self.params)
+                    key_label_list, self.params, self.params.input_dir_train)
         # read the test set
         fname = '{0}/{1}_{2}.txt'.format(self.params.splits_dir, self.category, \
                                          self.params.split_test_name)
         key_label_list = self.read_key_label_file_(fname, sys.maxint, sys.maxint)
-        self.test_set = self.create_pipeline_images_(key_label_list, self.params)
+        self.test_set = self.create_pipeline_images_( \
+                    key_label_list, self.params, self.params.input_dir_test)
         # check: make sure all the files exists
         error = False
         for pi in (self.train_set + self.test_set):
@@ -259,14 +276,15 @@ class PipelineDetector:
         Xtrain = None
         Ytrain = None
         idx = 0
-        for pi in self.train_set:
-            logging.info('Elaborating train key: {0}'.format(pi.key))
+        for idx_pi, pi in enumerate(self.train_set):
+            logging.info('Elaborating train key: {0} ({1}/{2})'.format( \
+                          pi.key, idx_pi, len(self.train_set)))
             assert (pi.label == 1) or (pi.label == -1)
             # get the AnnotatedImage
             ai = pi.get_ai()
             # evaluate the model learned in the previous iteration
             if self.iteration > 0:
-                for bb in pi.bboxes:
+                for bb in pi.bboxes():
                     feat = ai.extract_features(bb[0])
                     bb[0].confidence = self.detector.predict(feat)
             # select pos and neg bboxes that will compose our train set
@@ -305,10 +323,19 @@ class PipelineDetector:
         stats_all = []
         for pi in self.test_set:
             logging.info('Elaborating test key: {0}'.format(pi.key))
-            # evaluate the learned model            
-            for bb in pi.bboxes:
+            # evaluate the learned model
+            pi.get_ai()
+            Xtest = None
+            for idx_bb, bb in enumerate(pi.bboxes):
                 feat = pi.get_ai().extract_features(bb[0])
-                bb[0].confidence = self.detector.predict(feat)
+                if Xtest == None:
+                    Xtest = np.empty((len(pi.bboxes),feat.size), dtype=float)
+                Xtest[idx_bb, :] = feat
+            confidences = self.detector.predict(Xtest)
+            assert len(confidences) == Xtest.shape[0]
+            assert len(confidences) == len(pi.bboxes)
+            for idx_bb, bb in enumerate(pi.bboxes):            
+                bb[0].confidence = confidences[idx_bb]
             # calculate the Stats
             pred_bboxes = [bb[0].copy() for bb in pi.bboxes]
             if self.category in pi.get_ai().gt_objects:
@@ -339,9 +366,12 @@ class PipelineDetector:
         
     def save(self, fname):
         """ Pickle and save the current object to a file """
-        fd = open(fname, 'wb')
-        pickle.dump(self, fd, protocol=2)
-        fd.close()
+        pass
+        # TODO. fix RuntimeError: Pickling of "caffe.pycaffe.Net" instances
+        #       is not enabled
+        #fd = open(fname, 'wb')
+        #pickle.dump(self, fd, protocol=2)
+        #fd.close()
 
     def train_elaborate_pos_example_(self, pi):
         """ Elaborate a positive example during the training phase.
@@ -395,7 +425,7 @@ class PipelineDetector:
         buffer_size = num_pos_images*MAX_NUM_POS_BBOXES_PER_IMAGE \
                     + self.params.max_num_neg_bbox_per_image*len(self.train_set)
         Xtrain = np.ndarray(shape=(buffer_size,num_dims), dtype=float)
-        Ytrain = np.ndarray(shape=(buffer_size,1), dtype=int)
+        Ytrain = np.ndarray(shape=(buffer_size), dtype=int)
         return Xtrain, Ytrain        
 
     @staticmethod
@@ -460,7 +490,7 @@ class PipelineDetector:
             out[i][1] = True
                 
     @staticmethod
-    def create_pipeline_images_(key_label_list, params):
+    def create_pipeline_images_(key_label_list, params, input_dir):
         """
         Input: list of (<key>, <+1/-1>), and PipelineDetectorParams.
         Output: list of PipelineImage
@@ -468,12 +498,13 @@ class PipelineDetector:
         assert isinstance(key_label_list, list)
         assert isinstance(params, PipelineDetectorParams)
         out = []
-        for key_label in key_label_list:
+        for idx, key_label in enumerate(key_label_list):
             key, label = key_label
-            logging.info('Elaborating {0}'.format(key))
+            logging.info('Create PipelineImage {0} ({1}/{2})'.format( \
+                         key, idx, len(key_label_list)))
             # create the PipelineImage
             pi = PipelineImage( \
-                    key, label, '{0}/{1}.pkl'.format(params.input_dir, key), \
+                    key, label, '{0}/{1}.pkl'.format(input_dir, key), \
                     params.feature_extractor_params, \
                     params.field_name_for_pred_objects_in_AnnotatedImage)
             # append the PipelineImage

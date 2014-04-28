@@ -26,16 +26,20 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp25_01'
     # input
-    params.exp_name_input = 'exp24_04'
+    params.exp_name_input_train = 'exp24_04'
+    params.exp_name_input_test = 'exp24_05'
     # categories, splits
     params.categories_file = 'pascal2007/categories.txt'
     params.splits_dir = 'pascal2007'
-    params.split_train_name = 'trainval'
+    params.split_train_name = 'trainvalDBG'
+    params.split_test_name = 'testDBG'
     # input/output dirs
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
-    params.input_dir = conf.experiments_output_directory \
-                        + '/' + params.exp_name_input 
+    params.input_dir_train = conf.experiments_output_directory \
+                        + '/' + params.exp_name_input_train
+    params.input_dir_test = conf.experiments_output_directory \
+                        + '/' + params.exp_name_input_test                        
     # FeatureExtractor module to use (parameters object)
     params.feature_extractor_params = feature_extractor_params
     # Detector module to use (parameters object)
