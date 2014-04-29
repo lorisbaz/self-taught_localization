@@ -531,7 +531,7 @@ class PipelineDetector:
             key, label = key_label
             fname = '{0}/{1}.pkl'.format(input_dir, key)
             logging.info('Create PipelineImage for {0} ({1}/{2})'.format( \
-                         fname, idx, len(key_label_list)))
+                         fname, idx+1, len(key_label_list)))
             # create the PipelineImage
             pi = PipelineImage( \
                     key, label, fname, \
