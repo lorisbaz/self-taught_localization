@@ -3,6 +3,12 @@ import time
 
 import progressbar
 
+# NOTE:
+# This implementation uses the library 'progressbar':
+#   pip install progressbar
+# For the list of widgets, look:
+# http://code.google.com/p/python-progressbar/source/browse/progressbar/widgets.py
+
 class ProgressBar:
     """ Simple text-based ProgressBar """
 
