@@ -187,6 +187,51 @@ def pipeline_single_detector(cl, params):
     detector.train_evaluate()
     return 0
 
+def PipelineDetector_train_elaborate_single_image(pipdet, pi):
+    logging.info('Elaborating train key: {0}'.format(pi.key))
+    # get the AnnotatedImage
+    assert (pi.label == 1) or (pi.label == -1)
+    ai = pi.get_ai()
+    # evaluate the model learned in the previous iteration
+    if pipdet.iteration > 0:
+        for bb in pi.bboxes:
+            feat = ai.extract_features(bb[0])
+            bb[0].confidence = pipdet.detector.predict(feat)
+    # select pos and neg bboxes that will compose our train set
+    pos_bboxes = []
+    if pi.label == 1:
+        # elaborate POSITIVE image.
+        # Note: the method marks the negatives pi.bboxes
+        pos_bboxes = pipdet.train_elaborate_pos_example_(pi)
+    elif pi.label == -1:
+        # elaborate NEGATIVE image
+        # Note: the method marks the negatives pi.bboxes
+        pipdet.train_elaborate_neg_example_(pi)
+    # extract the features
+    Xtrain = None
+    Ytrain = None
+    neg_bboxes = [b for b in pi.bboxes if b[1]]
+    n = len(pos_bboxes) + len(neg_bboxes)
+    idx = 0
+    for bb in pos_bboxes:
+        feat = ai.extract_features(bb)                
+        if Xtrain == None:
+            Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
+        Xtrain[idx, :] = feat
+        Ytrain[idx] = 1
+        idx += 1
+    for bb in neg_bboxes:
+        feat = ai.extract_features(bb[0])                
+        if Xtrain == None:
+            Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
+        Xtrain[idx, :] = feat
+        Ytrain[idx] = -1
+        idx += 1
+    # clear the AnnotatedImage
+    pi.clear_ai()
+    # return a tuple
+    return (Xtrain, Ytrain, pi)
+
 def PipelineDetector_evaluate_single_image(pi, detector, category):
     logging.info('Elaborating test key: {0}'.format(pi.key))
     pi.get_ai()
@@ -298,48 +343,25 @@ class PipelineDetector:
 
     def train(self):
         """ Train an iteration of the detector """
-        Xtrain = None
-        Ytrain = None
-        idx = 0
-        for idx_pi, pi in enumerate(self.train_set):
-            logging.info('Elaborating train key: {0} ({1}/{2})'.format( \
-                          pi.key, idx_pi, len(self.train_set)))
-            assert (pi.label == 1) or (pi.label == -1)
-            # get the AnnotatedImage
-            ai = pi.get_ai()
-            # evaluate the model learned in the previous iteration
-            if self.iteration > 0:
-                for bb in pi.bboxes:
-                    feat = ai.extract_features(bb[0])
-                    bb[0].confidence = self.detector.predict(feat)
-            # select pos and neg bboxes that will compose our train set
-            pos_bboxes = []
-            if pi.label == 1:
-                # elaborate POSITIVE image
-                pos_bboxes = self.train_elaborate_pos_example_(pi)
-            elif pi.label == -1:
-                # elaborate NEGATIVE image
-                self.train_elaborate_neg_example_(pi)
-            # extract the features
-            for bb in pos_bboxes:
-                feat = ai.extract_features(bb)                
-                if Xtrain == None:
-                    Xtrain, Ytrain = self.create_train_buffer_(feat.size)
-                Xtrain[idx, :] = feat
-                Ytrain[idx] = 1
-                idx += 1
-            for bb in [b for b in pi.bboxes if b[1]]:
-                feat = ai.extract_features(bb[0])                
-                if Xtrain == None:
-                    Xtrain, Ytrain = self.create_train_buffer_(feat.size)
-                Xtrain[idx, :] = feat
-                Ytrain[idx] = -1
-                idx += 1
-            # clear the AnnotatedImage
-            pi.clear_ai()
-        # resize the buffer
-        Xtrain = Xtrain[0:idx, :]
-        Ytrain = Ytrain[0:idx]
+        # extract the features from the individual images
+        if self.params.num_cores > 1:
+            parfun = ParFunProcesses(PipelineDetector_train_elaborate_single_image,\
+                                     self.params.num_cores)
+        else:
+            parfun = ParFunDummy(PipelineDetector_train_elaborate_single_image)
+        for pi in self.train_set:
+            parfun.add_task(self, pi)
+        TrainSet = parfun.run()
+        assert len(TrainSet)==len(self.train_set)
+        # put all the features together in a single matrix
+        num_examples = sum([E[1].size for E in TrainSet])
+        Xtrain = np.vstack([E[0] for E in TrainSet])
+        Ytrain = np.concatenate([E[1] for E in TrainSet])
+        for idxE, E in enumerate(TrainSet):
+            assert isinstance(E[2], PipelineImage)
+            self.train_set[idxE] = E[2]
+        assert Xtrain.shape[0] == num_examples
+        assert Ytrain.size == num_examples
         # train the detector
         self.detector.train(Xtrain, Ytrain)
         
@@ -426,10 +448,15 @@ class PipelineDetector:
         num_pos_images = len([pi for pi in self.train_set if pi.label==1])
         buffer_size = num_pos_images*MAX_NUM_POS_BBOXES_PER_IMAGE \
                     + self.params.max_num_neg_bbox_per_image*len(self.train_set)
-        Xtrain = np.ndarray(shape=(buffer_size,num_dims), dtype=float)
-        Ytrain = np.ndarray(shape=(buffer_size), dtype=int)
+        Xtrain, Ytrain = self.create_buffer_(num_dims, buffer_size)
         return Xtrain, Ytrain        
 
+    @staticmethod
+    def create_buffer_(num_dims, buffer_size):
+        Xtrain = np.zeros(shape=(buffer_size,num_dims), dtype=float)
+        Ytrain = np.zeros(shape=(buffer_size), dtype=int)
+        return Xtrain, Ytrain
+            
     @staticmethod
     def mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
                             pos_bboxes, bboxes, max_num_bboxes):

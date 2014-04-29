@@ -36,10 +36,12 @@ class PipelineDetectorTest(unittest.TestCase):
         pt.train_evaluate()
 
     def test_train(self):
+        # single core version
         category = self.category
         params = self.params
         params.max_num_neg_bbox_per_image = 5
         params.num_neg_bboxes_per_pos_image_during_init = 1
+        params.num_cores = 1
         pt = PipelineDetector(category, params)
         pt.iteration = 0
         pt.train_set = [ \
@@ -48,6 +50,22 @@ class PipelineDetectorTest(unittest.TestCase):
             PipelineImage('000012', -1, 'test_data/000012.pkl', \
                           FeatureExtractorFakeParams(), 'SELECTIVESEARCH')]
         pt.train()
+
+    def test_train2(self):
+        # multiple cores version
+        category = self.category
+        params = self.params
+        params.max_num_neg_bbox_per_image = 5
+        params.num_neg_bboxes_per_pos_image_during_init = 1
+        params.num_cores = 2
+        pt = PipelineDetector(category, params)
+        pt.iteration = 0
+        pt.train_set = [ \
+            PipelineImage('000044', 1, 'test_data/000044.pkl', \
+                          FeatureExtractorFakeParams(), 'SELECTIVESEARCH'), \
+            PipelineImage('000012', -1, 'test_data/000012.pkl', \
+                          FeatureExtractorFakeParams(), 'SELECTIVESEARCH')]
+        pt.train()        
 
     def test_evaluate(self):
         category = self.category
@@ -128,7 +146,17 @@ class PipelineDetectorTest(unittest.TestCase):
         self.assertTrue(pi.bboxes[0][1])
         self.assertTrue(pi.bboxes[1][1])
         self.assertFalse(pi.bboxes[2][1])                
-                                             
+
+    def test_create_buffer(self):
+        num_dims = 10
+        n = 22
+        X, Y = PipelineDetector.create_buffer_(num_dims, n)
+        self.assertEqual(X.shape[0], n)
+        self.assertEqual(X.shape[1], num_dims)
+        self.assertEqual(Y.size, n)
+        self.assertTrue(isinstance(X, np.ndarray))
+        self.assertTrue(isinstance(Y, np.ndarray))
+                                                 
     def test_create_train_buffer(self):
         category = 'label1'
         params = self.params
