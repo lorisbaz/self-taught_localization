@@ -186,7 +186,32 @@ def pipeline_single_detector(cl, params):
     detector.init()
     detector.train_evaluate()
     return 0
-    
+
+def PipelineDetector_evaluate_single_image(pi, detector, category):
+    logging.info('Elaborating test key: {0}'.format(pi.key))
+    pi.get_ai()
+    Xtest = None
+    for idx_bb, bb in enumerate(pi.bboxes):
+        feat = pi.get_ai().extract_features(bb[0])
+        if Xtest == None:
+            Xtest = np.empty((len(pi.bboxes),feat.size), dtype=float)
+        Xtest[idx_bb, :] = feat
+    confidences = detector.predict(Xtest)
+    assert len(confidences) == Xtest.shape[0]
+    assert len(confidences) == len(pi.bboxes)
+    for idx_bb, bb in enumerate(pi.bboxes):            
+        bb[0].confidence = confidences[idx_bb]
+    # calculate the Stats
+    pred_bboxes = [bb[0].copy() for bb in pi.bboxes]
+    if category in pi.get_ai().gt_objects:
+        gt_bboxes = pi.get_ai().gt_objects[category].bboxes
+    else:
+        gt_bboxes = []
+    stats = Stats()
+    stats.compute_stats(pred_bboxes, gt_bboxes)
+    pi.clear_ai()
+    return stats
+
 class PipelineDetector:
     def __init__(self, category, params):
         # check the input parameters
@@ -319,34 +344,15 @@ class PipelineDetector:
         self.detector.train(Xtrain, Ytrain)
         
     def evaluate(self):
-        # calculate the stats for each image
-        stats_all = []
-        for idx_pi, pi in enumerate(self.test_set):
-            logging.info('Elaborating test key: {0} ({1}/{2})'.format( \
-                         pi.key, idx_pi, len(self.test_set)))
-            # evaluate the learned model
-            pi.get_ai()
-            Xtest = None
-            for idx_bb, bb in enumerate(pi.bboxes):
-                feat = pi.get_ai().extract_features(bb[0])
-                if Xtest == None:
-                    Xtest = np.empty((len(pi.bboxes),feat.size), dtype=float)
-                Xtest[idx_bb, :] = feat
-            confidences = self.detector.predict(Xtest)
-            assert len(confidences) == Xtest.shape[0]
-            assert len(confidences) == len(pi.bboxes)
-            for idx_bb, bb in enumerate(pi.bboxes):            
-                bb[0].confidence = confidences[idx_bb]
-            # calculate the Stats
-            pred_bboxes = [bb[0].copy() for bb in pi.bboxes]
-            if self.category in pi.get_ai().gt_objects:
-                gt_bboxes = pi.get_ai().gt_objects[self.category].bboxes
-            else:
-                gt_bboxes = []
-            stats = Stats()
-            stats.compute_stats(pred_bboxes, gt_bboxes)
-            pi.clear_ai()
-            stats_all.append(stats)
+        """ calculate the stats for each image """
+        if self.params.num_cores > 1:
+            parfun = ParFunProcesses(PipelineDetector_evaluate_single_image, \
+                                     self.params.num_cores)
+        else:
+            parfun = ParFunDummy(PipelineDetector_evaluate_single_image)              
+        for pi in self.test_set:
+            parfun.add_task(pi, self.detector, self.category)
+        stats_all = parfun.run()
         assert len(stats_all)==len(self.test_set)
         # aggregate the stats for this detector
         stats, hist_overlap = Stats.aggregate_results(stats_all)

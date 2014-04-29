@@ -40,6 +40,8 @@ if __name__ == "__main__":
     params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
     # run on Anthill?
     params.run_on_anthill = False
+    # number of cores
+    params.num_cores = 4
     # run just the first category
     params.categories_to_process = [0]
     # *** run the pipeline

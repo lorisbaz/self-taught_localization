@@ -63,7 +63,12 @@ class PipelineDetectorTest(unittest.TestCase):
                           FeatureExtractorFakeParams(), 'SELECTIVESEARCH')]
         pt.train_set = pt.test_set
         pt.train()
+        # single core
+        pt.params.num_cores = 1
         stats = pt.evaluate()
+        # multiple cores 
+        pt.params.num_cores = 2
+        stats = pt.evaluate()       
         
     def test_train_elaborate_pos_example(self):
         # PipelineImage and Detector
