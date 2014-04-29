@@ -16,6 +16,7 @@ from vlg.util.parfun import *
 from detector import *
 from featextractor import *
 from heatextractor import *
+import pbar
 from util import *
 from stats import *
 
@@ -188,7 +189,7 @@ def pipeline_single_detector(cl, params):
     return 0
 
 def PipelineDetector_train_elaborate_single_image(pipdet, pi):
-    logging.info('Elaborating train key: {0}'.format(pi.key))
+    #logging.info('Elaborating train key: {0}'.format(pi.key))
     # get the AnnotatedImage
     assert (pi.label == 1) or (pi.label == -1)
     ai = pi.get_ai()
@@ -233,7 +234,7 @@ def PipelineDetector_train_elaborate_single_image(pipdet, pi):
     return (Xtrain, Ytrain, pi)
 
 def PipelineDetector_evaluate_single_image(pi, detector, category):
-    logging.info('Elaborating test key: {0}'.format(pi.key))
+    #logging.info('Elaborating test key: {0}'.format(pi.key))
     pi.get_ai()
     Xtest = None
     for idx_bb, bb in enumerate(pi.bboxes):
@@ -346,7 +347,8 @@ class PipelineDetector:
         # extract the features from the individual images
         if self.params.num_cores > 1:
             parfun = ParFunProcesses(PipelineDetector_train_elaborate_single_image,\
-                                     self.params.num_cores)
+                                     self.params.num_cores, \
+                                     callback=pbar.ProgressBar(len(self.train_set)))
         else:
             parfun = ParFunDummy(PipelineDetector_train_elaborate_single_image)
         for pi in self.train_set:
@@ -369,7 +371,8 @@ class PipelineDetector:
         """ calculate the stats for each image """
         if self.params.num_cores > 1:
             parfun = ParFunProcesses(PipelineDetector_evaluate_single_image, \
-                                     self.params.num_cores)
+                                     self.params.num_cores, \
+                                     callback=pbar.ProgressBar(len(self.test_set)))
         else:
             parfun = ParFunDummy(PipelineDetector_evaluate_single_image)              
         for pi in self.test_set:
