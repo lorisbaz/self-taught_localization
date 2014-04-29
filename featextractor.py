@@ -1,3 +1,5 @@
+import logging
+
 from annotatedimage import *
 from bbox import *
 from network import *
@@ -163,6 +165,8 @@ class FeatureExtractorNetwork(FeatureExtractor):
                 feat = netfeat['featdata'][netfeat['featidx'][key], :]
             except:
                 # the features are not present :-( we extract them
+                logging.info('Extracting feats for image {0}, key {1}'.format( \
+                       self.anno_image.image_name, key))
                 # we crop appropriately the image
                 img = self.img.copy()
                 img = img[bb.ymin:bb.ymax, bb.xmin:bb.xmax]

@@ -24,9 +24,8 @@ if __name__ == "__main__":
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # feature layer
-    params.classifier = 'CAFFE'
-    params.center_only = True
-    params.feature_layer = 'fc7'
+    params.feature_extractor_params = load_obj_from_file_using_pickle( \
+                                       'featextractor_specs/000.pkl')
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name

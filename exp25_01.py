@@ -9,16 +9,8 @@ from pipeline_detector import *
 if __name__ == "__main__":
     conf = Configuration()    
     # *** FeatureExtractor
-    # TODO. Decide with Loris how to make sure the info is consistent.
-    #       Also, does it work on the cluster? Maybe we should create a factory
-    #       for the class Network as well.
-    net = NetworkCaffe(conf.ilsvrc2012_caffe_model_spec, \
-                       conf.ilsvrc2012_caffe_model, \
-                       conf.ilsvrc2012_caffe_wnids_words, \
-                       conf.ilsvrc2012_caffe_avg_image, \
-                       center_only=True)
-    feature_extractor_params =  FeatureExtractorNetworkParams(network=net,\
-                                layer='fc7', cache_features=False)
+    feature_extractor_params = load_obj_from_file_using_pickle( \
+                                       'featextractor_specs/000.pkl')
     # *** Detector
     detector_params = DetectorLinearSVMParams()
     # *** PipelineDetectorParams
@@ -26,7 +18,7 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp25_01'
     # input
-    params.exp_name_input_train = 'exp24_04'
+    params.exp_name_input_train = 'exp24_03'
     params.exp_name_input_test = 'exp24_05'
     # categories, splits
     params.categories_file = 'pascal2007/categories.txt'

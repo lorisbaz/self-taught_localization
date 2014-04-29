@@ -27,27 +27,16 @@ class Params:
         # Usual parameters to run the exp on the cluster
         self.run_on_anthill = True
         self.task = []
+        # FeatureExtractorParams
+        self.feature_extractor_params = None
 
 def pipeline(inputdb, output_dir, params):
     # Display info machine for debugging purposes
     logging.info(os.uname())
     # Instantiate some objects, and open the database
     conf = params.conf
-    if params.classifier=='CAFFE':
-        net = NetworkCaffe(conf.ilsvrc2012_caffe_model_spec, \
-                           conf.ilsvrc2012_caffe_model, \
-                           conf.ilsvrc2012_caffe_wnids_words, \
-                           conf.ilsvrc2012_caffe_avg_image, \
-                           center_only = params.center_only)
-    elif params.classifier=='DECAF':
-        net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
-                           conf.ilsvrc2012_decaf_model, \
-                           conf.ilsvrc2012_classid_wnid_words, \
-                           center_only = params.center_only)
-    # Init Feature Extractor object
-    feature_extractor_params =  FeatureExtractorNetworkParams(network = net,\
-                                layer = params.feature_layer, \
-                                cache_features = params.save_features_cache)
+    assert params.feature_extractor_params != None
+    feature_extractor_params = params.feature_extractor_params
     # retrieve all the AnnotatedImages and images from the database
     logging.info('Opening ' + inputdb)
     db_input = bsddb.btopen(inputdb, 'r')
