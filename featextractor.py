@@ -146,7 +146,11 @@ class FeatureExtractorNetwork(FeatureExtractor):
             self.cache[name] = {}
             self.cache[name]['featdata'] = None
             self.cache[name]['featidx'] = {}
-                
+
+    def __getstate__(self):
+        raise RuntimeError('__getstate__ is not supported for '\
+                           'FeatureExtractorNetwork')
+        
     def extract(self, bboxes):
         # for each bbox:
         width = self.anno_image.image_width

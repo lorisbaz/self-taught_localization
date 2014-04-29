@@ -1,4 +1,4 @@
-
+import cPickle as pickle
 import unittest
 
 from annotatedimage import *
@@ -29,6 +29,18 @@ class AnnotatedImageTest(unittest.TestCase):
     def tearDown(self):
         self.img_anno = None
 
+    def test_getstate(self):
+        # register the extractor first
+        params = FeatureExtractorFakeParams()
+        self.img_anno.register_feature_extractor(params, True)
+        self.assertNotEqual(self.img_anno.feature_extractor_, None)
+        # pickle
+        s = pickle.dumps(self.img_anno)
+        # unpickle
+        img_anno = pickle.loads(s)
+        # check
+        self.assertFalse( hasattr(img_anno, 'feature_extractor_') )
+        
     def test_set_image(self):
         img = skimage.io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         skimage.io.imshow(img)

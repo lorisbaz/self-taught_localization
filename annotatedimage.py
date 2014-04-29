@@ -89,6 +89,12 @@ class AnnotatedImage:
             out += '  ' + str(obj)
         return out
 
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        if 'feature_extractor_' in d:
+            del d['feature_extractor_']
+        return d
+    
     def set_image(self, img):
         """
         Set the image, given a ndarray-image

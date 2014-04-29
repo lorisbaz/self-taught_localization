@@ -367,10 +367,7 @@ class PipelineDetector:
         
     def save(self, fname):
         """ Pickle and save the current object to a file """
-        pass
-        # TODO. fix RuntimeError: Pickling of "caffe.pycaffe.Net" instances
-        #       is not enabled
-        #dump_obj_to_file_using_pickle(self, fname, 'binary')
+        dump_obj_to_file_using_pickle(self, fname, 'binary')
         
     def train_elaborate_pos_example_(self, pi):
         """ Elaborate a positive example during the training phase.
