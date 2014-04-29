@@ -21,7 +21,7 @@ class ProgressBar:
         self.max_val = max_val
         self.iter = 0
         self.progress = progressbar.ProgressBar( widgets=widgets, \
-                            maxval=max_val, redirect_stdout=True)
+                            maxval=max_val)
         self.progress.start()
 
     def next(self, n_steps=1):
@@ -31,3 +31,5 @@ class ProgressBar:
     def update(self, val):
         self.progress.update(val)
 
+    def finish(self):
+        self.progress.finish()

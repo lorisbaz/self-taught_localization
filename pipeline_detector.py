@@ -256,6 +256,7 @@ def PipelineDetector_evaluate_single_image(pi, detector, category):
     stats = Stats()
     stats.compute_stats(pred_bboxes, gt_bboxes)
     pi.clear_ai()
+    gc.collect()
     return stats
 
 class PipelineDetector:
@@ -286,6 +287,7 @@ class PipelineDetector:
         if os.path.exists(self.detector_output_dir) == False:
             os.makedirs(self.detector_output_dir)           
         # read the training set
+        logging.info('Read the training set files')
         fname = '{0}/{1}_{2}.txt'.format(self.params.splits_dir, self.category,\
                                          self.params.split_train_name)
         key_label_list = self.read_key_label_file_( \
@@ -294,6 +296,7 @@ class PipelineDetector:
         self.train_set = self.create_pipeline_images_( \
                     key_label_list, self.params, self.params.input_dir_train)
         # read the test set
+        logging.info('Read the test set files')
         fname = '{0}/{1}_{2}.txt'.format(self.params.splits_dir, self.category, \
                                          self.params.split_test_name)
         key_label_list = self.read_key_label_file_(fname, sys.maxint, sys.maxint)
@@ -530,11 +533,13 @@ class PipelineDetector:
         assert isinstance(key_label_list, list)
         assert isinstance(params, PipelineDetectorParams)
         out = []
+        progress = pbar.ProgressBar(len(key_label_list))
         for idx, key_label in enumerate(key_label_list):
             key, label = key_label
             fname = '{0}/{1}.pkl'.format(input_dir, key)
-            logging.info('Create PipelineImage for {0} ({1}/{2})'.format( \
-                         fname, idx+1, len(key_label_list)))
+            #logging.info('Create PipelineImage for {0} ({1}/{2})'.format( \
+            #             fname, idx+1, len(key_label_list)))
+            progress.update(idx+1)
             # create the PipelineImage
             pi = PipelineImage( \
                     key, label, fname, \
