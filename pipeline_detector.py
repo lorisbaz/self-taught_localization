@@ -73,6 +73,8 @@ class PipelineDetectorParams:
         self.exp_name = None
         # categories to learn (None means everything)
         self.categories_to_process = None
+        # ProgressBar visualization
+        self.progress_bar_name = 'ProgressBarPlus'
 
         # name of the split for the training set
         self.split_train_name = 'train'
@@ -112,25 +114,79 @@ class PipelineImage:
         self.fname = fname
         # the parameters to use for the feature extractor module
         self.feature_extractor_params = feature_extractor_params
-        # The list of bounding boxes to use for prediction
-        # (as well as for the neg set)
-        # Each element of this list is 2-elements-list of the format:
-        # [Bbox, True/False] where the confidence value of the Bbox indicates
-        # the confidence of the bbox given the model learned in the
-        # previous iteration, and boolean value indicates whether
+        # Each element of this list is a boolean  indicating whether
         # or not the bbox has been already used as a negative example.
-        #
-        # Note: for efficiency we defer the filling of this field to later,
-        #  while loading for the first time the AnnotatedImage.
-        #  Therefore, before using this field you must have called get_ai()
-        # TODO: replace the field with set/get methods
-        self.bboxes = None
+        self.bboxes_mark_ = None
+        # the confidence of the bboxes
+        self.bboxes_confidence_ = None
         # the annotated image
         self.ai_ = None
         # field_name_for_pred_objects_in_AnnotatedImage
         self.field_name_for_pred_objects_in_AnnotatedImage = \
                  field_name_for_pred_objects_in_AnnotatedImage
-                    
+
+    def save_marks_and_confidences(self):
+        """
+        Store the confidence and mark values of the bboxes retrieved with
+        get_bboxes()
+        """
+        self.bboxes_mark_ = None
+        self.bboxes_confidence_ = None
+        bboxes = self.get_bboxes()
+        self.bboxes_mark_ = [False]*len(bboxes)
+        self.bboxes_confidence_ = [0.0]*len(bboxes)
+        assert len(self.bboxes_mark_)==len(bboxes)
+        assert len(self.bboxes_confidence_)==len(bboxes)
+        # store
+        for idx_bb, bb in enumerate(bboxes):
+            self.bboxes_mark_[idx_bb] = bb.mark
+            self.bboxes_confidence_[idx_bb] = bb.confidence
+
+    def get_bboxes(self):
+        """
+        Retrieve the list of bounding boxes to use for prediction
+        (as well as for the neg set).
+        The BBox objects have an extra boolean field 'mark'.
+        Note that if you want to make to save the confidence
+        and mark values, you need to call save_marks_and_confidences()
+        """
+        bboxes = []
+        if self.field_name_for_pred_objects_in_AnnotatedImage != None:
+            name = self.field_name_for_pred_objects_in_AnnotatedImage            
+            ai = self.get_ai()
+            assert len(ai.pred_objects[name]) == 1
+            label = ai.pred_objects[name].keys()[0]
+            bboxes = ai.pred_objects[name][label].bboxes
+            for idx_bb, bb in enumerate(bboxes):
+                # if the mark field does not exist, we create it
+                if not hasattr(bb, 'mark'):
+                    bb.mark = False
+                # if we have previsouly stored the confidences and marks,
+                # we substitute them here
+                if self.bboxes_mark_ != None:
+                    assert len(bboxes)==len(self.bboxes_mark_)
+                    bb.mark = self.bboxes_mark_[idx_bb]
+                if self.bboxes_confidence_ != None:
+                    assert len(bboxes)==len(self.bboxes_confidence_)
+                    bb.confidence = self.bboxes_confidence_[idx_bb]
+            if len(bboxes) <= 0:
+                logging.warning('Warning. The AnnotatedImage {0} '\
+                    'does not contain bboxes under the pred_objects[{1}] field'\
+                    .format(fname, name))
+        # return
+        return bboxes
+
+    def get_pos_bboxes(self, category):
+        """
+        Retrieve the positive bounding boxes, if any.
+        Returns a list of Bbox objects.
+        Note that len(self.bboxes_marked)==len(out)
+        """
+        out = []
+        if category in self.get_ai().gt_objects:
+            out = self.get_ai().gt_objects[category].bboxes
+        return out
+                 
     def get_ai(self):
         """
         Returns the associated AnnotatedImage.
@@ -146,22 +202,6 @@ class PipelineImage:
             self.ai_.feature_extractor_ = None
             # register the feature extractor
             self.ai_.register_feature_extractor(self.feature_extractor_params)
-        # fill-out self.bboxes, if never done before
-        if self.bboxes == None:
-            if self.field_name_for_pred_objects_in_AnnotatedImage == None:
-                self.bboxes = []
-            else:
-                self.bboxes = []
-                name = self.field_name_for_pred_objects_in_AnnotatedImage            
-                ai = self.ai_
-                assert len(ai.pred_objects[name]) == 1
-                for label in ai.pred_objects[name]:
-                    for bb in ai.pred_objects[name][label].bboxes:
-                        self.bboxes.append( [bb, False] )
-                if len(self.bboxes) <= 0:
-                    logging.warning('Warning. The AnnotatedImage {0} '\
-                        'does not contain bboxes under the pred_objects[{1}] field'\
-                        .format(fname, name))
         # return the AnnotatedImage
         return self.ai_
 
@@ -190,14 +230,12 @@ def pipeline_single_detector(cl, params):
 
 def PipelineDetector_train_elaborate_single_image(pipdet, pi):
     #logging.info('Elaborating train key: {0}'.format(pi.key))
-    # get the AnnotatedImage
     assert (pi.label == 1) or (pi.label == -1)
-    ai = pi.get_ai()
     # evaluate the model learned in the previous iteration
     if pipdet.iteration > 0:
-        for bb in pi.bboxes:
-            feat = ai.extract_features(bb[0])
-            bb[0].confidence = pipdet.detector.predict(feat)
+        for bb in pi.get_bboxes():
+            feat = pi.get_ai().extract_features(bb)
+            bb.confidence = pipdet.detector.predict(feat)
     # select pos and neg bboxes that will compose our train set
     pos_bboxes = []
     if pi.label == 1:
@@ -211,18 +249,18 @@ def PipelineDetector_train_elaborate_single_image(pipdet, pi):
     # extract the features
     Xtrain = None
     Ytrain = None
-    neg_bboxes = [b for b in pi.bboxes if b[1]]
+    neg_bboxes = [b for b in pi.get_bboxes() if b.mark]
     n = len(pos_bboxes) + len(neg_bboxes)
     idx = 0
     for bb in pos_bboxes:
-        feat = ai.extract_features(bb)                
+        feat = pi.get_ai().extract_features(bb)                
         if Xtrain == None:
             Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
         Xtrain[idx, :] = feat
         Ytrain[idx] = 1
         idx += 1
     for bb in neg_bboxes:
-        feat = ai.extract_features(bb[0])                
+        feat = pi.get_ai().extract_features(bb)                
         if Xtrain == None:
             Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
         Xtrain[idx, :] = feat
@@ -235,24 +273,21 @@ def PipelineDetector_train_elaborate_single_image(pipdet, pi):
 
 def PipelineDetector_evaluate_single_image(pi, detector, category):
     #logging.info('Elaborating test key: {0}'.format(pi.key))
-    pi.get_ai()
     Xtest = None
-    for idx_bb, bb in enumerate(pi.bboxes):
-        feat = pi.get_ai().extract_features(bb[0])
+    for idx_bb, bb in enumerate(pi.get_bboxes()):
+        feat = pi.get_ai().extract_features(bb)
         if Xtest == None:
-            Xtest = np.empty((len(pi.bboxes),feat.size), dtype=float)
+            Xtest = np.empty((len(pi.get_bboxes()),feat.size), dtype=float)
         Xtest[idx_bb, :] = feat
     confidences = detector.predict(Xtest)
     assert len(confidences) == Xtest.shape[0]
-    assert len(confidences) == len(pi.bboxes)
-    for idx_bb, bb in enumerate(pi.bboxes):            
-        bb[0].confidence = confidences[idx_bb]
+    assert len(confidences) == len(pi.get_bboxes())
+    for idx_bb, bb in enumerate(pi.get_bboxes()):
+        bb.confidence = confidences[idx_bb]
+    # TODO: save the confidences, and so return a new pi
     # calculate the Stats
-    pred_bboxes = [bb[0].copy() for bb in pi.bboxes]
-    if category in pi.get_ai().gt_objects:
-        gt_bboxes = pi.get_ai().gt_objects[category].bboxes
-    else:
-        gt_bboxes = []
+    pred_bboxes = [bb.copy() for bb in pi.get_bboxes()]
+    gt_bboxes = pi.get_pos_bboxes(category)
     stats = Stats()
     stats.compute_stats(pred_bboxes, gt_bboxes)
     pi.clear_ai()
@@ -348,10 +383,12 @@ class PipelineDetector:
     def train(self):
         """ Train an iteration of the detector """
         # extract the features from the individual images
+        logging.info('Collecting the training features')
         if self.params.num_cores > 1:
-            parfun = ParFunProcesses(PipelineDetector_train_elaborate_single_image,\
-                                     self.params.num_cores, \
-                                     callback=pbar.ProgressBar(len(self.train_set)))
+            parfun = ParFunProcesses( \
+                PipelineDetector_train_elaborate_single_image,\
+                self.params.num_cores, \
+                callback=pbar.ProgressBar.create(self.params.progress_bar_name))
         else:
             parfun = ParFunDummy(PipelineDetector_train_elaborate_single_image)
         for pi in self.train_set:
@@ -362,20 +399,26 @@ class PipelineDetector:
         num_examples = sum([E[1].size for E in TrainSet])
         Xtrain = np.vstack([E[0] for E in TrainSet])
         Ytrain = np.concatenate([E[1] for E in TrainSet])
+        num_pos_examples = len([y for y in Ytrain if y==1])
+        num_neg_examples = len([y for y in Ytrain if y==-1])        
+        logging.info('The training set has {0} positive and {1} negative '\
+                     'examples'.format(num_pos_examples, num_neg_examples))        
         for idxE, E in enumerate(TrainSet):
             assert isinstance(E[2], PipelineImage)
             self.train_set[idxE] = E[2]
         assert Xtrain.shape[0] == num_examples
         assert Ytrain.size == num_examples
         # train the detector
+        logging.info('Train the detector')
         self.detector.train(Xtrain, Ytrain)
         
     def evaluate(self):
         """ calculate the stats for each image """
         if self.params.num_cores > 1:
-            parfun = ParFunProcesses(PipelineDetector_evaluate_single_image, \
-                                     self.params.num_cores, \
-                                     callback=pbar.ProgressBar(len(self.test_set)))
+            parfun = ParFunProcesses( \
+                PipelineDetector_evaluate_single_image, \
+                self.params.num_cores, \
+                callback=pbar.ProgressBar.create(self.params.progress_bar_name))
         else:
             parfun = ParFunDummy(PipelineDetector_evaluate_single_image)              
         for pi in self.test_set:
@@ -408,16 +451,20 @@ class PipelineDetector:
         It marks eventual pi.bboxes as negatives.
         It returns the set of positive BBox. """
         assert pi.label == 1
-        ai = pi.get_ai()
-        pos_bboxes = ai.gt_objects[self.category].bboxes
+        pos_bboxes = pi.get_pos_bboxes(self.category)
         if self.iteration == 0:
+            # extract the positives, and the slightly overlapping bboxes
+            # which will be used as negatives
             self.mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
-                pos_bboxes, pi.bboxes, \
-                self.params.num_neg_bboxes_per_pos_image_during_init)
+                pos_bboxes, pi.get_bboxes(), \
+                self.params.num_neg_bboxes_per_pos_image_during_init) 
+            # save the marks
+            pi.save_marks_and_confidences()
         else:
             # TODO. add negative examples from the positive image?
             #       For now, do nothing.
             pass
+        # return
         return pos_bboxes
 
     def train_elaborate_neg_example_(self, pi):
@@ -425,31 +472,36 @@ class PipelineDetector:
         It marks pi.bboxes as negatives. It returns void """
         niter = self.params.num_neg_bboxes_to_add_per_image_per_iter
         if self.iteration == 0:
+            bboxes = pi.get_bboxes()          
             # check the input
-            for bb in pi.bboxes:
-                assert bb[1]==False
+            for bb in bboxes:
+                assert bb.mark==False
             # we pick a bunch of randomly-selected bboxes
-            idxperm = util.randperm_deterministic(len(pi.bboxes))
+            idxperm = util.randperm_deterministic(len(bboxes))
             for i in range(min(len(idxperm), niter)):
-                pi.bboxes[idxperm[i]][1] = True
+                bboxes[idxperm[i]].mark = True
+            # save the marks
+            pi.save_marks_and_confidences()    
         else:
             # we sort the bboxes by confidence score
-            pi.bboxes = sorted(pi.bboxes, \
-                                 key=lambda x: -x[0].confidence)
+            bboxes = pi.get_bboxes()
+            bboxes = sorted(bboxes, key=lambda bb: -bb.confidence)
             # we pick the top ones that have not been already selected
-            num_neg_bboxes = len([x for x in pi.bboxes if x[1]==True])
+            num_neg_bboxes = len([bb for bb in bboxes if bb.mark==True])
             nmax = self.params.max_num_neg_bbox_per_image - num_neg_bboxes
             niter = min(nmax, niter)
             n = 0
-            for bb in pi.bboxes:
-                if (n < nmax) and (not bb[1]):
-                    bb[1] = True
-                    n += 1       
+            for bb in bboxes:
+                if (n < niter) and (not bb.mark):
+                    bb.mark = True
+                    n += 1
+            # save the marks
+            pi.save_marks_and_confidences()    
 
     def create_train_buffer_(self, num_dims):
         """ Create an appropriate matrix that will be able to contain
         for sure the entire training set for the detector.
-        It return Xtrain, Ytrain"""
+        It returns Xtrain, Ytrain"""
         MAX_NUM_POS_BBOXES_PER_IMAGE = 30
         num_pos_images = len([pi for pi in self.train_set if pi.label==1])
         buffer_size = num_pos_images*MAX_NUM_POS_BBOXES_PER_IMAGE \
@@ -471,7 +523,7 @@ class PipelineDetector:
         If there are too many bboxes, we
         randomly-chosen subset of 'max_num_bboxes' bboxes.
         Input: pos_bboxes: is a list of BBox objects.
-               bboxes: is a list of [BBox, False] 2-elems-lists
+               bboxes: is a list of BBox (with the 'mark' field)
         Output: Nothing.
         """
         # check input
@@ -480,9 +532,8 @@ class PipelineDetector:
         for bb in pos_bboxes:
             assert isinstance(bb, BBox)
         for bb in bboxes:
-            assert isinstance(bb, list)
-            assert isinstance(bb[0], BBox)
-            assert bb[1] == False
+            assert isinstance(bb, BBox)
+            assert bb.mark == False
         assert max_num_bboxes > 0
         out = []
         MIN_OVERLAP = 0.2
@@ -493,7 +544,7 @@ class PipelineDetector:
         # with any positive
         for bb in bboxes:
             for pos_bb in pos_bboxes:
-                overlap = bb[0].jaccard_similarity(pos_bb)
+                overlap = bb.jaccard_similarity(pos_bb)
                 if (overlap >= MIN_OVERLAP) and (overlap <= MAX_OVERLAP):
                     out.append(bb)
                     break
@@ -503,7 +554,7 @@ class PipelineDetector:
         for bb in out:
             remove_bb = False
             for pos_bb in pos_bboxes:
-                overlap = bb[0].jaccard_similarity(pos_bb)
+                overlap = bb.jaccard_similarity(pos_bb)
                 if overlap > MAX_OVERLAP_WITH_POS:
                     remove_bb = True
                     break
@@ -518,11 +569,11 @@ class PipelineDetector:
             bb = out.pop()
             out2.append(bb)
             out = [bb2 for bb2 in out \
-                   if bb[0].jaccard_similarity(bb2[0]) <= NMS_OVERLAP]
+                   if bb.jaccard_similarity(bb2) <= NMS_OVERLAP]
         out = out2
         # mark the bboxes to keep
         for i in range(min(len(out), max_num_bboxes)):
-            out[i][1] = True
+            out[i].mark = True
                 
     @staticmethod
     def create_pipeline_images_(key_label_list, params, input_dir):
@@ -533,7 +584,7 @@ class PipelineDetector:
         assert isinstance(key_label_list, list)
         assert isinstance(params, PipelineDetectorParams)
         out = []
-        progress = pbar.ProgressBar(len(key_label_list))
+        progress = pbar.ProgressBar.create('ProgressBarPlus', len(key_label_list))
         for idx, key_label in enumerate(key_label_list):
             key, label = key_label
             fname = '{0}/{1}.pkl'.format(input_dir, key)

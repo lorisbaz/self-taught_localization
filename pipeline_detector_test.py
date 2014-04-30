@@ -1,3 +1,5 @@
+import os
+import shutil
 import unittest
 
 from featextractor import *
@@ -9,7 +11,9 @@ class PipelineDetectorTest(unittest.TestCase):
         params = PipelineDetectorParams()
         params.input_dir_train = 'test_data'
         params.input_dir_test = 'test_data'        
-        params.output_dir = 'TEMP_TEST'
+        params.output_dir = 'TEMP_TEST_3475892304'
+        if os.path.exists(params.output_dir):
+            shutil.rmtree(params.output_dir)        
         params.splits_dir = 'test_data'
         params.feature_extractor_params = FeatureExtractorFakeParams()
         params.detector_params = DetectorFakeParams()
@@ -84,6 +88,21 @@ class PipelineDetectorTest(unittest.TestCase):
         # single core
         pt.params.num_cores = 1
         stats = pt.evaluate()
+        
+    def test_evaluate2(self):
+        category = self.category
+        params = self.params
+        params.max_num_neg_bbox_per_image = 5
+        params.num_neg_bboxes_per_pos_image_during_init = 1
+        pt = PipelineDetector(category, params)
+        pt.iteration = 0
+        pt.test_set = [ \
+            PipelineImage('000044', 1, 'test_data/000044.pkl', \
+                          FeatureExtractorFakeParams(), 'SELECTIVESEARCH'), \
+            PipelineImage('000012', -1, 'test_data/000012.pkl', \
+                          FeatureExtractorFakeParams(), 'SELECTIVESEARCH')]
+        pt.train_set = pt.test_set
+        pt.train()
         # multiple cores 
         pt.params.num_cores = 2
         stats = pt.evaluate()       
@@ -98,7 +117,6 @@ class PipelineDetectorTest(unittest.TestCase):
         pt.iteration = 0
         pi = PipelineImage('000044', 1, 'test_data/000044.pkl', \
                            FeatureExtractorFakeParams())
-        pi.bboxes = []
         # run - iteration 0
         out = pt.train_elaborate_pos_example_(pi)
         self.assertEqual(len(out), 1)
@@ -118,34 +136,50 @@ class PipelineDetectorTest(unittest.TestCase):
     def test_train_elaborate_neg_example(self):
         pos_bboxes = [BBox(0.10, 0.10, 0.40, 0.60, 0.0), \
                       BBox(0.45, 0.25, 0.80, 0.80, 0.0)]
-        bboxes = [[BBox(0.05, 0.05, 0.45, 0.30, 0.1), False], \
-                  [BBox(0.50, 0.60, 0.85, 0.85, 0.9), False], \
-                  [BBox(0.51, 0.61, 0.86, 0.86, 0.5), False]]
+        bboxes = [None]*3
+        bboxes[0] = BBox(0.05, 0.05, 0.45, 0.30, 0.1)
+        bboxes[0].mark = False
+        bboxes[1] = BBox(0.50, 0.60, 0.85, 0.85, 0.9)
+        bboxes[1].mark = False
+        bboxes[2] = BBox(0.51, 0.61, 0.86, 0.86, 0.5)
+        bboxes[2].mark = False
         # PipelineImage and Detector
         category = self.category
         params = self.params
         params.num_neg_bboxes_to_add_per_image_per_iter = 2
         params.max_num_neg_bbox_per_image = 2
+        params.field_name_for_pred_objects_in_AnnotatedImage = 'name'
         pt = PipelineDetector(category, params)
         pt.iteration = 0
         pi = PipelineImage('000044', 1, 'test_data/000044.pkl', \
-                           FeatureExtractorFakeParams())
-        pi.bboxes = bboxes
+                           FeatureExtractorFakeParams(), \
+                           'name')
+        pi.get_ai().gt_objects[category] = pos_bboxes
+        pi.get_ai().pred_objects['name'] = {}
+        anno_obj = AnnotatedObject('cl')
+        anno_obj.bboxes = bboxes
+        pi.get_ai().pred_objects['name']['cl'] = anno_obj
+        # double-check pi.get_bboxes()
+        self.assertEqual(len(pi.get_bboxes()), 3)
+        self.assertEqual(pi.get_bboxes()[0].confidence, 0.1)
+        self.assertEqual(pi.get_bboxes()[1].confidence, 0.9)
+        self.assertEqual(pi.get_bboxes()[2].confidence, 0.5)                
         # run - iteration 0
         pt.train_elaborate_neg_example_(pi)
-        self.assertEqual(len([bb for bb in pi.bboxes if bb[1]]), 2)
+        self.assertEqual(len([bb for bb in pi.get_bboxes() if bb.mark]), 2)
         # run - iteration 1
-        pi.bboxes = [[BBox(0.05, 0.05, 0.45, 0.30, 0.1), False], \
-                  [BBox(0.50, 0.60, 0.85, 0.85, 0.9), True], \
-                  [BBox(0.51, 0.61, 0.86, 0.86, 0.5), False]]
+        bboxes[0].mark = False
+        bboxes[1].mark = True
+        bboxes[2].mark = False
+        pi.save_marks_and_confidences()
         pt.iteration = 1
         pt.train_elaborate_neg_example_(pi)
-        self.assertEqual(pi.bboxes[0][0].confidence, 0.9)
-        self.assertEqual(pi.bboxes[1][0].confidence, 0.5)
-        self.assertEqual(pi.bboxes[2][0].confidence, 0.1)                
-        self.assertTrue(pi.bboxes[0][1])
-        self.assertTrue(pi.bboxes[1][1])
-        self.assertFalse(pi.bboxes[2][1])                
+        self.assertEqual(pi.get_bboxes()[0].confidence, 0.1)
+        self.assertEqual(pi.get_bboxes()[1].confidence, 0.9)
+        self.assertEqual(pi.get_bboxes()[2].confidence, 0.5)                
+        self.assertFalse(pi.get_bboxes()[0].mark)
+        self.assertTrue(pi.get_bboxes()[1].mark)
+        self.assertTrue(pi.get_bboxes()[2].mark)                
 
     def test_create_buffer(self):
         num_dims = 10
@@ -178,30 +212,36 @@ class PipelineDetectorTest(unittest.TestCase):
     def test_mark_bboxes_sligtly_overlapping_with_pos_bboxes(self):
         pos_bboxes = [BBox(0.10, 0.10, 0.40, 0.60, 0.0), \
                       BBox(0.45, 0.25, 0.80, 0.80, 0.0)]
-        bboxes = [[BBox(0.05, 0.05, 0.45, 0.30, 0), False], \
-                  [BBox(0.50, 0.60, 0.85, 0.85, 0), False], \
-                  [BBox(0.51, 0.61, 0.86, 0.86, 0), False]]
+        bboxes = [None]*3
+        bboxes[0] = BBox(0.05, 0.05, 0.45, 0.30, 0.0)
+        bboxes[0].mark = False
+        bboxes[1] = BBox(0.50, 0.60, 0.85, 0.85, 0.0)
+        bboxes[1].mark = False
+        bboxes[2] = BBox(0.51, 0.61, 0.86, 0.86, 0.0)
+        bboxes[2].mark = False
         max_num_bboxes = 1000
         PipelineDetector.mark_bboxes_sligtly_overlapping_with_pos_bboxes_(\
                    pos_bboxes, bboxes, max_num_bboxes)
         out = bboxes
-        self.assertEqual(out[0][0].xmin, 0.05)
-        self.assertEqual(out[1][0].xmin, 0.50)
-        self.assertEqual(out[2][0].xmin, 0.51)
-        self.assertTrue(out[0][1])
-        self.assertTrue(out[1][1] or out[2][1])
-        self.assertFalse(out[1][1] and out[2][1])
+        self.assertEqual(out[0].xmin, 0.05)
+        self.assertEqual(out[1].xmin, 0.50)
+        self.assertEqual(out[2].xmin, 0.51)
+        self.assertTrue(out[0].mark)
+        self.assertTrue(out[1].mark or out[2].mark)
+        self.assertFalse(out[1].mark and out[2].mark)
 
     def test_mark_bboxes_sligtly_overlapping_with_pos_bboxes2(self):
         pos_bboxes = [BBox(0.10, 0.10, 0.40, 0.60, 0.0), \
                       BBox(0.45, 0.25, 0.80, 0.80, 0.0)]
-        bboxes = [ [BBox(0.01, 0.01, 0.02, 0.02, 0), False] ]
+        bboxes = [None]
+        bboxes[0] = BBox(0.01, 0.01, 0.02, 0.02, 0)
+        bboxes[0].mark = False
         max_num_bboxes = 1000
         PipelineDetector.mark_bboxes_sligtly_overlapping_with_pos_bboxes_(\
                    pos_bboxes, bboxes, max_num_bboxes)
         out = bboxes
-        self.assertEqual(out[0][0].xmin, 0.01)
-        self.assertFalse(out[0][1])
+        self.assertEqual(out[0].xmin, 0.01)
+        self.assertFalse(out[0].mark)
                           
     def test_create_pipeline_images(self):
         # run the code
@@ -217,17 +257,15 @@ class PipelineDetectorTest(unittest.TestCase):
         self.assertEqual(len(out), 2)
         for o in out:
             self.assertTrue(isinstance(o, PipelineImage))
-        out[1].get_ai()
-        self.assertFalse(out[1].bboxes[0][1])
         self.assertEqual(out[1].key, '000044')
         self.assertEqual(out[1].label, 1)
         self.assertEqual(out[1].fname, 'test_data/000044.pkl')
-        self.assertEqual(len(out[1].bboxes), 10)
-        self.assertAlmostEqual(out[1].bboxes[0][0].xmin, 0.299559471366)
-        self.assertAlmostEqual(out[1].bboxes[0][0].ymin, 0.0881057268722)
-        self.assertAlmostEqual(out[1].bboxes[0][0].xmax, 0.995594713656)
-        self.assertAlmostEqual(out[1].bboxes[0][0].ymax, 0.995594713656)
-        self.assertAlmostEqual(out[1].bboxes[0][0].confidence, 0.762684643269)
+        self.assertEqual(len(out[1].get_bboxes()), 10)
+        self.assertAlmostEqual(out[1].get_bboxes()[0].xmin, 0.299559471366)
+        self.assertAlmostEqual(out[1].get_bboxes()[0].ymin, 0.0881057268722)
+        self.assertAlmostEqual(out[1].get_bboxes()[0].xmax, 0.995594713656)
+        self.assertAlmostEqual(out[1].get_bboxes()[0].ymax, 0.995594713656)
+        self.assertAlmostEqual(out[1].get_bboxes()[0].confidence, 0.762684643269)
     
     def test_read_key_label_file(self):
         fname = 'test_data/key_binary_label_file.txt'

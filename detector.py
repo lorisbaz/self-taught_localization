@@ -163,6 +163,6 @@ class DetectorLinearSVM(Detector):
         svm = sklearn.svm.LinearSVC( \
                 penalty='l2', loss='l1', dual=True, tol=0.0001,
                 C=C, fit_intercept=True, intercept_scaling=1, \
-                class_weight='auto', verbose=1, random_state=0)
+                class_weight='auto', verbose=0, random_state=0)
         return svm
     

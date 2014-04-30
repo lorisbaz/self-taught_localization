@@ -3,9 +3,10 @@ import time
 
 import pbar
 
-class BBoxTest(unittest.TestCase):
+class ProgressBarPlusTest(unittest.TestCase):
     def setUp(self):
-        self.progress = pbar.ProgressBar(150)
+        self.progress = pbar.ProgressBarPlus(150)
+        self.progress2 = pbar.ProgressBar.create('ProgressBarPlus', 150)
         
     def tearDown(self):
         pass
