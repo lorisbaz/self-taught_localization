@@ -60,22 +60,24 @@ class ProgressBarPlus(ProgressBar):
     """ Simple text-based ProgressBar """
 
     def __init__(self, max_val):
-        widgets = [progressbar.Percentage(), ' ', \
+        self.widgets = [progressbar.Percentage(), ' ', \
                    progressbar.Bar(), ' ', \
                    progressbar.Counter(), ' ', \
                    progressbar.Timer(), ' ', \
                    progressbar.ETA()]        
         self.max_val = max_val
         self.iter = 0
-        self.progress = progressbar.ProgressBar( widgets=widgets, \
-                            maxval=max_val)
-        self.progress.start()
+        self.progress = None
 
     def next(self, n_steps=1):
         self.iter += 1
-        self.progress.update(self.iter)
+        self.update(self.iter)
     
     def update(self, val):
+        if self.progress == None:
+            self.progress = progressbar.ProgressBar(widgets=self.widgets, \
+                            maxval=self.max_val)
+            self.progress.start()
         self.progress.update(val)
 
     def finish(self):
