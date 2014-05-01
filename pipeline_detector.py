@@ -11,7 +11,8 @@ import scipy.misc
 import scipy.io
 import skimage.io
 import tempfile
-from vlg.util.parfun import *
+import vlg.util.parfun
+import vlg.util.pbar
 
 from detector import *
 from featextractor import *
@@ -65,16 +66,19 @@ class PipelineDetectorParams:
 
         # *******************  OPTIONAL PARAMETERS TO SET *******************
         
-        # Run the script on Anthill
-        self.run_on_anthill = False
-        # Number of cores
-        self.num_cores = 1
         # experiment name. used for the job names
         self.exp_name = None
         # categories to learn (None means everything)
         self.categories_to_process = None
         # ProgressBar visualization
-        self.progress_bar_name = 'ProgressBarPlus'
+        self.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
+        # ParFunParams (for the categories)
+        self.parfun_params_categories = ParFunDummyParams()
+        # ParFunParams (for the training)
+        self.parfun_params_training = ParFunDummyParams()
+        # ParFunParams (for the evaluation)
+        self.parfun_params_evaluation = ParFunDummyParams()
+        
 
         # name of the split for the training set
         self.split_train_name = 'train'
@@ -384,14 +388,8 @@ class PipelineDetector:
         """ Train an iteration of the detector """
         # extract the features from the individual images
         logging.info('Collecting the training features')
-        if self.params.num_cores > 1:
-            parfun = ParFunProcesses( \
-                PipelineDetector_train_elaborate_single_image,\
-                self.params.num_cores, \
-                callback=vlg.util.pbar.ProgressBar.create( \
-                                    self.params.progress_bar_name))
-        else:
-            parfun = ParFunDummy(PipelineDetector_train_elaborate_single_image)
+        parfun = vlg.util.parfun.ParFun.create(self.params.parfun_params_training)
+        parfun.set_fun(PipelineDetector_train_elaborate_single_image)
         for pi in self.train_set:
             parfun.add_task(self, pi)
         TrainSet = parfun.run()
@@ -415,14 +413,8 @@ class PipelineDetector:
         
     def evaluate(self):
         """ calculate the stats for each image """
-        if self.params.num_cores > 1:
-            parfun = ParFunProcesses( \
-                PipelineDetector_evaluate_single_image, \
-                self.params.num_cores, \
-                callback=vlg.util.pbar.ProgressBar.create( \
-                                self.params.progress_bar_name))
-        else:
-            parfun = ParFunDummy(PipelineDetector_evaluate_single_image)              
+        parfun = vlg.util.parfun.ParFun.create(self.parfun_params_evaluation)
+        parfun.set_fun(PipelineDetector_evaluate_single_image)
         for pi in self.test_set:
             parfun.add_task(pi, self.detector, self.category)
         stats_all = parfun.run()
@@ -662,15 +654,11 @@ class PipelineDetector:
         if params.categories_to_process:
             classes = [classes[i] for i in params.categories_to_process]
         # run the pipeline
-        parfun = None
-        if params.run_on_anthill:
-            jobname = None
-            if params.exp_name != None:
-                jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
-            parfun = ParFunAnthill(pipeline, time_requested=10, \
-                                   memory_requested=4, job_name=jobname)
-        else:
-            parfun = ParFunDummy(pipeline_single_detector)
+        if params.exp_name != None:
+            params.parfun_params_categories.job_name =
+                    'Job{0}'.format(params.exp_name).replace('exp','') 
+        parfun = vlg.util.parfun.ParFun.create(params.parfun_params_categories)
+        parfun.set_fun(pipeline_single_detector)
         for cl in classes:
             parfun.add_task(cl, params)
         out = parfun.run()

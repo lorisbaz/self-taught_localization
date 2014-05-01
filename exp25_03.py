@@ -1,5 +1,6 @@
-from util import *
+import vlg.util.pbar
 
+from util import *
 from detector import *
 from featextractor import *
 from network import *
@@ -38,10 +39,38 @@ if __name__ == "__main__":
     params.detector_params = detector_params
     # field_name_for_pred_objects_in_AnnotatedImage
     params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
-    # run on Anthill?
-    params.run_on_anthill = False
-    # number of cores
-    params.num_cores = 12
+    # visualization
+    self.progress_bar_params vlg.util.pbar.ProgressBarPlusParams()
+    # ParFun Categories
+    parfun_tmpdir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP')
+    if 0:
+        self.parfun_params_categories = ParFunAnthillParams( \
+                        time_requested=10, memory_requested=6, \
+                        progress_bar_params = self.progress_bar_params, \
+                        tmp_dir = parfun_tmpdir
+    if 1:
+        self.parfun_params_categories = ParFunDummyParams()
+    # ParFun TRAINING        
+    if 1:
+        self.parfun_params_training = ParFunAnthillParams( \
+                        time_requested=10, memory_requested=2, \
+                        progress_bar_params = self.progress_bar_params, \
+                        tmp_dir = parfun_tmpdir
+    if 0:
+        self.parfun_params_training = ParFunProcessesParams( \
+                num_processes = 8, \
+                progress_bar_params = self.progress_bar_params)                        
+    # ParFun EVALUATION                
+    if 1:
+        self.parfun_params_evaluation = ParFunAnthillParams( \
+                        time_requested=10, memory_requested=2, \
+                        progress_bar_params = self.progress_bar_params, \
+                        tmp_dir = parfun_tmpdir
+    if 0:
+        self.parfun_params_evaluation = ParFunProcessesParams( \
+                num_processes = 8, \
+                progress_bar_params = self.progress_bar_params)
+                    
     # run just the first category
     params.categories_to_process = [0]
     # *** run the pipeline
