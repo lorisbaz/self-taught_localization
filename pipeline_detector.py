@@ -16,7 +16,7 @@ from vlg.util.parfun import *
 from detector import *
 from featextractor import *
 from heatextractor import *
-import pbar
+import vlg.util.pbar
 from util import *
 from stats import *
 
@@ -388,7 +388,8 @@ class PipelineDetector:
             parfun = ParFunProcesses( \
                 PipelineDetector_train_elaborate_single_image,\
                 self.params.num_cores, \
-                callback=pbar.ProgressBar.create(self.params.progress_bar_name))
+                callback=vlg.util.pbar.ProgressBar.create( \
+                                    self.params.progress_bar_name))
         else:
             parfun = ParFunDummy(PipelineDetector_train_elaborate_single_image)
         for pi in self.train_set:
@@ -418,7 +419,8 @@ class PipelineDetector:
             parfun = ParFunProcesses( \
                 PipelineDetector_evaluate_single_image, \
                 self.params.num_cores, \
-                callback=pbar.ProgressBar.create(self.params.progress_bar_name))
+                callback=vlg.util.pbar.ProgressBar.create( \
+                                self.params.progress_bar_name))
         else:
             parfun = ParFunDummy(PipelineDetector_evaluate_single_image)              
         for pi in self.test_set:
@@ -584,7 +586,8 @@ class PipelineDetector:
         assert isinstance(key_label_list, list)
         assert isinstance(params, PipelineDetectorParams)
         out = []
-        progress = pbar.ProgressBar.create('ProgressBarPlus', len(key_label_list))
+        progress = vlg.util.pbar.ProgressBar.create( \
+                                'ProgressBarPlus', len(key_label_list))
         for idx, key_label in enumerate(key_label_list):
             key, label = key_label
             fname = '{0}/{1}.pkl'.format(input_dir, key)
