@@ -42,7 +42,7 @@ class PipelineDetectorParams:
         #   category_dog/ // a directory for each category
         #     iter0.pkl   // containing the PipelineDetector object of the
         #     ...         // completed iterations.
-        #     iter5.pkl        
+        #     iter5.pkl
         self.output_dir = None
         # Text file, containing the classes to elaborate.
         self.categories_file = None
@@ -65,7 +65,7 @@ class PipelineDetectorParams:
         self.field_name_for_pred_objects_in_AnnotatedImage = None
 
         # *******************  OPTIONAL PARAMETERS TO SET *******************
-        
+
         # experiment name. used for the job names
         self.exp_name = None
         # categories to learn (None means everything)
@@ -73,22 +73,22 @@ class PipelineDetectorParams:
         # ProgressBar visualization
         self.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
         # ParFunParams (for the categories)
-        self.parfun_params_categories = ParFunDummyParams()
+        self.parfun_params_categories = vlg.util.parfun.ParFunDummyParams()
         # ParFunParams (for the training)
-        self.parfun_params_training = ParFunDummyParams()
+        self.parfun_params_training = vlg.util.parfun.ParFunDummyParams()
         # ParFunParams (for the evaluation)
-        self.parfun_params_evaluation = ParFunDummyParams()
-        
+        self.parfun_params_evaluation = vlg.util.parfun.ParFunDummyParams()
+
 
         # name of the split for the training set
         self.split_train_name = 'train'
         # name of the split for the testing set
         self.split_test_name = 'test'
-        
+
         # number of iterations to perform
-        self.num_iterations = 3 
+        self.num_iterations = 3
         # max total number of negative bbox per image
-        self.max_num_neg_bbox_per_image = 10       
+        self.max_num_neg_bbox_per_image = 10
         # num of negative bbox per image to add during the iterations
         self.num_neg_bboxes_to_add_per_image_per_iter = 1
         # num of negative bboxes from a positive image to add during the init
@@ -156,7 +156,7 @@ class PipelineImage:
         """
         bboxes = []
         if self.field_name_for_pred_objects_in_AnnotatedImage != None:
-            name = self.field_name_for_pred_objects_in_AnnotatedImage            
+            name = self.field_name_for_pred_objects_in_AnnotatedImage
             ai = self.get_ai()
             assert len(ai.pred_objects[name]) == 1
             label = ai.pred_objects[name].keys()[0]
@@ -190,7 +190,7 @@ class PipelineImage:
         if category in self.get_ai().gt_objects:
             out = self.get_ai().gt_objects[category].bboxes
         return out
-                 
+
     def get_ai(self):
         """
         Returns the associated AnnotatedImage.
@@ -223,10 +223,10 @@ class PipelineImage:
         """
         self.ai_ = None
         gc.collect()
-            
+
 #==============================================================================
 
-def pipeline_single_detector(cl, params):        
+def pipeline_single_detector(cl, params):
     detector = PipelineDetector(cl, params)
     detector.init()
     detector.train_evaluate()
@@ -257,14 +257,14 @@ def PipelineDetector_train_elaborate_single_image(pipdet, pi):
     n = len(pos_bboxes) + len(neg_bboxes)
     idx = 0
     for bb in pos_bboxes:
-        feat = pi.get_ai().extract_features(bb)                
+        feat = pi.get_ai().extract_features(bb)
         if Xtrain == None:
             Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
         Xtrain[idx, :] = feat
         Ytrain[idx] = 1
         idx += 1
     for bb in neg_bboxes:
-        feat = pi.get_ai().extract_features(bb)                
+        feat = pi.get_ai().extract_features(bb)
         if Xtrain == None:
             Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
         Xtrain[idx, :] = feat
@@ -324,7 +324,7 @@ class PipelineDetector:
         logging.info('Initializing the detector for {0}'.format(self.category))
         # create output directory for this detector
         if os.path.exists(self.detector_output_dir) == False:
-            os.makedirs(self.detector_output_dir)           
+            os.makedirs(self.detector_output_dir)
         # read the training set
         logging.info('Read the training set files')
         fname = '{0}/{1}_{2}.txt'.format(self.params.splits_dir, self.category,\
@@ -348,7 +348,7 @@ class PipelineDetector:
                 error = True
                 logging.info('The file {0} does not exist'.format(pi.fname))
         assert not error, 'Some required files were not found. Abort.'
-        logging.info('Initialization complete')       
+        logging.info('Initialization complete')
 
     def train_evaluate(self):
         for iteration in range(self.params.num_iterations):
@@ -373,7 +373,7 @@ class PipelineDetector:
             fname = '{0}/iter_stats{1}.pkl'.format( \
                     self.detector_output_dir, iteration)
             fname_mat = '{0}/iter_stats{1}.mat'.format( \
-                    self.detector_output_dir, iteration)                    
+                    self.detector_output_dir, iteration)
             if os.path.exists(fname):
                 logging.info('The stats file for iteration {0} already '\
                              'exists: {1}'.format(iteration, fname))
@@ -399,9 +399,9 @@ class PipelineDetector:
         Xtrain = np.vstack([E[0] for E in TrainSet])
         Ytrain = np.concatenate([E[1] for E in TrainSet])
         num_pos_examples = len([y for y in Ytrain if y==1])
-        num_neg_examples = len([y for y in Ytrain if y==-1])        
+        num_neg_examples = len([y for y in Ytrain if y==-1])
         logging.info('The training set has {0} positive and {1} negative '\
-                     'examples'.format(num_pos_examples, num_neg_examples))        
+                     'examples'.format(num_pos_examples, num_neg_examples))
         for idxE, E in enumerate(TrainSet):
             assert isinstance(E[2], PipelineImage)
             self.train_set[idxE] = E[2]
@@ -410,10 +410,10 @@ class PipelineDetector:
         # train the detector
         logging.info('Train the detector')
         self.detector.train(Xtrain, Ytrain)
-        
+
     def evaluate(self):
         """ calculate the stats for each image """
-        parfun = vlg.util.parfun.ParFun.create(self.parfun_params_evaluation)
+        parfun = vlg.util.parfun.ParFun.create(self.params.parfun_params_evaluation)
         parfun.set_fun(PipelineDetector_evaluate_single_image)
         for pi in self.test_set:
             parfun.add_task(pi, self.detector, self.category)
@@ -422,7 +422,7 @@ class PipelineDetector:
         # aggregate the stats for this detector
         stats, hist_overlap = Stats.aggregate_results(stats_all)
         return stats
-    
+
     def load(self, fname):
         """ Load from a Pickled file, and substitute the current fields """
         fd = open(fname, 'r')
@@ -435,11 +435,11 @@ class PipelineDetector:
         assert self.detector_output_dir == pd.detector_output_dir
         self.iteration = pd.iteration
         self.detector = pd.detector
-        
+
     def save(self, fname):
         """ Pickle and save the current object to a file """
         dump_obj_to_file_using_pickle(self, fname, 'binary')
-        
+
     def train_elaborate_pos_example_(self, pi):
         """ Elaborate a positive example during the training phase.
         It marks eventual pi.bboxes as negatives.
@@ -451,7 +451,7 @@ class PipelineDetector:
             # which will be used as negatives
             self.mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
                 pos_bboxes, pi.get_bboxes(), \
-                self.params.num_neg_bboxes_per_pos_image_during_init) 
+                self.params.num_neg_bboxes_per_pos_image_during_init)
             # save the marks
             pi.save_marks_and_confidences()
         else:
@@ -466,7 +466,7 @@ class PipelineDetector:
         It marks pi.bboxes as negatives. It returns void """
         niter = self.params.num_neg_bboxes_to_add_per_image_per_iter
         if self.iteration == 0:
-            bboxes = pi.get_bboxes()          
+            bboxes = pi.get_bboxes()
             # check the input
             for bb in bboxes:
                 assert bb.mark==False
@@ -475,7 +475,7 @@ class PipelineDetector:
             for i in range(min(len(idxperm), niter)):
                 bboxes[idxperm[i]].mark = True
             # save the marks
-            pi.save_marks_and_confidences()    
+            pi.save_marks_and_confidences()
         else:
             # we sort the bboxes by confidence score
             bboxes = pi.get_bboxes()
@@ -490,7 +490,7 @@ class PipelineDetector:
                     bb.mark = True
                     n += 1
             # save the marks
-            pi.save_marks_and_confidences()    
+            pi.save_marks_and_confidences()
 
     def create_train_buffer_(self, num_dims):
         """ Create an appropriate matrix that will be able to contain
@@ -501,14 +501,14 @@ class PipelineDetector:
         buffer_size = num_pos_images*MAX_NUM_POS_BBOXES_PER_IMAGE \
                     + self.params.max_num_neg_bbox_per_image*len(self.train_set)
         Xtrain, Ytrain = self.create_buffer_(num_dims, buffer_size)
-        return Xtrain, Ytrain        
+        return Xtrain, Ytrain
 
     @staticmethod
     def create_buffer_(num_dims, buffer_size):
         Xtrain = np.zeros(shape=(buffer_size,num_dims), dtype=float)
         Ytrain = np.zeros(shape=(buffer_size), dtype=int)
         return Xtrain, Ytrain
-            
+
     @staticmethod
     def mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
                             pos_bboxes, bboxes, max_num_bboxes):
@@ -555,8 +555,8 @@ class PipelineDetector:
             if not remove_bb:
                 out2.append(bb)
         out = out2
-        # randomly shuffle 
-        out = [out[i] for i in util.randperm_deterministic(len(out))]        
+        # randomly shuffle
+        out = [out[i] for i in util.randperm_deterministic(len(out))]
         # remove near-duplicates
         out2 = []
         while len(out) > 0:
@@ -568,7 +568,7 @@ class PipelineDetector:
         # mark the bboxes to keep
         for i in range(min(len(out), max_num_bboxes)):
             out[i].mark = True
-                
+
     @staticmethod
     def create_pipeline_images_(key_label_list, params, input_dir):
         """
@@ -578,8 +578,8 @@ class PipelineDetector:
         assert isinstance(key_label_list, list)
         assert isinstance(params, PipelineDetectorParams)
         out = []
-        progress = vlg.util.pbar.ProgressBar.create( \
-                                'ProgressBarPlus', len(key_label_list))
+        progress = vlg.util.pbar.ProgressBar.create(params.progress_bar_params)
+        progress.set_max_val(len(key_label_list))
         for idx, key_label in enumerate(key_label_list):
             key, label = key_label
             fname = '{0}/{1}.pkl'.format(input_dir, key)
@@ -594,7 +594,7 @@ class PipelineDetector:
             # append the PipelineImage
             out.append(pi)
         return out
-                
+
     @staticmethod
     def read_key_label_file_(fname, max_pos_examples, max_neg_examples):
         """
@@ -609,7 +609,7 @@ class PipelineDetector:
         out = []
         # read the file
         pos_set = []
-        neg_set = []        
+        neg_set = []
         fd = open(fname, 'r')
         for line in fd:
             elems = line.strip().split()
@@ -634,7 +634,7 @@ class PipelineDetector:
         # shuffle randomly the set
         idxperm = randperm_deterministic(len(out))
         return [out[i] for i in idxperm]
-                
+
     @staticmethod
     def train_evaluate_detectors(params):
         """
@@ -642,7 +642,7 @@ class PipelineDetector:
         """
         # create output directory
         if os.path.exists(params.output_dir) == False:
-            os.makedirs(params.output_dir)        
+            os.makedirs(params.output_dir)
         # read the list of classes to elaborate
         classes = []
         fd = open(params.categories_file, 'r')
@@ -655,8 +655,8 @@ class PipelineDetector:
             classes = [classes[i] for i in params.categories_to_process]
         # run the pipeline
         if params.exp_name != None:
-            params.parfun_params_categories.job_name =
-                    'Job{0}'.format(params.exp_name).replace('exp','') 
+            params.parfun_params_categories.job_name = \
+                    'Job{0}'.format(params.exp_name).replace('exp','')
         parfun = vlg.util.parfun.ParFun.create(params.parfun_params_categories)
         parfun.set_fun(pipeline_single_detector)
         for cl in classes:
@@ -666,4 +666,3 @@ class PipelineDetector:
             if val != 0:
                 logging.info('Task {0} didn''t exit properly'.format(i))
         logging.info('End of the script')
-

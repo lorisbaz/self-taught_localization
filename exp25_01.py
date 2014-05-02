@@ -38,10 +38,38 @@ if __name__ == "__main__":
     params.detector_params = detector_params
     # field_name_for_pred_objects_in_AnnotatedImage
     params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
-    # run on Anthill?
-    params.run_on_anthill = False
-    # number of cores
-    params.num_cores = 4
+    # visualization
+    params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
+    # ParFun Categories
+    parfun_tmpdir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP'
+    if 0:  # -- Anthill
+        params.parfun_params_categories = vlg.util.parfun.ParFunAnthillParams( \
+                        time_requested=10, memory_requested=6, \
+                        progress_bar_params = params.progress_bar_params, \
+                        tmp_dir = parfun_tmpdir, max_tasks=100)
+    if 1:  # -- Local
+        params.parfun_params_categories = vlg.util.parfun.ParFunDummyParams()
+    # ParFun TRAINING        
+    if 1:  # -- Anthill
+        params.parfun_params_training = vlg.util.parfun.ParFunAnthillParams( \
+                        time_requested=10, memory_requested=2, \
+                        progress_bar_params = params.progress_bar_params, \
+                        tmp_dir = parfun_tmpdir, max_tasks=100)
+    if 0:  # -- Local, multi-core
+        params.parfun_params_training = vlg.util.parfun.ParFunProcessesParams( \
+                num_processes = 8, \
+                progress_bar_params = params.progress_bar_params)
+    # ParFun EVALUATION                
+    if 1:  # -- Anthill
+        params.parfun_params_evaluation = vlg.util.parfun.ParFunAnthillParams( \
+                        time_requested=10, memory_requested=2, \
+                        progress_bar_params = params.progress_bar_params, \
+                        tmp_dir = parfun_tmpdir, max_tasks=100)
+    if 0:  # -- Local, multi-core
+        params.parfun_params_evaluation = vlg.util.parfun.ParFunProcessesParams( \
+                num_processes = 8, \
+                progress_bar_params = params.progress_bar_params)
+
     # run just the first category
     params.categories_to_process = [0]
     # *** run the pipeline
