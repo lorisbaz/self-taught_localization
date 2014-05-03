@@ -9,10 +9,10 @@ from configuration import *
 from pipeline_detector import *
 
 if __name__ == "__main__":
-    conf = Configuration()    
+    conf = Configuration()
     # *** FeatureExtractor
     feature_extractor_params = load_obj_from_file_using_pickle( \
-                                       'featextractor_specs/000.pkl')    
+                                       'featextractor_specs/000.pkl')
     # *** Detector
     detector_params = DetectorLinearSVMParams()
     # *** PipelineDetectorParams
@@ -33,13 +33,14 @@ if __name__ == "__main__":
     params.input_dir_train = conf.experiments_output_directory \
                         + '/' + params.exp_name_input_train
     params.input_dir_test = conf.experiments_output_directory \
-                        + '/' + params.exp_name_input_test                        
+                        + '/' + params.exp_name_input_test
     # FeatureExtractor module to use (parameters object)
     params.feature_extractor_params = feature_extractor_params
     # Detector module to use (parameters object)
     params.detector_params = detector_params
-    # field_name_for_pred_objects_in_AnnotatedImage
-    params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
+    # field names for the pos/neg bboxes
+    params.field_name_pos_bboxes = 'GT'
+    params.field_name_bboxes = 'PRED:SELECTIVESEARCH'
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
@@ -51,7 +52,7 @@ if __name__ == "__main__":
                         tmp_dir = parfun_tmpdir, max_tasks=100)
     if 1:  # -- Local
         params.parfun_params_categories = vlg.util.parfun.ParFunDummyParams()
-    # ParFun TRAINING        
+    # ParFun TRAINING
     if 1:  # -- Anthill
         params.parfun_params_training = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=2, \
@@ -61,7 +62,7 @@ if __name__ == "__main__":
         params.parfun_params_training = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 8, \
                 progress_bar_params = params.progress_bar_params)
-    # ParFun EVALUATION                
+    # ParFun EVALUATION
     if 1:  # -- Anthill
         params.parfun_params_evaluation = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=2, \
@@ -71,7 +72,7 @@ if __name__ == "__main__":
         params.parfun_params_evaluation = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 8, \
                 progress_bar_params = params.progress_bar_params)
-                    
+
     # run just the first category
     params.categories_to_process = [0]
     # *** run the pipeline
