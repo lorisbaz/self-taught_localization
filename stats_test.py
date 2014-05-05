@@ -1,6 +1,7 @@
 import unittest
 import bbox
 import stats
+import numpy as np
 
 class StatsTest(unittest.TestCase):
     def setUp(self):
@@ -20,7 +21,7 @@ class StatsTest(unittest.TestCase):
                                      bbox.BBox(0.5, 0.7, 0.65, 0.85, 2.32), \
                                      bbox.BBox(0.3, 0.7, 0.6, 0.85, 1.22), \
                                      bbox.BBox(0.4, 0.7, 0.25, 0.85, 3.1), \
-                                     bbox.BBox(0.5, 0.7, 0.45, 0.85, 1.0) ]}  
+                                     bbox.BBox(0.5, 0.7, 0.45, 0.85, 1.0) ]}
         self.topN = 3
 
     def tearDown(self):
@@ -48,7 +49,7 @@ class StatsTest(unittest.TestCase):
         stat_single.compute_stats(self.pred_bboxes['dog'], \
                                   self.gt_bboxes['dog'])
         stat_single.save_mat('TEST_MAT.mat')
-        
+
     def test_aggregator(self):
         stats_list = []
         stat_1 = stats.Stats()
@@ -58,7 +59,7 @@ class StatsTest(unittest.TestCase):
         stats_list.append(stat_1)
         stats_list.append(stat_2)
         stats_aggr, hist_overlap = stats.Stats.aggregate_results(stats_list)
-        #print str(stats_aggr) 
+        #print str(stats_aggr)
         self.assertEqual(stats_aggr.NPOS, 5)
         self.assertEqual(stats_aggr.TP[0], 1)
         self.assertEqual(stats_aggr.TP[1], 0)
@@ -67,7 +68,7 @@ class StatsTest(unittest.TestCase):
         self.assertEqual(stats_aggr.TP[4], 1)
         self.assertAlmostEqual(stats_aggr.overlap[0], 0.8, places = 5)
         self.assertAlmostEqual(stats_aggr.overlap[1], 0.140625, places = 5)
-        self.assertAlmostEqual(stats_aggr.overlap[2], 0.5, places = 5)   
+        self.assertAlmostEqual(stats_aggr.overlap[2], 0.5, places = 5)
         self.assertAlmostEqual(stats_aggr.overlap[3], 0.090909, places = 5)
         self.assertAlmostEqual(stats_aggr.overlap[4], 0.7826086, places = 5)
         self.assertAlmostEqual(stats_aggr.recall[0], 0.2, places = 3)
@@ -79,9 +80,9 @@ class StatsTest(unittest.TestCase):
         self.assertAlmostEqual(stats_aggr.precision[1], 0.5, places = 3)
         self.assertAlmostEqual(stats_aggr.precision[2], 0.6666667, places = 5)
         self.assertAlmostEqual(stats_aggr.precision[3], 0.5, places = 3)
-        self.assertAlmostEqual(stats_aggr.precision[4], 0.6, places = 3) 
-        self.assertAlmostEqual(stats_aggr.detection_rate, 0.6, places = 3) 
-        self.assertAlmostEqual(stats_aggr.average_prec, 0.448484848, places = 5) 
+        self.assertAlmostEqual(stats_aggr.precision[4], 0.6, places = 3)
+        self.assertAlmostEqual(stats_aggr.detection_rate, 0.6, places = 3)
+        self.assertAlmostEqual(stats_aggr.average_prec, 0.448484848, places = 5)
         self.assertEqual(hist_overlap[0][0], 1)
         self.assertEqual(hist_overlap[0][1], 1)
         self.assertEqual(hist_overlap[0][6], 0)
@@ -98,8 +99,52 @@ class StatsTest(unittest.TestCase):
                                                             topN = self.topN)
         #print str(stat_1)
         #print str(stat_2)
-        print str(stats_aggr) 
+        print str(stats_aggr)
         self.assertEqual(len(stats_aggr.recall), 6)
+
+
+    def test_compare_VOCdevkit(self):
+        # some params
+        IoU_threshold = 0.5
+        # load GT txt
+        gt_bboxes = {}
+        for line in open('./test_data/test_stats/GT_aeroplane.txt'):
+            imgname, confidence, xmin, ymin, xmax, ymax, \
+                                            img_szx, img_szy = line.split()
+            tmp = bbox.BBox(float(xmin)/float(img_szx), \
+                            float(ymin)/float(img_szy), \
+                            float(xmax)/float(img_szx), \
+                            float(ymax)/float(img_szy), \
+                            float(confidence))
+            if not gt_bboxes.has_key(imgname):
+                gt_bboxes[imgname] = [tmp]
+            else:
+                gt_bboxes[imgname].append(tmp)
+        # load estimates txt
+        pred_bboxes = {}
+        for line in open('./test_data/test_stats/comp3_det_val_aeroplane.txt'):
+            imgname, confidence, xmin, ymin, xmax, ymax, \
+                                            img_szx, img_szy = line.split()
+            tmp = bbox.BBox(float(xmin)/float(img_szx), \
+                            float(ymin)/float(img_szy), \
+                            float(xmax)/float(img_szx), \
+                            float(ymax)/float(img_szy), \
+                            float(confidence))
+            if not pred_bboxes.has_key(imgname):
+                pred_bboxes[imgname] = [tmp]
+            else:
+                pred_bboxes[imgname].append(tmp)
+        assert len(gt_bboxes) == len(pred_bboxes)
+        # compute stats for each image
+        stat_list = []
+        for imgname in gt_bboxes.keys():
+            stat_obj = stats.Stats()
+            stat_obj.compute_stats(pred_bboxes[imgname], gt_bboxes[imgname],\
+                                    IoU_threshold)
+            stat_list.append(stat_obj)
+        # aggregate results
+        stat_agg, hist_overlap = stats.Stats.aggregate_results(stat_list)
+        self.assertAlmostEqual(stat_agg.average_prec, 0.0361, places = 4)
 
 #==============================================================================
 
