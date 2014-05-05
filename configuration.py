@@ -18,7 +18,7 @@ class Configuration:
            directory storing the validation images
     - ilsvrc2012_test_images_dir
            directory storing the test images
-    
+
     - ilsvrc2012_val_images
            list of validation images (each entry is "val/imagename.JPEG")
     - ilsvrc2012_val_labels
@@ -74,7 +74,7 @@ class Configuration:
     """
 
     def __init__(self):
-        hostname = os.uname()[1]        
+        hostname = os.uname()[1]
         if  'anthill' in hostname or \
             'bokken' in hostname or \
             'ennead' in hostname or \
@@ -82,8 +82,8 @@ class Configuration:
             'katana' in hostname or \
             'killington' in hostname or \
             'nodachi' in hostname or \
-            'tanto' in hostname:            
-            # ***** ILSVRC 2012 *****
+            'tanto' in hostname:
+            # ***** ILSVRC 2012 Localization *****
             ilsvrc2012_root = '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012'
             self.ilsvrc2012_root_images_dir = ilsvrc2012_root
             self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
@@ -114,7 +114,40 @@ class Configuration:
                 '/synset_words.txt'
        	    self.ilsvrc2012_segm_results_dir = \
                  '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'\
-                 '/segment_ILSVRC2012' 
+                 '/segment_ILSVRC2012'
+            # ***** ILSVRC 2013 Detection *****
+            ilsvrc2013_root = \
+                        '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2013/DET'
+            self.ilsvrc2013_root_images_dir = ilsvrc2013_root
+            self.ilsvrc2013_train_images_dir = ilsvrc2013_root + '/train'
+            self.ilsvrc2013_val_images_dir = ilsvrc2013_root + '/val'
+            self.ilsvrc2013_test_images_dir = ilsvrc2013_root + '/test'
+            self.ilsvrc2013_train_images = ilsvrc2013_root + '/train_images.txt'
+            self.ilsvrc2013_val_images = ilsvrc2013_root + '/val_images.txt'
+            self.ilsvrc2013_train_labels = ilsvrc2013_root + '/train_labels.txt'
+            self.ilsvrc2013_val_labels = ilsvrc2013_root + '/val_labels.txt'
+            self.ilsvrc2013_train_box_gt = ilsvrc2013_root + '/bbox_train'
+            self.ilsvrc2013_val_box_gt = ilsvrc2013_root + '/bbox_val'
+            self.ilsvrc2013_classid_wnid_words = \
+                ilsvrc2013_root + '/classid_wnid_words.txt'
+            self.ilsvrc2013_decaf_model_spec = \
+                ilsvrc2013_root + '/decaf_model_131205/imagenet.decafnet.meta'
+            self.ilsvrc2013_decaf_model = \
+                ilsvrc2013_root +'/decaf_model_131205/imagenet.decafnet.epoch90'
+            self.ilsvrc2013_caffe_model_spec = \
+                './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+            self.ilsvrc2013_caffe_model = \
+                ilsvrc2013_root + '/caffe_model_131211'\
+                '/caffe_reference_imagenet_model'
+            self.ilsvrc2013_caffe_avg_image = \
+                ilsvrc2013_root + '/caffe_model_131211'\
+                '/ilsvrc_2012_mean.npy'
+            self.ilsvrc2013_caffe_wnids_words = \
+                ilsvrc2013_root + '/caffe_model_131211'\
+                '/synset_words.txt'
+       	    self.ilsvrc2013_segm_results_dir = \
+                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'\
+                 '/segment_ILSVRC2013'
             # ***** PASCAL VOC 2007 *****
             self.pascal2007_root_dir = \
                 '/home/ironfs/scratch/vlg/Data/Images/PASCAL_VOC_2007'
@@ -167,7 +200,9 @@ class Configuration:
                 '/synset_words.txt'
        	    self.ilsvrc2012_segm_results_dir = \
                 '/home/alessandro/Data_projects/grayobfuscation/'\
-                'segment_ILSVRC2012' 
+                'segment_ILSVRC2012'
+            # ***** ILSVRC 2013 Detection *****
+            # TODOOO: now only anthill is supported
             # ***** PASCAL VOC 2007 *****
             self.pascal2007_root_dir = \
                 '/home/alessandro/Data/VOCdevkit/VOC2007'
@@ -220,7 +255,9 @@ class Configuration:
                 '/synset_words.txt'
        	    self.ilsvrc2012_segm_results_dir = \
                '/home/lbazzani/CODE/DATA/obfuscation_results/'\
-               'segment_ILSVRC2012' 
+               'segment_ILSVRC2012'
+            # ***** ILSVRC 2013 Detection *****
+            # TODOOO: now only anthill is supported
             # ***** PASCAL VOC 2007 *****
             self.pascal2007_root_dir = \
                 '/home/lbazzani/DATASETS/VOC2007'
