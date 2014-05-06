@@ -7,6 +7,8 @@ import sklearn.svm
 import sklearn.metrics
 import sys
 
+from util import *
+
 class DetectorParams:
     def __init__(self):
         raise NotImplementedError()
@@ -48,7 +50,7 @@ class Detector:
                 assert y==1 or y==-1
                 numYval[(y+1)/2] += 1
             assert numYval[0] > 0, 'No negative val labels -1'
-            assert numYval[1] > 0, 'No positive val labels +1'      
+            assert numYval[1] > 0, 'No positive val labels +1'
 
     def predict(self, Xtest):
         """
@@ -68,31 +70,31 @@ class Detector:
         elif isinstance(params, DetectorLinearSVMParams):
             return DetectorLinearSVM(params)
         else:
-            raise ValueError('DetectorParams instance not recognized')        
+            raise ValueError('DetectorParams instance not recognized')
 
 # --------------------------------------------------------------
-        
+
 class DetectorFakeParams(DetectorParams):
     def __init__(self):
         pass
-    
+
 class DetectorFake(Detector):
     def __init__(self, params):
         """ *** PRIVATE CONSTRUCTOR *** """
         pass
-                        
+
     def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
         # check the input
         Detector.train(self, Xtrain, Ytrain, Xval, Yval)
         pass
-    
+
     def predict(self, Xtest):
         # check the input
         Detector.predict(self, Xtest)
         # predict
         Spred = np.ones(shape=(Xtest.shape[0],1), dtype=float)
         return Spred
-        
+
 # --------------------------------------------------------------
 
 class DetectorLinearSVMParams(DetectorParams):
@@ -117,7 +119,7 @@ class DetectorLinearSVM(Detector):
         self.Call = params.Call
         self.numCV = params.numCV
         self.svm = None
-                
+
     def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
         # check the input
         Detector.train(self, Xtrain, Ytrain, Xval, Yval)
@@ -126,7 +128,7 @@ class DetectorLinearSVM(Detector):
         bestC = None
         for C in self.Call:
             logging.info('Train C={0}'.format(C))
-            # validation mode            
+            # validation mode
             if len(Xval) and len(Yval):
                 svm = self.build_svm_(C)
                 svm.fit(Xtrain, Ytrain)
@@ -143,6 +145,7 @@ class DetectorLinearSVM(Detector):
                                 svm, Xtrain, Ytrain,
                                 scoring='average_precision', cv=cv_mode)
                 ap = np.mean(cv_scores)
+                logging.info('cv_scores:{0}; ap:{1}'.format(cv_scores, ap))
             # keep the best ap
             if ap > bestAP:
                 bestAP = ap
@@ -150,7 +153,7 @@ class DetectorLinearSVM(Detector):
         # re-train the SVM on the whole dataset using the best C
         self.svm = self.build_svm_(bestC)
         self.svm.fit(Xtrain, Ytrain)
-                                
+
     def predict(self, Xtest):
         # check the input
         Detector.predict(self, Xtest)
@@ -165,4 +168,3 @@ class DetectorLinearSVM(Detector):
                 C=C, fit_intercept=True, intercept_scaling=1, \
                 class_weight='auto', verbose=0, random_state=0)
         return svm
-    

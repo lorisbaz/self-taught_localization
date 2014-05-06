@@ -381,22 +381,28 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
     # return a tuple
     return (Xtrain, Ytrain, pi)
 
-def PipelineDetector_evaluate_single_image(pi, detector, category):
-    #logging.info('Elaborating test key: {0}'.format(pi.key))
+def PipelineDetector_evaluate_single_image(pi, detector, category, \
+                                           threshold_duplicates):
+    # logging.info('Elaborating test key: {0}'.format(pi.key))
+    # extract the features for this image
     Xtest = None
     for idx_bb, bb in enumerate(pi.get_bboxes()):
         feat = pi.get_ai().extract_features(bb)
         if Xtest == None:
             Xtest = np.empty((len(pi.get_bboxes()),feat.size), dtype=float)
         Xtest[idx_bb, :] = feat
+    # predict the confidences
+    # TODO: save the raw confidences to the disk (useful for future purposes),
+    #       and return a new pi
     confidences = detector.predict(Xtest)
     assert len(confidences) == Xtest.shape[0]
     assert len(confidences) == len(pi.get_bboxes())
     for idx_bb, bb in enumerate(pi.get_bboxes()):
         bb.confidence = confidences[idx_bb]
-    # TODO: save the confidences, and so return a new pi
-    # calculate the Stats
+    # perform NMS
     pred_bboxes = [bb.copy() for bb in pi.get_bboxes()]
+    pred_bboxes = BBox.non_maxima_suppression(pred_bboxes, threshold_duplicates)
+    # calculate the Stats
     gt_bboxes = pi.get_gt_bboxes()
     stats = Stats()
     stats.compute_stats(pred_bboxes, gt_bboxes)
@@ -451,8 +457,12 @@ class PipelineDetector:
                     key_label_list, self.params, self.params.input_dir_test, \
                     self.category)
         # check: make sure all the files exists
+        logging.info('Checking that all the required files exist')
         error = False
+        progress = vlg.util.pbar.ProgressBar.create(self.params.progress_bar_params)
+        progress.set_max_val(len(self.train_set) + len(self.test_set))
         for pi in (self.train_set + self.test_set):
+            progress.next()
             if not os.path.exists(pi.fname):
                 error = True
                 logging.info('The file {0} does not exist'.format(pi.fname))
@@ -528,7 +538,8 @@ class PipelineDetector:
         parfun = vlg.util.parfun.ParFun.create(self.params.parfun_params_evaluation)
         parfun.set_fun(PipelineDetector_evaluate_single_image)
         for pi in self.test_set:
-            parfun.add_task(pi, self.detector, self.category)
+            parfun.add_task(pi, self.detector, self.category, \
+                            self.params.threshold_duplicates)
         stats_all = parfun.run()
         assert len(stats_all)==len(self.test_set)
         # aggregate the stats for this detector

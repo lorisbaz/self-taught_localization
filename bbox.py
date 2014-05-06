@@ -58,7 +58,7 @@ class BBox:
         self.xmax *= float(width)
         self.ymax *= float(height)
         return self
-        
+
     def convert_coordinates_to_integers(self):
         """
         It returns self.
@@ -68,7 +68,7 @@ class BBox:
         self.xmax = int(self.xmax)
         self.ymax = int(self.ymax)
         return self
-        
+
     def translate(self, x, y):
         """
         Translate the coordinates of the box, that will have
@@ -116,7 +116,7 @@ class BBox:
         confidence scorse, while bboxes which have more than 'iou_threshold'
         overlap with a higher scoring bbox are consdered near-duplicates
         and removed.
-        The method returns a containing the remaining bboxes sorted 
+        The method returns the remaining bboxes sorted
         by confidence.
         """
         assert iou_threshold >= 0.0
@@ -135,8 +135,3 @@ class BBox:
                     bboxes2.append(bb)
             bboxes = bboxes2
         return bboxes_out
-        
-
-
-
-
