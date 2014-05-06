@@ -7,13 +7,16 @@ from pipeline_detector import *
 
 class PipelineImageTest(unittest.TestCase):
     def setUp(self):
+        neg_bboxes_overlapping_with_pos_params = [0.2, 0.5, 0.5, 0.7]
         self.category = 'cat'
         self.pi_pos = \
             PipelineImage('000044', 1, 'test_data/000044.pkl', \
-                FeatureExtractorFakeParams(), 'GT:cat', 'PRED:SELECTIVESEARCH')
+                FeatureExtractorFakeParams(), 'GT:cat', 'PRED:SELECTIVESEARCH',\
+                neg_bboxes_overlapping_with_pos_params)
         self.pi_neg = \
             PipelineImage('000012', -1, 'test_data/000012.pkl', \
-                FeatureExtractorFakeParams(), 'GT:cat', 'PRED:SELECTIVESEARCH')
+                FeatureExtractorFakeParams(), 'GT:cat', 'PRED:SELECTIVESEARCH',\
+                neg_bboxes_overlapping_with_pos_params)
 
     def tearDown(self):
         pass
@@ -109,10 +112,12 @@ class PipelineDetectorTest(unittest.TestCase):
         # create some pipeline images
         self.pi_pos = \
             PipelineImage('000044', 1, 'test_data/000044.pkl', \
-                FeatureExtractorFakeParams(), 'GT:cat', 'PRED:SELECTIVESEARCH')
+                FeatureExtractorFakeParams(), 'GT:cat', 'PRED:SELECTIVESEARCH',\
+                params.neg_bboxes_overlapping_with_pos_params)
         self.pi_neg = \
             PipelineImage('000012', -1, 'test_data/000012.pkl', \
-                FeatureExtractorFakeParams(), 'GT:cat', 'PRED:SELECTIVESEARCH')
+                FeatureExtractorFakeParams(), 'GT:cat', 'PRED:SELECTIVESEARCH',\
+                params.neg_bboxes_overlapping_with_pos_params)
         self.pipeline_images = [self.pi_pos, self.pi_neg]
 
     def tearDown(self):

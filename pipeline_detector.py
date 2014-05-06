@@ -100,6 +100,9 @@ class PipelineDetectorParams:
         self.num_neg_bboxes_to_add_per_image_per_iter = 1
         # num of negative bboxes from a positive image to add during the init
         self.num_neg_bboxes_per_pos_image_during_init = 5
+        # while selecting the neg bboxes that slightly overlap with a pos bbox
+        # Params: [min_overlap, max_overlap, max_overlap_with_pos, nms_overlap]
+        self.neg_bboxes_overlapping_with_pos_params = [0.2, 0.5, 0.5, 0.7]
         # thresholds to define duplicate boxes for the evaluation
         self.threshold_duplicates = 0.3
         # max number of positive images per category
@@ -111,7 +114,8 @@ class PipelineDetectorParams:
 
 class PipelineImage:
     def __init__(self, key, label, fname, feature_extractor_params, \
-                 field_name_pos_bboxes, field_name_bboxes):
+                 field_name_pos_bboxes, field_name_bboxes, \
+                 neg_bboxes_overlapping_with_pos_params):
         # check input
         assert isinstance(key, str)
         assert isinstance(label, int)
@@ -139,6 +143,10 @@ class PipelineImage:
         # field name to use for the neg/pred bboxes
         # 'PRED:<name>'
         self.field_name_bboxes = field_name_bboxes
+        # parameters: while selecting the neg bboxes that slightly overlap
+        # with a pos bbox
+        self.neg_bboxes_overlapping_with_pos_params = \
+                neg_bboxes_overlapping_with_pos_params
 
     def save_marks_and_confidences(self):
         """
@@ -217,7 +225,8 @@ class PipelineImage:
         """
         Retrieve the positive bounding boxes, if any.
         Returns a list of Bbox objects.
-        Note that len(self.bboxes_marked)==len(out)
+        We use the category specified in 'field_name_pos_bboxes'
+        to retrieve the correct bboxes from the GT field of AnnotatedImage.
         """
         assert self.field_name_pos_bboxes != None
         parts = self.field_name_pos_bboxes.split(':')
@@ -245,8 +254,9 @@ class PipelineImage:
             self.ai_ = pickle.load(fd)
             fd.close()
             assert self.ai_.image_name == self.key
-            # TODO. This is a pure hack. The AnnotatedImage.feature_extractor_
-            #       should not be pickled.
+            # HACK. This is a pure hack to make some old-code running,
+            #       when the AnnotatedImage.feature_extractor_
+            #       was pickled.
             self.ai_.feature_extractor_ = None
             # register the feature extractor
             self.ai_.register_feature_extractor(self.feature_extractor_params)
@@ -271,7 +281,7 @@ class PipelineImage:
     def train_elaborate_pos_example_(self, iteration,
                                      num_neg_bboxes_per_pos_image_during_init):
         """ Elaborate a positive example during the training phase.
-        It marks eventual pi.bboxes as negatives.
+        It marks eventual self.bboxes as negatives.
         It returns the set of positive BBox. """
         assert self.label == 1
         pos_bboxes = self.get_pos_bboxes()
@@ -280,7 +290,8 @@ class PipelineImage:
             # which will be used as negatives
             PipelineDetector.mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
                 pos_bboxes, self.get_bboxes(), \
-                num_neg_bboxes_per_pos_image_during_init)
+                num_neg_bboxes_per_pos_image_during_init, \
+                self.neg_bboxes_overlapping_with_pos_params)
             # save the marks
             self.save_marks_and_confidences()
         else:
@@ -294,7 +305,7 @@ class PipelineImage:
                        num_neg_bboxes_to_add_per_image_per_iter, \
                        max_num_neg_bbox_per_image):
         """ Elaborate a negative example during the training phase.
-        It marks pi.bboxes as negatives. It returns void """
+        It marks self.bboxes as negatives. It returns void """
         niter = num_neg_bboxes_to_add_per_image_per_iter
         if iteration == 0:
             bboxes = self.get_bboxes()
@@ -342,17 +353,17 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
         for bb in pi.get_bboxes():
             feat = pi.get_ai().extract_features(bb)
             bb.confidence = detector.predict(feat)
-    # select pos and neg bboxes that will compose our train set
+    # select pos and neg bboxes, building our train set
     pos_bboxes = []
     if pi.label == 1:
         # elaborate POSITIVE image.
-        # Note: the method marks the negatives pi.bboxes
+        # Note: the method marks the negatives self.bboxes
         pos_bboxes = pi.train_elaborate_pos_example_( \
                             iteration, \
                             num_neg_bboxes_per_pos_image_during_init)
     elif pi.label == -1:
         # elaborate NEGATIVE image
-        # Note: the method marks the negatives pi.bboxes
+        # Note: the method marks the negatives self.bboxes
         pi.train_elaborate_neg_example_(iteration, \
                         num_neg_bboxes_to_add_per_image_per_iter, \
                         max_num_neg_bbox_per_image)
@@ -534,7 +545,8 @@ class PipelineDetector:
         self.detector.train(Xtrain, Ytrain)
 
     def evaluate(self):
-        """ calculate the stats for each image """
+        """ calculate the stats for the current model """
+        # calculate stats for the individual images
         parfun = vlg.util.parfun.ParFun.create(self.params.parfun_params_evaluation)
         parfun.set_fun(PipelineDetector_evaluate_single_image)
         for pi in self.test_set:
@@ -582,7 +594,8 @@ class PipelineDetector:
 
     @staticmethod
     def mark_bboxes_sligtly_overlapping_with_pos_bboxes_( \
-                            pos_bboxes, bboxes, max_num_bboxes):
+                            pos_bboxes, bboxes, max_num_bboxes, \
+                            params = [0.2, 0.5, 0.5, 0.7]):
         """
         Mark the bboxes that sligtly overlap with the pos bboxes.
         If there are too many bboxes, we
@@ -600,17 +613,19 @@ class PipelineDetector:
             assert isinstance(bb, BBox)
             assert bb.mark == False
         assert max_num_bboxes > 0
+        assert isinstance(params, list)
+        assert len(params) == 4
+        min_overlap = params[0]
+        max_overlap = params[1]
+        max_overlap_with_pos = params[2]
+        nms_overlap = params[3]
         out = []
-        MIN_OVERLAP = 0.2
-        MAX_OVERLAP = 0.5
-        MAX_OVERLAP_WITH_POS = 0.5
-        NMS_OVERLAP = 0.7
         # select the bboxes that have an overlap between 0.2 and 0.5
         # with any positive
         for bb in bboxes:
             for pos_bb in pos_bboxes:
                 overlap = bb.jaccard_similarity(pos_bb)
-                if (overlap >= MIN_OVERLAP) and (overlap <= MAX_OVERLAP):
+                if (overlap >= min_overlap) and (overlap <= max_overlap):
                     out.append(bb)
                     break
         # remove the bboxes that overlap too much with a positive
@@ -620,7 +635,7 @@ class PipelineDetector:
             remove_bb = False
             for pos_bb in pos_bboxes:
                 overlap = bb.jaccard_similarity(pos_bb)
-                if overlap > MAX_OVERLAP_WITH_POS:
+                if overlap > max_overlap_with_pos:
                     remove_bb = True
                     break
             if not remove_bb:
@@ -634,7 +649,7 @@ class PipelineDetector:
             bb = out.pop()
             out2.append(bb)
             out = [bb2 for bb2 in out \
-                   if bb.jaccard_similarity(bb2) <= NMS_OVERLAP]
+                   if bb.jaccard_similarity(bb2) <= nms_overlap]
         out = out2
         # mark the bboxes to keep
         for i in range(min(len(out), max_num_bboxes)):
@@ -664,7 +679,8 @@ class PipelineDetector:
             pi = PipelineImage( \
                     key, label, fname, \
                     params.feature_extractor_params, \
-                    pos_bboxes_field_name, bboxes_field_name)
+                    pos_bboxes_field_name, bboxes_field_name, \
+                    params.neg_bboxes_overlapping_with_pos_params)
             # append the PipelineImage
             out.append(pi)
         return out
