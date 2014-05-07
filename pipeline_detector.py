@@ -511,6 +511,7 @@ class PipelineDetector:
                 logging.info('Evaluation the model of iteration {0}'.format( \
                              iteration))
                 stats = self.evaluate()
+                logging.info('AP: {0}'.format(stats.average_prec))
                 dump_obj_to_file_using_pickle(stats, fname, 'binary')
                 stats.save_mat(fname_mat)
 

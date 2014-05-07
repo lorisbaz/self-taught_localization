@@ -108,7 +108,7 @@ class DetectorLinearSVMParams(DetectorParams):
          normalizer: if not None, it can be a string 'l1' or 'l2',
                 which normalizes the individual feature vectors **in place**.
         """
-        self.Call = [10**x for x in range(-4, 4)]
+        self.Call = [10**x for x in range(-4, 3)]
         self.numCV = 5
         self.normalize_features = None
 
