@@ -165,6 +165,7 @@ class DetectorLinearSVM(Detector):
         # re-train the SVM on the whole dataset using the best C
         self.svm = self.build_svm_(bestC)
         self.svm.fit(Xtrain, Ytrain)
+        assert self.svm.classes_[1] == 1
 
     def predict(self, Xtest):
         # check the input
