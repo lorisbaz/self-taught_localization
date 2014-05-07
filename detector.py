@@ -169,6 +169,11 @@ class DetectorLinearSVM(Detector):
     def predict(self, Xtest):
         # check the input
         Detector.predict(self, Xtest)
+        # normalize the input, if requested
+        norm = self.params.normalize_features
+        if norm != None:
+            assert norm=='l1' or norm=='l2'
+            sklearn.preprocessing.normalize(Xtest, norm=norm, copy=False)
         # predict
         Spred = self.svm.decision_function(Xtest)
 	return Spred

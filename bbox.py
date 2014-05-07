@@ -111,7 +111,7 @@ class BBox:
 
     def get_coordinates_str(self):
         if isinstance(self.xmin, float):
-            return '{0:.2}:{1:.2}:{2:.2}:{3:.2}'\
+            return '{0:.4}:{1:.4}:{2:.4}:{3:.4}'\
             .format(self.xmin, self.ymin, self.xmax, self.ymax)
         else:
             return '{0}:{1}:{2}:{3}'\
