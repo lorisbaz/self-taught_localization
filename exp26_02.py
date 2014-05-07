@@ -15,7 +15,7 @@ import exp26
 
 if __name__ == "__main__":
     conf = Configuration()
-    params = exp19.Params()
+    params = exp26.Params()
     # experiment name
     params.exp_name = 'exp26_02'
     # default Configuration
@@ -37,4 +37,4 @@ if __name__ == "__main__":
     # specify task to debug ([] process everything)
     params.task = []
     # RUN THE EXPERIMENT
-    exp19.run_exp(params)
+    exp26.run_exp(params)
