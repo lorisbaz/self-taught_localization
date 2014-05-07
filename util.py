@@ -34,12 +34,12 @@ class TempFile:
         # set some class fields
         self.user = os.getenv('USER')
         self.mappedfilename = mapped_file
-        # copy the mapped file, if requested        
+        # copy the mapped file, if requested
         if mapped_file and copy:
             command = 'scp {0}@anthill:{1} {2}'.format(\
                        self.user, mapped_file, tmpfilename)
             logging.info('Executing command ' + command)
-            subprocess.check_call(command, shell=True)        
+            subprocess.check_call(command, shell=True)
 
     def get_temp_filename(self):
         return self.tmpfilename
@@ -54,7 +54,7 @@ class TempFile:
             if copy:
                 command = 'scp {0} {1}@anthill:{2}'.format(\
                     self.tmpfilename, self.user, self.mappedfilename)
-                logging.info('Executing command ' + command)    
+                logging.info('Executing command ' + command)
                 subprocess.check_call(command, shell=True)
         except:
             # remote the temporary file
@@ -62,11 +62,11 @@ class TempFile:
             raise
         else:
             os.remove(self.tmpfilename)
-    
+
 
 def resize_image_max_size(img, fix_sz):
     """
-    Return a resized version of the image, where the longest edge has 
+    Return a resized version of the image, where the longest edge has
     length 'fix_sz' pixels. The resizing mantains the proportion.
     """
     img = np.copy(img)
@@ -74,7 +74,7 @@ def resize_image_max_size(img, fix_sz):
     if great_size > fix_sz:
         proportion = fix_sz / float(great_size)
         width = int(img.shape[1] * float(proportion))
-        height = int(img.shape[0] * float(proportion))    
+        height = int(img.shape[0] * float(proportion))
         img = skimage.transform.resize(img, (height, width))
     return img
 
@@ -123,7 +123,7 @@ def convert_jpeg_string_to_image(img_jpeg_string):
     img = skimage.io.imread(tmpfilename)
     os.remove(tmpfilename)
     return img
-    
+
 def split_list(l, num_chunks):
     """
     Split the given list 'l' into 'num_chunks' lists, trying to balance
@@ -152,7 +152,7 @@ def selective_search(images, ss_version):
 
     INPUT:
      images: list of N ndarray elements, each element is an image
-     ss_version: The SelectiveSearch version to use. 
+     ss_version: The SelectiveSearch version to use.
                  It is a string that could be either 'quality' or 'fast'.
                  Please refer to selective_search.m.
     OUTPUT:
@@ -195,7 +195,7 @@ def selective_search(images, ss_version):
         except:
             logging.error('Exception while loading ' + mat_temp_files[i])
             bboxes_all.append( [] )
-            continue    
+            continue
         img_width = mat.get('img_width')[0,0]
         assert img_width > 0
         img_height = mat.get('img_height')[0,0]
@@ -231,12 +231,12 @@ def reRank_pred_objects(pred_objects, image, net, full_img_class = False, \
     height = img_sz[0]
     width = img_sz[1]
     if full_img_class:
-        image_rz = np.copy(image) 
+        image_rz = np.copy(image)
         # Resize crop
         image_rz = skimage.transform.resize(image_rz, \
                             (net.get_input_dim(), net.get_input_dim()))
         image_rz = skimage.img_as_ubyte(image_rz)
-        # Compute Net max score 
+        # Compute Net max score
         net_feature_full = net.evaluate(image_rz)
         # Max
         if GT_label==None:
@@ -244,9 +244,9 @@ def reRank_pred_objects(pred_objects, image, net, full_img_class = False, \
         else:
             id_gt = net.get_label_id(GT_label)
     for label in pred_objects.keys():
-        # Do it for each BBox 
+        # Do it for each BBox
         for b in range(len(pred_objects[label].bboxes)):
-            # project bbox to the image sizes 
+            # project bbox to the image sizes
             ymin = np.int16(pred_objects[label].bboxes[b].ymin * height)
             ymax = np.int16(pred_objects[label].bboxes[b].ymax * height)
             xmin = np.int16(pred_objects[label].bboxes[b].xmin * width)
@@ -257,7 +257,7 @@ def reRank_pred_objects(pred_objects, image, net, full_img_class = False, \
             image_crop = skimage.transform.resize(image_crop, \
                                 (net.get_input_dim(), net.get_input_dim()))
             image_crop = skimage.img_as_ubyte(image_crop)
-            # Compute Net max score 
+            # Compute Net max score
             net_feature_vector = net.evaluate(image_crop)
             if full_img_class:
                 if GT_label==None:
@@ -265,7 +265,7 @@ def reRank_pred_objects(pred_objects, image, net, full_img_class = False, \
                                 net_feature_vector[id_max], 0.0)
                 else:
                     confidence = max(net_feature_full[id_gt] - \
-                                net_feature_vector[id_gt], 0.0) 
+                                net_feature_vector[id_gt], 0.0)
             else:
                 confidence = np.max(net_feature_vector)
             # Overwrite the old confidence value
@@ -274,13 +274,13 @@ def reRank_pred_objects(pred_objects, image, net, full_img_class = False, \
     return pred_objects
 
 
-def segments_to_bboxes(segments): 
-    bboxes = [] 
+def segments_to_bboxes(segments):
+    bboxes = []
     for s in range(np.shape(segments)[0]):
-        for w in range(np.shape(segments[s])[0]): 
-            bboxes.append(segments[s][w]['bbox']) 
-    return bboxes  
-                                                                                
+        for w in range(np.shape(segments[s])[0]):
+            bboxes.append(segments[s][w]['bbox'])
+    return bboxes
+
 
 def randperm_deterministic(n):
     """
@@ -310,3 +310,14 @@ def load_obj_from_file_using_pickle(fname):
     obj = pickle.load(fd)
     fd.close()
     return obj
+
+def remove_slash_and_extension_from_image_key(image_key, remove_string = ''):
+    """
+    Replaces the slash character from image_key (if any) with an underscore.
+    If remove_string is provided, also the string is removed.
+    """
+    new_image_key = image_key.replace('/','_')
+    if (remove_string in image_key):
+        new_image_key = new_image_key.replace(remove_string, '')
+    return new_image_key
+
