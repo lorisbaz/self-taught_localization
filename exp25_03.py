@@ -15,10 +15,11 @@ if __name__ == "__main__":
                                        'featextractor_specs/000.pkl')
     # *** Detector
     detector_params = DetectorLinearSVMParams()
+    detector_params.normalize_features = 'l2'
     # *** PipelineDetectorParams
     params = PipelineDetectorParams()
     # experiment name
-    params.exp_name = 'exp25_03_TEMP2'
+    params.exp_name = 'exp25_03_TEMP5'
     # input
     params.exp_name_input_train = 'exp24_04'
     params.exp_name_input_test = 'exp24_02'
@@ -41,8 +42,10 @@ if __name__ == "__main__":
     # field names for the pos/neg bboxes
     params.field_name_pos_bboxes = 'GT'
     params.field_name_bboxes = 'PRED:SELECTIVESEARCH'
+    # neg_bboxes_overlapping_with_pos_params
+    params.neg_bboxes_overlapping_with_pos_params = [0.0, 0.3, 0.3, 0.7]
     # number of iterations
-    params.num_iterations = 1
+    params.num_iterations = 3
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories

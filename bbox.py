@@ -109,6 +109,14 @@ class BBox:
     def copy(self):
         return copy.deepcopy(self)
 
+    def get_coordinates_str(self):
+        if isinstance(self.xmin, float):
+            return '{0:.2}:{1:.2}:{2:.2}:{3:.2}'\
+            .format(self.xmin, self.ymin, self.xmax, self.ymax)
+        else:
+            return '{0}:{1}:{2}:{3}'\
+            .format(self.xmin, self.ymin, self.xmax, self.ymax)
+
     @staticmethod
     def non_maxima_suppression(bboxes, iou_threshold):
         """
