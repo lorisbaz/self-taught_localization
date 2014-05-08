@@ -131,8 +131,8 @@ class BBox:
         if not bboxes:
             return []
         # make a copy of the bboxes, and sort them by confidence
-        bboxes = copy.deepcopy(bboxes)
-        bboxes.sort(key=lambda bb: bb.confidence, reverse=True)
+        bboxes = copy.copy(bboxes)
+        bboxes.sort(key=lambda bb: -bb.confidence)
         bboxes_out = []
         while len(bboxes) >= 1:
             bboxes_out.append(bboxes[0])
