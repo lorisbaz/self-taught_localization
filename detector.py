@@ -108,7 +108,7 @@ class DetectorLinearSVMParams(DetectorParams):
          normalizer: if not None, it can be a string 'l1' or 'l2',
                 which normalizes the individual feature vectors **in place**.
         """
-        self.Call = [10**x for x in range(-4, 4)]
+        self.Call = [10**x for x in range(-4, 3)]
         self.numCV = 5
         self.normalize_features = None
 
@@ -165,6 +165,7 @@ class DetectorLinearSVM(Detector):
         # re-train the SVM on the whole dataset using the best C
         self.svm = self.build_svm_(bestC)
         self.svm.fit(Xtrain, Ytrain)
+        assert self.svm.classes_[1] == 1
 
     def predict(self, Xtest):
         # check the input
