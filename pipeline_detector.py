@@ -353,6 +353,7 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
         for bb in pi.get_bboxes():
             feat = pi.get_ai().extract_features(bb)
             bb.confidence = detector.predict(feat)
+        pi.save_marks_and_confidences()
     # select pos and neg bboxes, building our train set
     pos_bboxes = []
     if pi.label == 1:

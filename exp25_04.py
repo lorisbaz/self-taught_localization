@@ -19,7 +19,7 @@ if __name__ == "__main__":
     # *** PipelineDetectorParams
     params = PipelineDetectorParams()
     # experiment name
-    params.exp_name = 'exp25_04_TEMP'
+    params.exp_name = 'exp25_04_TEMP2'
     # input
     params.exp_name_input_train = 'exp26_02'
     params.exp_name_input_test = 'exp26_01'
@@ -47,7 +47,7 @@ if __name__ == "__main__":
     # neg_bboxes_overlapping_with_pos_params
     params.neg_bboxes_overlapping_with_pos_params = [0.2, 0.5, 0.5, 0.7]
     # number of iterations
-    params.num_iterations = 3
+    params.num_iterations = 2
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
