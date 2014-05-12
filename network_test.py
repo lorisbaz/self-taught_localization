@@ -4,7 +4,7 @@ from configuration import *
 import unittest
 import numpy as np
 
-
+@unittest.skip("Skipping Decaf Test")
 class NetworkDecafTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()
@@ -68,8 +68,8 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertAlmostEqual(scores[0,0], 0.0)
         self.assertAlmostEqual(scores[0,3], 9.88611, places=4)
         self.assertAlmostEqual(scores[0,564], 3.55161, places=4)
-        self.assertAlmostEqual(scores[0,3530], 15.6157, places=4)        
-        
+        self.assertAlmostEqual(scores[0,3530], 15.6157, places=4)
+
 #=============================================================================
 
 class NetworkCaffeTest(unittest.TestCase):
@@ -88,6 +88,15 @@ class NetworkCaffeTest(unittest.TestCase):
                                     self.conf.ilsvrc2012_caffe_avg_image, \
                                     center_only = True)
         self.net2 = Network.create_network(params)
+        # using the factory
+        self.wnid_my_subset = ['n01440764', 'n01443537', 'n01751748']
+        params2 = NetworkCaffeParams(self.conf.ilsvrc2012_caffe_model_spec,\
+                                    self.conf.ilsvrc2012_caffe_model,\
+                                    self.conf.ilsvrc2012_caffe_wnids_words,\
+                                    self.conf.ilsvrc2012_caffe_avg_image, \
+                                    center_only = True, \
+                                    wnid_subset = self.wnid_my_subset)
+        self.net3 = Network.create_network(params2)
 
     def tearDown(self):
         self.net = None
@@ -124,7 +133,22 @@ class NetworkCaffeTest(unittest.TestCase):
         self.assertAlmostEqual(scores[0], 5.41017e-06, places=5)
         self.assertAlmostEqual(scores[999], 8.32369e-09, places=5)
         self.assertAlmostEqual(max(scores), 0.640054, places=5)
-        
+
+    def test_evaluate_subset(self):
+        img = np.asarray(io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG'))
+        scores = self.net3.evaluate(img, layer_name = 'softmax')
+        self.assertAlmostEqual(\
+            scores[self.net3.get_label_id(self.wnid_my_subset[0])], \
+            5.4101706e-06, places=6)
+        self.assertAlmostEqual(\
+            scores[self.net3.get_label_id(self.wnid_my_subset[1])], \
+            4.0534101e-08, places=7)
+        self.assertAlmostEqual(\
+            scores[self.net3.get_label_id(self.wnid_my_subset[2])], \
+            0.026647, places=5)
+        self.assertAlmostEqual(\
+            scores[self.net3.get_label_id('n02892767')], 0.0, places=5)
+
     def test_evaluate_layers(self):
         img = np.asarray(io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG'))
         features = self.net.evaluate(img, layer_name = 'fc7')
@@ -154,7 +178,7 @@ class NetworkCaffeTest(unittest.TestCase):
         self.assertAlmostEqual(features[0,0,0], 0.0, places=5)
         self.assertAlmostEqual(features[255,10,10], 0.0, places=5)
         self.assertAlmostEqual(np.max(features), 335.69110, places=5)
-                
+
 #=============================================================================
 
 if __name__ == '__main__':

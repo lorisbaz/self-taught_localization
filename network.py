@@ -82,9 +82,9 @@ class Network:
         elif isinstance(params, NetworkDecafParams):
             return NetworkDecaf(params)
         elif isinstance(params, NetworkCaffeParams):
-            return NetworkCaffe(params)        
+            return NetworkCaffe(params)
         else:
-            raise ValueError('NetworkParams instance not recognized')    
+            raise ValueError('NetworkParams instance not recognized')
 
 #=============================================================================
 
@@ -121,13 +121,13 @@ class NetworkFake(Network):
             return 2
         else:
             NotImplementedError()
-        
+
     def get_label_desc(self, label):
         return 'DESCRIPTION' + label
-        
+
     def get_labels(self):
         return ['label0', 'label1', 'label2']
-        
+
 #=============================================================================
 
 class NetworkDecafParams(NetworkParams):
@@ -220,7 +220,7 @@ class NetworkDecaf(Network):
         images = np.ascontiguousarray(image[np.newaxis], dtype=np.float32)
         # classify
         predictions = self.net_.classify_direct(images)
-        scores = predictions.mean(0)        
+        scores = predictions.mean(0)
         # look at the particular layer
         if layer_name == 'softmax':
             return scores
@@ -242,14 +242,15 @@ class NetworkDecaf(Network):
 
 class NetworkCaffeParams(NetworkParams):
     def __init__(self, model_spec_filename, model_filename,\
-                 wnid_words_filename, mean_img_filename,
-                 caffe_mode='cpu', center_only=False):
+                 wnid_words_filename, mean_img_filename,\
+                 caffe_mode = 'cpu', center_only = False, wnid_subset = []):
         self.model_spec_filename = model_spec_filename
         self.model_filename = model_filename
         self.wnid_words_filename = wnid_words_filename
         self.mean_img_filename = mean_img_filename
         self.caffe_mode = caffe_mode
         self.center_only = center_only
+        self.wnid_subset = wnid_subset
 
 class NetworkCaffe(Network):
     """
@@ -257,10 +258,10 @@ class NetworkCaffe(Network):
     """
     def __init__(self, model_spec_filename, model_filename=None,\
                  wnid_words_filename=None, mean_img_filename=None, \
-                 caffe_mode='cpu', center_only=False):
+                 caffe_mode='cpu', center_only=False, wnid_subset = []):
         """
         *** PRIVATE CONSTRUCTOR ***
-        """                 
+        """
         # the following is just an hack to allow retro-compatibility
         # with existing code
         if isinstance(model_spec_filename, NetworkCaffeParams):
@@ -271,11 +272,12 @@ class NetworkCaffe(Network):
             mean_img_filename = params.mean_img_filename
             caffe_mode = params.caffe_mode
             center_only = params.center_only
+            wnid_subset = params.wnid_subset
         else:
             assert isinstance(model_spec_filename, str)
             assert model_filename != None
             assert wnid_words_filename != None
-            assert mean_img_filename != None             
+            assert mean_img_filename != None
         # for now, we support only the single full-image evaluation
         assert center_only == True
         # load Caffe model
@@ -308,7 +310,7 @@ class NetworkCaffe(Network):
         self.net_.mean_img = np.load(\
                    os.path.join(os.path.dirname(__file__), mean_img_filename))
         # mean of 3 channels
-        self.net_.mean_img = np.mean(np.mean(self.net_.mean_img,axis=1),axis=0) 
+        self.net_.mean_img = np.mean(np.mean(self.net_.mean_img,axis=1),axis=0)
         # it is in BGR convert in RGB
         self.net_.mean_img = self.net_.mean_img[::-1]
         # extract the list of layers
@@ -319,6 +321,8 @@ class NetworkCaffe(Network):
             print 'Warning: Old version of Caffe, please install a more ' \
                                 'recent version (23 April 2014) or only ' \
                                 'softmax output layer is supported.'
+        # subset of ids
+        self.wnid_subset = wnid_subset
 
     def get_mean_img(self):
         return self.net_.mean_img
@@ -338,15 +342,15 @@ class NetworkCaffe(Network):
     def evaluate(self, img, layer_name = 'softmax'):
         """
         Evaluates an image with caffe and extracts features at the layer_name.
-        layer_name can assume different values dependengly on the network 
+        layer_name can assume different values dependengly on the network
         architecture that you are using.
         Most common names are:
-        - 'prob' or 'softmax' (default): for the last layer representation 
+        - 'prob' or 'softmax' (default): for the last layer representation
             usually used for classitication
         - 'fc<N>', <N> is the level number: the fully connected layers
         - 'conv<N>': the convolutional layers
         - 'pool<N>': the pooling layers
-        - 'norm<N>': the fully connected layers 
+        - 'norm<N>': the fully connected layers
         """
         # if the image in in grayscale, we make it to 3-channels
         if img.ndim == 2:
@@ -380,16 +384,21 @@ class NetworkCaffe(Network):
             net_representation = {k: output for k, output in \
                                     self.net_.caffenet.blobs.items()}
             if net_representation.has_key(layer_name):
-                scores = net_representation[layer_name].data[0] 
+                scores = net_representation[layer_name].data[0]
                 assert np.shape(net_representation[layer_name].data)[0] == 1
                 # Done for back-compatibility (remove single dimentions)
                 if np.shape(scores)[1]==1 and np.shape(scores)[2]==1:
                     scores = scores.flatten()
-            else:    
+            else:
                 raise ValueError('layer_name not supported')
         except:
             scores = output_blobs[0].mean(0).flatten()
             print 'Warning: Old version of Caffe, please install a more ' \
                                 'recent version (23 April 2014). The softmax' \
                                 'layer is now output of this function.'
+        # if a subset is provided, we zero out the entry not used
+        if self.wnid_subset != [] and layer_name == 'prob':
+            for wnid in self.labels_:
+                if wnid not in self.wnid_subset:
+                    scores[self.get_label_id(wnid)] = 0.0
         return scores

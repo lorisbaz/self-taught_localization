@@ -37,6 +37,7 @@ fid = fopen(train_blacklist);
 train_blacklistlist = textscan(fid, '%s', 'Delimiter', ' ');
 fclose(fid);
 sel_set = 'train/';
+aggregator = [];
 for k = class_ids
     % Open training file
     train_file = strcat(devkit_path, '/data/det_lists/train_pos_',num2str(k),'.txt');
@@ -75,12 +76,13 @@ for k = class_ids
             fprintf('Warning image %s do not exist.\n', img_path)
         end
     end
+    aggregator = [aggregator; unique(train_all_list{1})]; 
 end
 % Close train_1.txt, train_2.txt, ..., train_200.txt
 for k = class_ids
     fclose(fid_train(k));
 end
-
+assert(length(unique(aggregator))==395909)
 
 %% Create val*.txt
 fprintf('-------------VALIDATION SET-------------\n')
@@ -105,6 +107,7 @@ for k = class_ids
     fid(k) = fopen(strcat(output_path,'/val_',num2str(k),'.txt'), 'w');
 end
 % Go over the images GT
+counter = zeros(1, length(img_basenames)); 
 for i=1:length(img_basenames)
     if toc(t) > 10
         fprintf('  Loading on %i of %i\n', i,length(img_basenames));
@@ -130,17 +133,34 @@ for i=1:length(img_basenames)
     rec = VOCreadxml(sprintf('%s/%s.xml',gtruth_dir, ...
         img_basenames{i}));
     if ~isfield(rec.annotation,'object')
+        % if annotation is not containing objects, the image is a negative!
+        fprintf('Warning image %s does not contain objects -> negative.\n', img_path)     
+        for k = class_ids
+            fprintf(fid(k), '%s %d \n', img_name, -1);
+        end
+        counter(i) = 1;
         continue;
     end
     objects = rec.annotation.object;
     % scan objects
+    ignored_objs = 0;
     for j = 1:length(objects)
         if strcmp(objects(j).name, blackobj)
+            ignored_objs = ignored_objs + 1;
+            % if all objs are blacklisted, the image become is a negative!
+            if ignored_objs==length(objects)        
+                fprintf('Warning all obj of image %s are blacklisted -> negative.\n', img_path)     
+                for k = class_ids 
+                    fprintf(fid(k), '%s %d \n', img_name, -1);
+                end
+                counter(i) = 1;
+            end
             continue; % just ignore this detection
         end
         id_object = get_class2node(hash, objects(j).name);
         % wrote positive output file
         fprintf(fid(id_object), '%s %d \n', img_name, 1);
+        counter(i) = 1;
         % wrote negative output files
         not_id_object = setdiff(class_ids, id_object);
         for k = not_id_object
@@ -156,6 +176,7 @@ end
 for k = class_ids
     fclose(fid(k));
 end
+assert(sum(counter)==20121)
 
 
 %% Create test*.txt
@@ -181,3 +202,4 @@ for i=1:length(test_list{1})
     end
 end
 fclose(fid);
+assert(sum(counter)==40152)
