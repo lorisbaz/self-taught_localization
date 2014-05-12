@@ -353,6 +353,7 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
         for bb in pi.get_bboxes():
             feat = pi.get_ai().extract_features(bb)
             bb.confidence = detector.predict(feat)
+        pi.save_marks_and_confidences()
     # select pos and neg bboxes, building our train set
     pos_bboxes = []
     if pi.label == 1:
@@ -397,22 +398,22 @@ def PipelineDetector_evaluate_single_image(pi, detector, category, \
     # logging.info('Elaborating test key: {0}'.format(pi.key))
     # extract the features for this image
     Xtest = None
-    for idx_bb, bb in enumerate(pi.get_bboxes()):
+    bboxes = pi.get_bboxes()
+    for idx_bb, bb in enumerate(bboxes):
         feat = pi.get_ai().extract_features(bb)
         if Xtest == None:
-            Xtest = np.empty((len(pi.get_bboxes()),feat.size), dtype=float)
+            Xtest = np.empty((len(bboxes),feat.size), dtype=float)
         Xtest[idx_bb, :] = feat
     # predict the confidences
     # TODO: save the raw confidences to the disk (useful for future purposes),
     #       and return a new pi
     confidences = detector.predict(Xtest)
     assert len(confidences) == Xtest.shape[0]
-    assert len(confidences) == len(pi.get_bboxes())
-    for idx_bb, bb in enumerate(pi.get_bboxes()):
+    assert len(confidences) == len(bboxes)
+    for idx_bb, bb in enumerate(bboxes):
         bb.confidence = confidences[idx_bb]
     # perform NMS
-    pred_bboxes = [bb.copy() for bb in pi.get_bboxes()]
-    pred_bboxes = BBox.non_maxima_suppression(pred_bboxes, threshold_duplicates)
+    pred_bboxes = BBox.non_maxima_suppression(bboxes, threshold_duplicates)
     # calculate the Stats
     gt_bboxes = pi.get_gt_bboxes()
     stats = Stats()
@@ -511,6 +512,7 @@ class PipelineDetector:
                 logging.info('Evaluation the model of iteration {0}'.format( \
                              iteration))
                 stats = self.evaluate()
+                logging.info('AP: {0}'.format(stats.average_prec))
                 dump_obj_to_file_using_pickle(stats, fname, 'binary')
                 stats.save_mat(fname_mat)
 

@@ -5,6 +5,7 @@ import sklearn.cross_validation
 from sklearn.cross_validation import KFold
 import sklearn.svm
 import sklearn.metrics
+import sklearn.preprocessing
 import sys
 
 from util import *
@@ -104,9 +105,12 @@ class DetectorLinearSVMParams(DetectorParams):
          Call: list of hyperparameters C for the SVM
          numCV: number of CV fold to execute (if at training time the
                 validation set is not specifyed)
+         normalizer: if not None, it can be a string 'l1' or 'l2',
+                which normalizes the individual feature vectors **in place**.
         """
-        self.Call = [10**x for x in range(-4, 4)]
+        self.Call = [10**x for x in range(-4, 3)]
         self.numCV = 5
+        self.normalize_features = None
 
 class DetectorLinearSVM(Detector):
     """
@@ -118,11 +122,19 @@ class DetectorLinearSVM(Detector):
         """ *** PRIVATE CONSTRUCTOR *** """
         self.Call = params.Call
         self.numCV = params.numCV
+        self.params = params
         self.svm = None
 
     def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
         # check the input
         Detector.train(self, Xtrain, Ytrain, Xval, Yval)
+        # normalize the input, if requested
+        norm = self.params.normalize_features
+        if norm != None:
+            assert norm=='l1' or norm=='l2'
+            sklearn.preprocessing.normalize(Xtrain, norm=norm, copy=False)
+            if Xval:
+                sklearn.preprocessing.normalize(Xval, norm=norm, copy=False)
         # for each hyperparameter:
         bestAP = -sys.float_info.max
         bestC = None
@@ -145,7 +157,7 @@ class DetectorLinearSVM(Detector):
                                 svm, Xtrain, Ytrain,
                                 scoring='average_precision', cv=cv_mode)
                 ap = np.mean(cv_scores)
-                logging.info('cv_scores:{0}; ap:{1}'.format(cv_scores, ap))
+                #logging.info('cv_scores:{0}; ap:{1}'.format(cv_scores, ap))
             # keep the best ap
             if ap > bestAP:
                 bestAP = ap
@@ -153,10 +165,16 @@ class DetectorLinearSVM(Detector):
         # re-train the SVM on the whole dataset using the best C
         self.svm = self.build_svm_(bestC)
         self.svm.fit(Xtrain, Ytrain)
+        assert self.svm.classes_[1] == 1
 
     def predict(self, Xtest):
         # check the input
         Detector.predict(self, Xtest)
+        # normalize the input, if requested
+        norm = self.params.normalize_features
+        if norm != None:
+            assert norm=='l1' or norm=='l2'
+            sklearn.preprocessing.normalize(Xtest, norm=norm, copy=False)
         # predict
         Spred = self.svm.decision_function(Xtest)
 	return Spred

@@ -11,7 +11,7 @@ class FeatureExtractorParams():
     """
     def __init__(self):
         raise NotImplementedError()
-        
+
 class FeatureExtractor():
     """
     Extractor features from an AnnotatedImage.
@@ -50,26 +50,28 @@ class FeatureExtractor():
         if isinstance(params, FeatureExtractorNetworkParams):
             return FeatureExtractorNetwork(anno_image, params)
         elif isinstance(params, FeatureExtractorFakeParams):
-            return FeatureExtractorFake()
+            return FeatureExtractorFake(anno_image, params)
+        elif isinstance(params, FeatureExtractorMatlabGTSSParams):
+            return FeatureExtractorMatlabGTSS(anno_image, params)
         else:
             raise ValueError('FeatureExtractorParams instance not recognized')
-    
+
 #=============================================================================
 
 class FeatureExtractorFakeParams(FeatureExtractorParams):
     def __init__(self):
         pass
-        
+
 class FeatureExtractorFake(FeatureExtractor):
     """
     Fake feature extractor module, for debugging purposes.
     """
 
-    def __init__(self):
+    def __init__(self, anno_image, params):
         """  *** PRIVATE CONSTRUCTOR *** """
         self.name = 'FeatureExtractorFake'
         self.num_feats = 5
-    
+
     def extract(self, bboxes):
         """
         Return a matrix of ones.
@@ -78,7 +80,7 @@ class FeatureExtractorFake(FeatureExtractor):
 
     def get_cache(self):
         return 123
-    
+
 #=============================================================================
 
 class FeatureExtractorNetworkParams(FeatureExtractorParams):
@@ -87,7 +89,7 @@ class FeatureExtractorNetworkParams(FeatureExtractorParams):
         self.netparams = netparams
         self.layer = layer
         self.cache_features = cache_features
-    
+
     def get_id_desc(self):
         name = str(self.netparams.__class__).replace('Params','')
         return 'name:{0}-layer:{1}'.format(name, self.layer)
@@ -95,7 +97,7 @@ class FeatureExtractorNetworkParams(FeatureExtractorParams):
 class FeatureExtractorNetwork(FeatureExtractor):
     """
     Extract features using a Network object.
-    
+
     The cached features are saved in a dictionary field of key
     FeatureExtractorNetworkParams.get_id_desc(), which is a dictionary
     with the following fields:
@@ -106,20 +108,20 @@ class FeatureExtractorNetwork(FeatureExtractor):
 
     NOTE: for efficiency reason and simplicitly, the current implementation
           allows only one type of network during the entire life of
-          this class.          
+          this class.
     """
-    
+
     # network to use during the life of any FeatureExtractorCaffe object
     network_ = None
     params_ = None
 
     def __init__(self, anno_image, params):
         """
-        *** PRIVATE CONSTRUCTOR *** 
-        
+        *** PRIVATE CONSTRUCTOR ***
+
         Input: AnnotatedImage and FeatureExtractorNetworkParams
         """
-        from annotatedimage import * # HACK: known circular import problem 
+        from annotatedimage import * # HACK: known circular import problem
         assert isinstance(anno_image, AnnotatedImage)
         assert isinstance(params, FeatureExtractorNetworkParams)
         self.name = 'FeatureExtractorNetwork'
@@ -141,7 +143,7 @@ class FeatureExtractorNetwork(FeatureExtractor):
         if modulename in self.anno_image.features:
             self.cache = self.anno_image.features[modulename]
         else:
-            self.cache = {} 
+            self.cache = {}
         if name not in self.cache:
             self.cache[name] = {}
             self.cache[name]['featdata'] = None
@@ -150,7 +152,7 @@ class FeatureExtractorNetwork(FeatureExtractor):
     def __getstate__(self):
         raise RuntimeError('__getstate__ is not supported for '\
                            'FeatureExtractorNetwork')
-        
+
     def extract(self, bboxes):
         # for each bbox:
         width = self.anno_image.image_width
@@ -187,7 +189,7 @@ class FeatureExtractorNetwork(FeatureExtractor):
                 # save the feature in the cache, if requested
                 if self.params.cache_features:
                     if self.cache[name]['featdata'] == None:
-                        self.cache[name]['featdata'] = feat                    
+                        self.cache[name]['featdata'] = feat
                     else:
                         self.cache[name]['featdata'] = \
                                np.vstack([self.cache[name]['featdata'], feat])
@@ -204,7 +206,61 @@ class FeatureExtractorNetwork(FeatureExtractor):
 
     def get_cache(self):
         return self.cache
-    
 
+#=============================================================================
 
+class FeatureExtractorMatlabGTSSParams(FeatureExtractorParams):
+    def __init__(self, mat_dir):
+        self.mat_dir = mat_dir
 
+    def get_id_desc(self):
+        return self.mat_dir
+
+class FeatureExtractorMatlabGTSS(FeatureExtractor):
+    """
+    TODO documentation.
+    """
+
+    def __init__(self, anno_image, params):
+        """
+        *** PRIVATE CONSTRUCTOR ***
+
+        Input: AnnotatedImage and FeatureExtractorNetworkParams
+        """
+        from annotatedimage import * # HACK: known circular import problem
+        assert isinstance(anno_image, AnnotatedImage)
+        assert isinstance(params, FeatureExtractorMatlabGTSSParams)
+        self.name = 'FeatureExtractorMatlabGTSS'
+        self.anno_image = anno_image
+        self.params = params
+        # inizialize the cache
+        modulename = self.name
+        name = self.params.get_id_desc()
+        assert modulename in self.anno_image.features
+        self.cache = self.anno_image.features[modulename]
+        name = self.params.get_id_desc()
+        self.cache[name]['featdata'] = self.cache[name]['featdata'].tocsc()
+        assert name in self.cache
+
+    def __getstate__(self):
+        raise RuntimeError('__getstate__ is not supported for '\
+                           'FeatureExtractorMatlabGTSS')
+
+    def extract(self, bboxes):
+        # retrieve the feats indexes to retrieve
+        name = self.params.get_id_desc()
+        feats = None
+        for idx_bb, bb in enumerate(bboxes):
+            idx = self.cache[name]['featidx'][bb.get_coordinates_str()]
+            feat = self.cache[name]['featdata'][idx, :]
+            feat = feat.todense() # convert to dense format
+            if feats == None:
+                feats = np.empty((len(bboxes), feat.size), dtype=float)
+            feats[idx_bb, :] = feat
+        # return
+        assert feats.shape[0] == len(bboxes)
+        assert feats.shape[1] > 0
+        return feats
+
+    def get_cache(self):
+        return self.cache

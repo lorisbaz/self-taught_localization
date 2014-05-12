@@ -91,17 +91,30 @@ class BBoxTest(unittest.TestCase):
                   bbox.BBox(0.6, 0.8, 0.7, 0.95, confidence=0.1), \
                   bbox.BBox(0.6, 0.8, 0.75, 0.9, confidence=0.7), \
                   bbox.BBox(0.1, 0.2, 0.4, 0.9, confidence=0.8) ]
+        # threshold 0.3
         bb = bbox.BBox.non_maxima_suppression(bboxes, 0.3)
         self.assertEqual(len(bboxes), 4)
         self.assertEqual(bboxes[0].confidence, 0.5)
         self.assertEqual(bboxes[1].confidence, 0.1)
         self.assertEqual(bboxes[2].confidence, 0.7)
-        self.assertEqual(bboxes[3].confidence, 0.8)        
+        self.assertEqual(bboxes[3].confidence, 0.8)
         self.assertEqual(len(bb), 2)
         self.assertEqual(bb[0].confidence, 0.8)
         self.assertEqual(bb[0].xmax, 0.4)
         self.assertEqual(bb[1].confidence, 0.7)
         self.assertEqual(bb[1].xmax, 0.75)
+        # threshold 1.0 (i.e. there is no NMS at all)
+        bb = bbox.BBox.non_maxima_suppression(bboxes, 1.0)
+        self.assertEqual(len(bboxes), 4)
+        self.assertEqual(bboxes[0].confidence, 0.5)
+        self.assertEqual(bboxes[1].confidence, 0.1)
+        self.assertEqual(bboxes[2].confidence, 0.7)
+        self.assertEqual(bboxes[3].confidence, 0.8)
+        self.assertEqual(len(bb), 4)
+        self.assertEqual(bb[0].confidence, 0.8)
+        self.assertEqual(bb[1].confidence, 0.7)
+        self.assertEqual(bb[2].confidence, 0.5)
+        self.assertEqual(bb[3].confidence, 0.1)
 
 #=============================================================================
 

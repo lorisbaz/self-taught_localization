@@ -11,21 +11,23 @@ from pipeline_detector import *
 if __name__ == "__main__":
     conf = Configuration()
     # *** FeatureExtractor
-    feature_extractor_params = load_obj_from_file_using_pickle( \
-                                       'featextractor_specs/000.pkl')
+    feature_extractor_params = FeatureExtractorMatlabGTSSParams( \
+                   '/home/ironfs/scratch/aleb/Data_projects/'\
+                   'detection/exp3/26_features')
     # *** Detector
     detector_params = DetectorLinearSVMParams()
-    #detector_params.normalize_features = 'l2'
     # *** PipelineDetectorParams
     params = PipelineDetectorParams()
     # experiment name
-    params.exp_name = 'exp25_03_TEMP6'
+    params.exp_name = 'exp25_04_TEMP2'
     # input
-    params.exp_name_input_train = 'exp24_04'
-    params.exp_name_input_test = 'exp24_02'
+    params.exp_name_input_train = 'exp26_02'
+    params.exp_name_input_test = 'exp26_01'
     # categories, splits
     params.categories_file = 'pascal2007/categories.txt'
     params.splits_dir = 'pascal2007'
+    # params.split_train_name = 'trainvalDBG'
+    # params.split_test_name = 'testDBG'
     params.split_train_name = 'trainval'
     params.split_test_name = 'test'
     # input/output dirs
@@ -43,9 +45,9 @@ if __name__ == "__main__":
     params.field_name_pos_bboxes = 'GT'
     params.field_name_bboxes = 'PRED:SELECTIVESEARCH'
     # neg_bboxes_overlapping_with_pos_params
-    params.neg_bboxes_overlapping_with_pos_params = [0.0, 0.3, 0.3, 1.0]
+    params.neg_bboxes_overlapping_with_pos_params = [0.2, 0.5, 0.5, 0.7]
     # number of iterations
-    params.num_iterations = 3
+    params.num_iterations = 2
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
@@ -58,25 +60,29 @@ if __name__ == "__main__":
     if 1:  # -- Local
         params.parfun_params_categories = vlg.util.parfun.ParFunDummyParams()
     # ParFun TRAINING
-    if 0:  # -- Anthill
+    if 1:  # -- Anthill
         params.parfun_params_training = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=2, \
                         progress_bar_params = params.progress_bar_params, \
-                        tmp_dir = parfun_tmpdir, max_tasks=500)
-    if 1:  # -- Local, multi-core
+                        tmp_dir = parfun_tmpdir, max_tasks=1000)
+    if 0:  # -- Local, multi-core
         params.parfun_params_training = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 12, \
                 progress_bar_params = params.progress_bar_params)
+    if 0:  # -- Local
+        params.parfun_params_training = vlg.util.parfun.ParFunDummyParams()
     # ParFun EVALUATION
-    if 0:  # -- Anthill
+    if 1:  # -- Anthill
         params.parfun_params_evaluation = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=2, \
                         progress_bar_params = params.progress_bar_params, \
-                        tmp_dir = parfun_tmpdir, max_tasks=500)
-    if 1:  # -- Local, multi-core
+                        tmp_dir = parfun_tmpdir, max_tasks=1000)
+    if 0:  # -- Local, multi-core
         params.parfun_params_evaluation = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 12, \
                 progress_bar_params = params.progress_bar_params)
+    if 0:  # -- Local
+        params.parfun_params_evaluation = vlg.util.parfun.ParFunDummyParams()
 
     # run just the first category
     params.categories_to_process = [0]

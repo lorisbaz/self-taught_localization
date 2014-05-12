@@ -109,6 +109,14 @@ class BBox:
     def copy(self):
         return copy.deepcopy(self)
 
+    def get_coordinates_str(self):
+        if isinstance(self.xmin, float):
+            return '{0:.4}:{1:.4}:{2:.4}:{3:.4}'\
+            .format(self.xmin, self.ymin, self.xmax, self.ymax)
+        else:
+            return '{0}:{1}:{2}:{3}'\
+            .format(self.xmin, self.ymin, self.xmax, self.ymax)
+
     @staticmethod
     def non_maxima_suppression(bboxes, iou_threshold):
         """
@@ -123,8 +131,8 @@ class BBox:
         if not bboxes:
             return []
         # make a copy of the bboxes, and sort them by confidence
-        bboxes = copy.deepcopy(bboxes)
-        bboxes.sort(key=lambda bb: bb.confidence, reverse=True)
+        bboxes = copy.copy(bboxes)
+        bboxes.sort(key=lambda bb: -bb.confidence)
         bboxes_out = []
         while len(bboxes) >= 1:
             bboxes_out.append(bboxes[0])
