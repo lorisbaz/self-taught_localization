@@ -113,6 +113,11 @@ for i=1:length(img_basenames)
         fprintf('  Loading on %i of %i\n', i,length(img_basenames));
         t = tic;
     end
+    % This is a corrupted image (manually checked!)
+    if strcmp(img_basenames{i}, 'ILSVRC2013_val_00004542')
+        fprintf('Warning image %s is corrupted.\n', gt_img_ids(i))
+        continue;
+    end
     % Retrieve objects in the blacklist
     blackimg = find(gt_img_ids(i) == validation_blacklistlist{1});
     if isempty(blackimg)
@@ -176,7 +181,7 @@ end
 for k = class_ids
     fclose(fid(k));
 end
-assert(sum(counter)==20121)
+assert(sum(counter)==20121-1) % -1, the corrupted image!
 
 
 %% Create test*.txt

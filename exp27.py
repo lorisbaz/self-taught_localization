@@ -29,7 +29,7 @@ def load_filenames_mapper(curr_image_set, conf):
     images = []
     if not os.path.exists(curr_image_set):
         logging.info('Warning: the file {0} doesn\'t exist'.\
-                                                format(curr_images_set))
+                                                format(curr_image_set))
     # Retrieve images list in the current file
     fd = open(curr_image_set)
     for line in fd:
