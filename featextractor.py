@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from annotatedimage import *
 from bbox import *

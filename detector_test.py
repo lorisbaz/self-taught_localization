@@ -34,17 +34,6 @@ class DetectorLinearSVMTest(unittest.TestCase):
         det = DetectorLinearSVM(params)
         det.train(self.Xtrain, self.Ytrain)
 
-    def test_train_cv2(self):
-        params = DetectorLinearSVMParams()
-        params.normalize_features = 'l2'
-        for i in range(self.Xtrain.shape[1]):
-            self.Xtrain[0,i] = float(i)
-        det = DetectorLinearSVM(params)
-        det.train(self.Xtrain, self.Ytrain)
-        n = math.sqrt(sum( [x*x for x in range(self.Xtrain.shape[1])] ))
-        for i in range(self.Xtrain.shape[1]):
-            self.assertAlmostEqual(self.Xtrain[0,i], i/float(n))
-
 #=============================================================================
 
 if __name__ == '__main__':

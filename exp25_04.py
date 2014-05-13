@@ -19,7 +19,7 @@ if __name__ == "__main__":
     # *** PipelineDetectorParams
     params = PipelineDetectorParams()
     # experiment name
-    params.exp_name = 'exp25_04_TEMP2'
+    params.exp_name = 'exp25_04_TEMP3'
     # input
     params.exp_name_input_train = 'exp26_02'
     params.exp_name_input_test = 'exp26_01'
