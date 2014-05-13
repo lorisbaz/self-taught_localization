@@ -46,6 +46,36 @@ class Configuration:
     - ilsvrc2012_segm_results_dir
            directory storing the segmentation results
 
+    ***** ILSVRC 2013 detection *****
+    - ilsvrc2013_root_images_dir
+           root directory storing all the images
+    - ilsvrc2013_train_images_dir
+           directory storing the training images
+    - ilsvrc2013_val_images_dir
+           directory storing the validation images
+    - ilsvrc2013_test_images_dir
+           directory storing the test images
+
+    - ilsvrc2013_val_images
+           list of validation images (each entry is "val/imagename.JPEG")
+
+    - ilsvrc2013_classid_wnid_words
+           containing the classid, wnid and words (separated by a tab),
+           according the official ILSVRC2012 specification
+    - ilsvrc2013_train_box_gt
+           directory containing the XML files of the training bbox information
+    - ilsvrc2013_val_box_gt
+           directory containing the XML files of the validation bbox information
+
+    - ilsvrc2013_decaf_model_spec
+           the meta file for decaf
+    - ilsvrc2013_decaf_model
+           the trained model for decaf
+
+    - ilsvrc2013_caffe_model_spec
+    - ilsvrc2013_caffe_model
+    - ilsvrc2013_caffe_wnids_words
+            the ordered list of wnids and words used by the caffe
 
     ***** PASCAL VOC 2007 *****
     - pascal2007_root_dir
@@ -118,16 +148,23 @@ class Configuration:
             # ***** ILSVRC 2013 Detection *****
             ilsvrc2013_root = \
                         '/home/ironfs/scratch/vlg/Data/Images/ILSVRC2013/DET'
+            ilsvrc2013_splits_root = './ILSVRC2013_det'
             self.ilsvrc2013_root_images_dir = ilsvrc2013_root
             self.ilsvrc2013_train_images_dir = ilsvrc2013_root + '/train'
             self.ilsvrc2013_val_images_dir = ilsvrc2013_root + '/val'
             self.ilsvrc2013_test_images_dir = ilsvrc2013_root + '/test'
-            self.ilsvrc2013_train_images = ilsvrc2013_root + '/train_images.txt'
-            self.ilsvrc2013_val_images = ilsvrc2013_root + '/val_images.txt'
-            self.ilsvrc2013_train_labels = ilsvrc2013_root + '/train_labels.txt'
-            self.ilsvrc2013_val_labels = ilsvrc2013_root + '/val_labels.txt'
+            self.ilsvrc2013_train_images = \
+                            ilsvrc2013_splits_root + '/train_{0}.txt'
+            self.ilsvrc2013_val_images = \
+                            ilsvrc2013_splits_root + '/val_{0}.txt'
+            self.ilsvrc2013_test_images = \
+                            ilsvrc2013_splits_root + '/test.txt'
             self.ilsvrc2013_train_box_gt = ilsvrc2013_root + '/bbox_train'
             self.ilsvrc2013_val_box_gt = ilsvrc2013_root + '/bbox_val'
+            # We select the subset of labels that overlaps with ILSVRC2012,
+            # decomment the second line if you want all the label
+            self.ilsvrc2013_classid_wnid_words_overlap = \
+                ilsvrc2013_root + '/label_subset_overlap_with_ILSVRC2012.txt'
             self.ilsvrc2013_classid_wnid_words = \
                 ilsvrc2013_root + '/classid_wnid_words.txt'
             self.ilsvrc2013_decaf_model_spec = \
@@ -145,9 +182,9 @@ class Configuration:
             self.ilsvrc2013_caffe_wnids_words = \
                 ilsvrc2013_root + '/caffe_model_131211'\
                 '/synset_words.txt'
-       	    self.ilsvrc2013_segm_results_dir = \
-                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'\
-                 '/segment_ILSVRC2013'
+       	    #self.ilsvrc2013_segm_results_dir = \
+            #     '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'\
+            #     '/segment_ILSVRC2013'
             # ***** PASCAL VOC 2007 *****
             self.pascal2007_root_dir = \
                 '/home/ironfs/scratch/vlg/Data/Images/PASCAL_VOC_2007'
