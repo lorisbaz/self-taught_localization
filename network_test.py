@@ -4,7 +4,7 @@ from configuration import *
 import unittest
 import numpy as np
 
-@unittest.skip("Skipping Decaf Test")
+#@unittest.skip("Skipping Decaf Test")
 class NetworkDecafTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()

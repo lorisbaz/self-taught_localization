@@ -47,9 +47,9 @@ class ComputeStatParams:
         # create also some statistics using a variable number of predictions/image
         self.stats_using_num_pred_bboxes_image = range(1,16)
         self.stats_using_num_pred_bboxes_image.extend([20, 30, 50, 100, 200, \
-                                                     500, 1000, 2000, 3000, 5000]) 
+                                                     500, 1000, 2000, 3000, 5000])
         # max num of subwindows generated per image (if 0, take them all)
-        self.max_subwin = max(self.stats_using_num_pred_bboxes_image) 
+        self.max_subwin = max(self.stats_using_num_pred_bboxes_image)
         # delete the pred_objects from the AnnotatedImages, to save storage
         # and speed-up the unpickling
         self.delete_pred_objects = True
@@ -57,13 +57,12 @@ class ComputeStatParams:
         self.output_dir = conf.experiments_output_directory \
                             + '/' + self.exp_name
         self.input_dir = conf.experiments_output_directory \
-                            + '/' + self.exp_name_input 
+                            + '/' + self.exp_name_input
         # parallelize the script on Anthill?
         self.run_on_anthill = True
-        self.run_stat_pipeline = True
         # Set jobname in case the process stop or crush
         self.task = []
-    
+
 def compute_statistics_exp(input_exp, run_on_anthill = True, \
                              run_stat_pipeline = True, stats_per_class = True,\
                              tasks = [], params=None):
@@ -86,7 +85,7 @@ def compute_statistics_exp(input_exp, run_on_anthill = True, \
         params = ComputeStatParams(input_exp)
         params.run_on_anthill = run_on_anthill
         params.run_stat_pipeline = run_stat_pipeline
-        params.tasks = tasks
+        params.task = tasks
     logging.info('Started')
     # RUN THE EXPERIMENT
     if stats_per_class:
@@ -123,7 +122,7 @@ def pipeline(inputdb, outputdb, params):
             if params.nms_execution:
                 pred_bboxes = BBox.non_maxima_suppression( \
                                      pred_bboxes, params.nms_iou_threshold)
-            # Extract stats 
+            # Extract stats
             stat_obj = Stats()
             stat_obj.compute_stats(pred_bboxes, gt_bboxes, \
                                    params.IoU_threshold, \
@@ -194,12 +193,12 @@ def run_exp(params):
             assert len(anno.stats.keys()) == 1, 'Only one classifier is supp.'
             classifier = anno.stats.keys()[0]
             stats_list.append(anno.stats[classifier])
-    # ** Aggregate results 
+    # ** Aggregate results
     logging.info('** Aggregating stats **')
     num_bins = 32
     if params.calculate_histogram:
         stats_aggr, hist_overlap = Stats.aggregate_results(stats_list, num_bins)
-        # Figure: IoU histogram   (plt.hist(stats_aggr.overlap, num_bins))    
+        # Figure: IoU histogram   (plt.hist(stats_aggr.overlap, num_bins))
         plt.bar((hist_overlap[1][0:-1]+hist_overlap[1][1:])/2, hist_overlap[0], \
                 width = 1/float(num_bins))
         #plt.hist(stats_aggr.overlap, num_bins)
@@ -268,13 +267,13 @@ def pipeline_per_class(inputdb, outputdb, params):
         stat_obj = {}
         gt_bboxes, gt_lab = Stats.flat_anno_bboxes(anno.gt_objects)
         for classifier in anno.pred_objects.keys():
-            # Get estimated bboxes 
+            # Get estimated bboxes
             pred_bboxes, pred_lab = Stats.flat_anno_bboxes( \
                                     anno.pred_objects[classifier])
             # execute NMS, if requested
             if params.nms_execution:
                 pred_bboxes = BBox.non_maxima_suppression( \
-                                     pred_bboxes, params.nms_iou_threshold)            
+                                     pred_bboxes, params.nms_iou_threshold)
             # Extract stats for all the GT bboxes -> special keywords 'ALL'
             stat_obj['ALL'] = Stats()
             stat_obj['ALL'].compute_stats(pred_bboxes, gt_bboxes, \
@@ -359,13 +358,13 @@ def run_exp_per_class(params):
                     stats_list[label] = [anno.stats[classifier][label]]
                 else: #... then append
                     stats_list[label].append(anno.stats[classifier][label])
-    # ** Aggregate results 
+    # ** Aggregate results
     logging.info('** Aggregating stats **')
     num_bins = 32
     if params.calculate_histogram: # considers only the case of ALL gt!
         stats_aggr, hist_overlap = Stats.aggregate_results(stats_list['ALL'],\
                                                              num_bins)
-        # Figure: IoU histogram   (plt.hist(stats_aggr.overlap, num_bins))    
+        # Figure: IoU histogram   (plt.hist(stats_aggr.overlap, num_bins))
         plt.bar((hist_overlap[1][0:-1]+hist_overlap[1][1:])/2, \
                             hist_overlap[0], width = 1/float(num_bins))
         #plt.hist(stats_aggr.overlap, num_bins)
@@ -378,7 +377,7 @@ def run_exp_per_class(params):
     if len(params.stats_using_num_pred_bboxes_image) > 0:
         recall_mean = np.zeros(len(params.stats_using_num_pred_bboxes_image))
         precision_mean = np.zeros(len(\
-                                params.stats_using_num_pred_bboxes_image))      
+                                params.stats_using_num_pred_bboxes_image))
         average_precision_mean = np.zeros(len(\
                                 params.stats_using_num_pred_bboxes_image))
         ABO_mean = np.zeros(len(params.stats_using_num_pred_bboxes_image))

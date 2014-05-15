@@ -132,18 +132,19 @@ class NetworkFake(Network):
 
 class NetworkDecafParams(NetworkParams):
     def __init__(self, model_spec_filename, model_filename,\
-                 wnid_words_filename, center_only = False):
+                 wnid_words_filename, center_only = False, wnid_subset = []):
         self.model_spec_filename = model_spec_filename
         self.model_filename = model_filename
         self.wnid_words_filename = wnid_words_filename
         self.center_only = center_only
+        self.wnid_subset =  wnid_subset
 
 class NetworkDecaf(Network):
     """
     Implementation for the Decaf library.
     """
     def __init__(self, model_spec_filename, model_filename=None,\
-                 wnid_words_filename=None, center_only=False):
+                 wnid_words_filename=None, center_only=False, wnid_subset = []):
         """
         *** PRIVATE CONSTRUCTOR ***
         """
@@ -155,6 +156,9 @@ class NetworkDecaf(Network):
             model_filename = params.model_filename
             wnid_words_filename = params.wnid_words_filename
             center_only = params.center_only
+            wnid_subset = params.wnid_subset
+            if wnid_subset!=[]:
+                print 'Warning: subset of labels not supported yet'
         else:
             assert isinstance(model_spec_filename, str)
             assert model_filename != None

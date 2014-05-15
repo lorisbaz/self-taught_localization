@@ -52,18 +52,6 @@ def load_filenames_reducer(image_lists):
     image_list = list(set(image_list))
     return image_list
 
-def get_wnids(classid_wnid_words_file):
-    fd = open(classid_wnid_words_file)
-    wnids = {}
-    locids = []
-    for line in fd:
-        temp = line.strip().split('\t')
-        locids.append(int(temp[0].strip()))
-        wnids[temp[1].strip()] = temp[2].strip()
-    fd.close()
-    assert len(locids) == len(wnids)
-    return locids, wnids
-
 def get_filenames(params):
     """
     Return a list of (wnid, filename) for all the files

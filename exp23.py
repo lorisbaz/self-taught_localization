@@ -22,27 +22,40 @@ from network import *
 
 class Params:
     def __init__(self):
-        # If ON, instead of obuscating the segment, we obfuscate the 
-        #  bbox sorrounding the segment. 
-        self.obfuscate_bbox = False       
+        # If ON, instead of obuscating the segment, we obfuscate the
+        #  bbox sorrounding the segment.
+        self.obfuscate_bbox = False
         # Use the GT label instead of the set of topC labels predicted
         # by the classifier
         self.use_fullimg_GT_label = False
-                
+        # If True, we select the subset of classes that overlap between
+        # ILSVRC2012-class and ILSVRC2013-det
+        self.select_subset_overlap_ilsvrc2012_ilsvrc2013 = False
+
+
 def pipeline(inputdb, outputdb, params):
     # Instantiate some objects, and open the database
     conf = params.conf
+    if params.select_subset_overlap_ilsvrc2012_ilsvrc2013:
+        # Retrieve wnids (used to rule out GTs)
+        locids, wnids_my_subset = \
+                    get_wnids(conf.ilsvrc2013_classid_wnid_words_overlap)
+    else:
+        wnids_my_subset = []
     if params.classifier=='CAFFE':
-        net = NetworkCaffe(conf.ilsvrc2012_caffe_model_spec, \
+        netParams = NetworkCaffeParams(conf.ilsvrc2012_caffe_model_spec, \
                            conf.ilsvrc2012_caffe_model, \
                            conf.ilsvrc2012_caffe_wnids_words, \
                            conf.ilsvrc2012_caffe_avg_image, \
-                           center_only = params.center_only)
+                           center_only = params.center_only,\
+                           wnid_subset = wnids_my_subset)
     elif params.classifier=='DECAF':
-        net = NetworkDecaf(conf.ilsvrc2012_decaf_model_spec, \
+        netParams = NetworkDecafParams(conf.ilsvrc2012_decaf_model_spec, \
                            conf.ilsvrc2012_decaf_model, \
                            conf.ilsvrc2012_classid_wnid_words, \
-                           center_only = params.center_only)
+                           center_only = params.center_only,\
+                           wnid_subset = wnids_my_subset)
+    net = Network.create_network(netParams)
     segmenter = ImgSegm_ObfuscationSearch(net, params.ss_version, \
                                    params.min_sz_segm, topC = params.topC,\
                                    alpha = params.alpha, \
@@ -52,7 +65,10 @@ def pipeline(inputdb, outputdb, params):
     db_input = bsddb.btopen(inputdb, 'r')
     db_output = bsddb.btopen(outputdb, 'c')
     db_keys = db_input.keys()
-    ss_label = 'none'
+    if not params.use_fullimg_GT_label:
+        classifier_name = 'OBFSEARCH_TOPC'
+    else:
+        classifier_name = 'OBFSEARCH_GT'
     # loop over the images
     for image_key in db_keys:
         # get database entry
@@ -63,33 +79,37 @@ def pipeline(inputdb, outputdb, params):
         # resize img to fit the size of the network
         image_resz = skimage.transform.resize(img,\
                                     (net.get_input_dim(), net.get_input_dim()))
-        image_resz = skimage.img_as_ubyte(image_resz) 
-        # extract segments
-        if not params.use_fullimg_GT_label:
-            segment_lists = segmenter.extract_greedy(image_resz)
-        else:
-            GT_label = anno.get_gt_label()
-            segment_lists = segmenter.extract_greedy(image_resz, label=GT_label)
+        image_resz = skimage.img_as_ubyte(image_resz)
         img_width, img_height = np.shape(image_resz)[0:2]
-        # Convert the segmentation lists to BBoxes
-        pred_bboxes_unnorm = segments_to_bboxes(segment_lists)
-        # Normalize the bboxes
-        pred_bboxes = []
-        for j in range(np.shape(pred_bboxes_unnorm)[0]):
-            pred_bboxes_unnorm[j].normalize_to_outer_box(BBox(0, 0, \
-                                                img_width, img_height))
-            pred_bboxes.append(pred_bboxes_unnorm[j])
-        # store results
-        pred_obj = AnnotatedObject(label=ss_label)
-        pred_obj.bboxes = pred_bboxes 
-        anno.pred_objects['SELECTIVESEARCH'] = {}
-        anno.pred_objects['SELECTIVESEARCH'][ss_label] = pred_obj
-        logging.info(str(anno))
-        # adding the AnnotatedImage with the heatmaps to the database 
-        logging.info('Adding the record to he database')
-        value = pickle.dumps(anno, protocol=2)
-        db_output[image_key] = value
-        logging.info('End record')
+        # extract segments
+        segment_lists = {}
+        if not params.use_fullimg_GT_label:
+            this_label = 'none'
+            segment_lists[this_label] = segmenter.extract_greedy(image_resz)
+        else:
+            for GT_label in  anno.gt_objects.keys():
+                segment_lists[GT_label] = segmenter.extract_greedy(image_resz,\
+                                                         label=GT_label)
+        anno.pred_objects[classifier_name] = {}
+        for this_label in segment_lists.keys():
+            # Convert the segmentation lists to BBoxes
+            pred_bboxes_unnorm = segments_to_bboxes(segment_lists[this_label])
+            # Normalize the bboxes
+            pred_bboxes = []
+            for j in range(np.shape(pred_bboxes_unnorm)[0]):
+                pred_bboxes_unnorm[j].normalize_to_outer_box(BBox(0, 0, \
+                                                    img_width, img_height))
+                pred_bboxes.append(pred_bboxes_unnorm[j])
+            # store results
+            pred_obj = AnnotatedObject(label = this_label)
+            pred_obj.bboxes = pred_bboxes
+            anno.pred_objects[classifier_name][this_label] = pred_obj
+            logging.info(str(anno))
+            # adding the AnnotatedImage to the database
+            logging.info('Adding the record to the database')
+            value = pickle.dumps(anno, protocol=2)
+            db_output[image_key] = value
+            logging.info('End record')
     # write the database
     logging.info('Writing file ' + outputdb)
     db_output.sync()
@@ -101,24 +121,6 @@ def run_exp(params):
     # create output directory
     if os.path.exists(params.output_dir) == False:
         os.makedirs(params.output_dir)
-    # change the protobuf file (for batch mode)
-    filetxt = open(params.conf.ilsvrc2012_caffe_model_spec)
-    # save new file locally
-    if params.classifier=='CAFFE':
-        params.conf.ilsvrc2012_caffe_model_spec = \
-                                            'imagenet_deploy_tmp.prototxt'
-        filetxtout = open(params.conf.ilsvrc2012_caffe_model_spec, 'w')
-        l = 0
-        for line in filetxt.readlines():
-            #print line
-            if l == 1: # second line contains num_dim
-                line_out = 'input_dim: ' + str(params.batch_sz) + '\n'
-            else:
-                line_out = line
-            filetxtout.write(line_out)        
-            l += 1        
-        filetxtout.close()
-        filetxt.close() 
     # list the databases chuncks
     n_chunks = len(glob.glob(params.input_dir + '/*.db'))
     # run the pipeline

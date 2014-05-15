@@ -10,10 +10,10 @@ class Stats:
     Public fields:
     - confidence: confidence of each predicted bbox
     - overlap: bboxes overlap vector accordingly to the PASCAL VOC criterion
-    - overlap_for_ABO: bboxes overlap matrix for all the predicted bboxes and 
+    - overlap_for_ABO: bboxes overlap matrix for all the predicted bboxes and
         GTs. It does not exclude the GT once associated to a prediction.
-    - maxoverlap_for_ABO: max over predicted bboxes (useful during the 
-        aggregation)    
+    - maxoverlap_for_ABO: max over predicted bboxes (useful during the
+        aggregation)
     - TP, FP: tru positive and false positive vectors
     - NPOS: number of GT bboxes
     - precision, recall: classic precision and recall (PASCAL VOC criterion)
@@ -30,7 +30,7 @@ class Stats:
         self.maxoverlap_for_ABO = []
         self.TP = []
         self.FP = []
-        self.NPOS = 0 
+        self.NPOS = 0
         self.precision = []
         self.recall = []
         self.ABO = []
@@ -44,7 +44,7 @@ class Stats:
                .format(self.overlap, self.TP, self.FP, self.NPOS, \
                        self.precision, self.recall, self.detection_rate, \
                        self.confidence, self.average_prec)
-                               
+
     def save_mat(self, fname):
         scipy.io.savemat(fname, \
                  {'confidence': self.confidence, \
@@ -60,21 +60,21 @@ class Stats:
     def compute_stats(self, pred_bboxes, gt_bboxes, IoU_threshold = 0.5, \
                       fp_overlap_zero = False, max_subwin = 0):
         """
-        Compute the statistics given a list of BBox objects of the 
-        predictions and the ground truth. IoU_threshols is the Intersection 
-        over Union threshold given by the PASCAL VOC evaluationa criteria. 
+        Compute the statistics given a list of BBox objects of the
+        predictions and the ground truth. IoU_threshols is the Intersection
+        over Union threshold given by the PASCAL VOC evaluationa criteria.
         Note: IoU is the same as Jaccard similarity.
         """
-        # Sort predictions by accuracy 
+        # Sort predictions by accuracy
         pred_confidence = []
         for i in range(len(pred_bboxes)):
             pred_confidence.append(pred_bboxes[i].confidence)
         idx_sort = np.argsort(pred_confidence)[::-1]
-        self.confidence = pred_confidence 
+        self.confidence = pred_confidence
         # Compute overlap (IoU) -> code translated from PASCAL VOC
         gt_det = np.zeros(len(gt_bboxes), 'bool')
-        self.FP = np.zeros(len(idx_sort))  
-        self.TP = np.zeros(len(idx_sort)) 
+        self.FP = np.zeros(len(idx_sort))
+        self.TP = np.zeros(len(idx_sort))
         self.overlap = np.zeros(len(idx_sort))
         for i in idx_sort:
             ovmax = 0.0
@@ -84,14 +84,14 @@ class Stats:
                 if ov>ovmax:
                     ovmax = ov
                     jmax = j
-            # check if it is FP or TP        
+            # check if it is FP or TP
             self.overlap[i] = ovmax
             if ovmax>=IoU_threshold:
                 if not(gt_det[jmax]):
                     self.TP[i] = 1 # true positive
                     gt_det[jmax] = True # association done!
                 else:
-                    self.FP[i] = 1 # false positive (multiple detection) 
+                    self.FP[i] = 1 # false positive (multiple detection)
                     if fp_overlap_zero:
                         self.overlap[i] = 0.0
             else:
@@ -102,18 +102,20 @@ class Stats:
             for i in idx_sort:
                 self.overlap_for_ABO[j,i] = \
                         pred_bboxes[i].jaccard_similarity(gt_bboxes[j])
-        # Store the tot num positive for the actual image 
-        self.NPOS = len(gt_bboxes) 
-        # Keep the top num_windows 
+        # Store the tot num positive for the actual image
+        self.NPOS = len(gt_bboxes)
+        if len(self.TP)==0:
+            logging.warning('These stats is empty!')
+        # Keep the top num_windows
         if max_subwin > 0:
             # select num_windows indexes
-            idx_sort = idx_sort[0:min(len(idx_sort), max_subwin)] 
+            idx_sort = idx_sort[0:min(len(idx_sort), max_subwin)]
             self.overlap = self.overlap[idx_sort]
             self.FP = self.FP[idx_sort]
             self.TP = self.TP[idx_sort]
             self.confidence = np.array(self.confidence)[idx_sort].tolist()
             # it is a list to keep compatibility
-            
+
     @staticmethod
     def flat_anno_bboxes(bboxes):
         bboxes_flat = []
@@ -129,7 +131,7 @@ class Stats:
     @staticmethod
     def aggregate_results(stats_list, n_bins=10, topN = float("inf")):
         """
-        Returns a Stats object that contains the aggregated statistics and the 
+        Returns a Stats object that contains the aggregated statistics and the
         histogram of overlapped regions.
           stats_aggr: Stats obj
           hist_overlap: ndarray of n_bins size
@@ -153,10 +155,10 @@ class Stats:
             stats_now.maxoverlap_for_ABO = np.max(np.array(stats_list[i].\
                                         overlap_for_ABO)[:, idx_sort], axis=1)
             stats_now.NPOS = stats_list[i].NPOS
-            # aggregate 
+            # aggregate
             stats_aggr.confidence.extend(stats_now.confidence)
             stats_aggr.TP.extend(stats_now.TP)
-            stats_aggr.FP.extend(stats_now.FP) 
+            stats_aggr.FP.extend(stats_now.FP)
             stats_aggr.overlap.extend(stats_now.overlap)
             stats_aggr.maxoverlap_for_ABO.extend(stats_now.maxoverlap_for_ABO)
             stats_aggr.NPOS += stats_now.NPOS
@@ -165,12 +167,12 @@ class Stats:
         stats_aggr.confidence = np.array(stats_aggr.confidence)[idx_sort]
         stats_aggr.TP = np.array(stats_aggr.TP)[idx_sort]
         stats_aggr.FP = np.array(stats_aggr.FP)[idx_sort]
-        stats_aggr.overlap = np.array(stats_aggr.overlap)[idx_sort] 
-        # Cumulative precision/recall (PASCAL stuff)    
+        stats_aggr.overlap = np.array(stats_aggr.overlap)[idx_sort]
+        # Cumulative precision/recall (PASCAL stuff)
         stats_aggr.recall = np.cumsum(stats_aggr.TP)/float(stats_aggr.NPOS)
         stats_aggr.precision = np.cumsum(stats_aggr.TP) / \
             np.float32((np.cumsum(stats_aggr.TP) + np.cumsum(stats_aggr.FP)))
-        # Compute the average precision        
+        # Compute the average precision
         stats_aggr.average_prec = 0.0
         for t in np.linspace(0,1,11):
             ps = stats_aggr.precision[stats_aggr.recall >= t]

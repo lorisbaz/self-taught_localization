@@ -18,6 +18,10 @@ import tempfile
 
 from bbox import *
 
+# Display info machine for debugging purposes
+logging.info(os.uname())
+
+
 class TempFile:
     def __init__(self, mapped_file='', copy=True):
         """
@@ -321,3 +325,14 @@ def remove_slash_and_extension_from_image_key(image_key, remove_string = ''):
         new_image_key = new_image_key.replace(remove_string, '')
     return new_image_key
 
+def get_wnids(classid_wnid_words_file):
+    fd = open(classid_wnid_words_file)
+    wnids = {}
+    locids = []
+    for line in fd:
+        temp = line.strip().split('\t')
+        locids.append(int(temp[0].strip()))
+        wnids[temp[1].strip()] = temp[2].strip()
+    fd.close()
+    assert len(locids) == len(wnids)
+    return locids, wnids
