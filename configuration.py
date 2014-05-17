@@ -103,7 +103,7 @@ class Configuration:
            root directory storing all the partial and final results
     """
 
-    def __init__(self):
+    def __init__(self, load_Girshick_caffe_model = False):
         hostname = os.uname()[1]
         if  'anthill' in hostname or \
             'bokken' in hostname or \
@@ -131,11 +131,18 @@ class Configuration:
                 ilsvrc2012_root + '/decaf_model_131205/imagenet.decafnet.meta'
             self.ilsvrc2012_decaf_model = \
                 ilsvrc2012_root +'/decaf_model_131205/imagenet.decafnet.epoch90'
-            self.ilsvrc2012_caffe_model_spec = \
-                './imagenet_deploy_GRAYOBFUSCATION.prototxt'
-            self.ilsvrc2012_caffe_model = \
-                ilsvrc2012_root + '/caffe_model_131211'\
-                '/caffe_reference_imagenet_model'
+            if not load_Girshick_caffe_model:
+                self.ilsvrc2012_caffe_model_spec = \
+                    './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                self.ilsvrc2012_caffe_model = \
+                    ilsvrc2012_root + '/caffe_model_131211'\
+                    '/caffe_reference_imagenet_model'
+            else:
+                self.ilsvrc2012_caffe_model_spec = \
+                    './rcnn_batch_256_output_fc7_GRAYOBFUSCATION.prototxt'
+                self.ilsvrc2012_caffe_model = \
+                    '/home/anthill/vlg/rcnn/data/caffe_nets' \
+                    '/ilsvrc_2012_train_iter_310k'
             self.ilsvrc2012_caffe_avg_image = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/ilsvrc_2012_mean.npy'
@@ -171,11 +178,18 @@ class Configuration:
                 ilsvrc2013_root + '/decaf_model_131205/imagenet.decafnet.meta'
             self.ilsvrc2013_decaf_model = \
                 ilsvrc2013_root +'/decaf_model_131205/imagenet.decafnet.epoch90'
-            self.ilsvrc2013_caffe_model_spec = \
-                './imagenet_deploy_GRAYOBFUSCATION.prototxt'
-            self.ilsvrc2013_caffe_model = \
-                ilsvrc2013_root + '/caffe_model_131211'\
-                '/caffe_reference_imagenet_model'
+            if not load_Girshick_caffe_model:
+                self.ilsvrc2013_caffe_model_spec = \
+                    './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                self.ilsvrc2013_caffe_model = \
+                    ilsvrc2013_root + '/caffe_model_131211'\
+                    '/caffe_reference_imagenet_model'
+            else:
+                self.ilsvrc2013_caffe_model_spec = \
+                    './rcnn_batch_256_output_fc7_GRAYOBFUSCATION.prototxt'
+                self.ilsvrc2013_caffe_model = \
+                    '/home/anthill/vlg/rcnn/data/caffe_nets' \
+                    '/ilsvrc_2012_train_iter_310k'
             self.ilsvrc2013_caffe_avg_image = \
                 ilsvrc2013_root + '/caffe_model_131211'\
                 '/ilsvrc_2012_mean.npy'

@@ -19,9 +19,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp23.Params()
     # experiment name
-    params.exp_name = 'exp23_12'
+    params.exp_name = 'exp23_13'
     # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp27_02'
+    params.exp_name_input = 'exp27_01'
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # default Configuration, image and label files

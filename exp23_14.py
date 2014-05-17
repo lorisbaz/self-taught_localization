@@ -19,7 +19,7 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp23.Params()
     # experiment name
-    params.exp_name = 'exp23_12'
+    params.exp_name = 'exp23_14'
     # input (GT AnnotatatedImages)
     params.exp_name_input = 'exp27_02'
     # Num elements in batch (for decaf/caffe eval)
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     params.min_sz_segm = 5 # keep this low (because we resize!!)
     params.alpha = np.array([1/3.0, 1/3.0, 1/3.0])
     params.obfuscate_bbox = True
-    params.use_fullimg_GT_label = False # if true params.topC is not used!
+    params.use_fullimg_GT_label = True # if true params.topC is not used!
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name

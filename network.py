@@ -376,7 +376,11 @@ class NetworkCaffe(Network):
         input_blob = [np.ascontiguousarray(image[np.newaxis], dtype=np.float32)]
         # forward pass to the network
         num = 1
-        num_output=1000
+        # hack to get the fc7 features
+        if layer_name == 'softmax' or layer_name == 'prob':
+            num_output=1000
+        elif layer_name == 'fc7':
+            num_output=4096
         output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
         self.net_.caffenet.Forward(input_blob, output_blobs)
         #assert layer_name == 'softmax', 'layer_name not supported'
