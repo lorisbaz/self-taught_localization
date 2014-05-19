@@ -44,11 +44,11 @@ if __name__ == "__main__":
     # neg_bboxes_overlapping_with_pos_params
     params.neg_bboxes_overlapping_with_pos_params = [0.0, 0.3, 0.3, 0.7]
     # number of iterations
-    params.num_iterations = 2
+    params.num_iterations = 3
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
-    parfun_tmpdir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP'
+    parfun_tmpdir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP2'
     if 0:  # -- Anthill
         params.parfun_params_categories = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=6, \
@@ -78,6 +78,6 @@ if __name__ == "__main__":
                 progress_bar_params = params.progress_bar_params)
 
     # run just the first category
-    params.categories_to_process = [0]
+    params.categories_to_process = []
     # *** run the pipeline
     PipelineDetector.train_evaluate_detectors(params)
