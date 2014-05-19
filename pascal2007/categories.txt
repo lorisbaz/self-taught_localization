@@ -9,7 +9,7 @@ cat
 chair
 cow
 diningtable
-dog'
+dog
 horse
 motorbike
 person
