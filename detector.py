@@ -114,6 +114,8 @@ class DetectorLinearSVM(Detector):
     Simple implementation of a detector: L2-L1 Batch Linear SVM.
     We use the Average Precision for model selection.
     If the validation set is not specifyed, we do Cross-Validation.
+    If the Call list contains a single element, we just train the model
+    using that parameter, whether Xval is specified or not.
     """
     def __init__(self, params):
         """ *** PRIVATE CONSTRUCTOR *** """
@@ -129,6 +131,9 @@ class DetectorLinearSVM(Detector):
         bestAP = -sys.float_info.max
         bestC = None
         for C in self.Call:
+            if len(self.Call) == 1:
+                bestC = self.Call[0]
+                break
             logging.info('Train C={0}'.format(C))
             # validation mode
             if len(Xval) and len(Yval):
