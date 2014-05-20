@@ -105,10 +105,13 @@ class DetectorLinearSVMParams(DetectorParams):
          Call: list of hyperparameters C for the SVM
          numCV: number of CV fold to execute (if at training time the
                 validation set is not specifyed)
+         B: regularization of the bias (i.e. param intercept_scaling in sklearn)
+         class_weight: either 'auto' or a dictionary {label -1/2 -> weight}
         """
         self.Call = [10**x for x in range(-4, 3)]
         self.numCV = 5
         self.B = 1.0
+        self.class_weight = 'auto'
 
 class DetectorLinearSVM(Detector):
     """
@@ -128,6 +131,12 @@ class DetectorLinearSVM(Detector):
     def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
         # check the input
         Detector.train(self, Xtrain, Ytrain, Xval, Yval)
+        if isinstance(self.params.class_weight, str):
+            assert self.params.class_weight == 'auto'
+        else:
+            assert isinstance(self.params.class_weight, dict)
+            assert 1 in self.params.class_weight
+            assert -1 in self.params.class_weight
         # for each hyperparameter:
         bestAP = -sys.float_info.max
         bestC = None
@@ -138,13 +147,13 @@ class DetectorLinearSVM(Detector):
             logging.info('Train C={0}'.format(C))
             # validation mode
             if len(Xval) and len(Yval):
-                svm = self.build_svm_(C, self.params.B)
+                svm = self.build_svm_(C)
                 svm.fit(Xtrain, Ytrain)
                 Spred = svm.decision_function(Xval)
                 ap = sklearn.metrics.average_precision_score(Yval, Spred)
             # cross-validation mode
             else:
-                svm = self.build_svm_(C, self.params.B)
+                svm = self.build_svm_(C)
                 n_samples = Ytrain.shape[0]
                 cv_mode = sklearn.cross_validation.KFold( \
                                n_samples, n_folds=self.numCV, \
@@ -159,7 +168,7 @@ class DetectorLinearSVM(Detector):
                 bestAP = ap
                 bestC = C
         # re-train the SVM on the whole dataset using the best C
-        self.svm = self.build_svm_(bestC, self.params.B)
+        self.svm = self.build_svm_(bestC)
         self.svm.fit(Xtrain, Ytrain)
         assert self.svm.classes_[1] == 1
 
@@ -170,10 +179,11 @@ class DetectorLinearSVM(Detector):
         Spred = self.svm.decision_function(Xtest)
 	return Spred
 
-    @staticmethod
-    def build_svm_(C, B):
+    def build_svm_(self, C):
+        B = self.params.B
         svm = sklearn.svm.LinearSVC( \
                 penalty='l2', loss='l1', dual=True, tol=0.0001,
                 C=C, fit_intercept=True, intercept_scaling=B, \
-                class_weight='auto', verbose=0, random_state=0)
+                class_weight=self.params.class_weight, \
+                verbose=0, random_state=0)
         return svm
