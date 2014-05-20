@@ -49,7 +49,7 @@ if __name__ == "__main__":
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
-    parfun_tmpdir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP2'
+    parfun_tmpdir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP'
     if 0:  # -- Anthill
         params.parfun_params_categories = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=6, \
