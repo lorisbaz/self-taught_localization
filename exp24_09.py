@@ -15,9 +15,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params.conf = conf
     # experiment name
-    params.exp_name = 'exp24_08'
+    params.exp_name = 'exp24_09'
     # input
-    params.exp_name_input = 'exp23_08stats_NMS_05'
+    params.exp_name_input = ['exp23_08stats_NMS_05', 'exp14_08']
     # export parameters
     params.max_num_bboxes = 10
     # Num elements in batch (for decaf/caffe eval)
@@ -29,8 +29,9 @@ if __name__ == "__main__":
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
-    params.input_dir = conf.experiments_output_directory \
-                        + '/' + params.exp_name_input
+    params.input_dir = []
+    for names in params.exp_name_input:
+        params.input_dir.append(conf.experiments_output_directory + '/' + names)
     # parallelize the script on Anthill?
     params.run_on_anthill = True
     # list of tasks to execute

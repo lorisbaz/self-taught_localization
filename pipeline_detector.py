@@ -110,6 +110,12 @@ class PipelineDetectorParams:
         # max number of negative images per category
         self.max_train_neg_images_per_category = sys.maxint
 
+        # max number of bboxes per image at testing time
+        self.max_per_image = sys.maxint
+        # total number of bboxes considered at testing time for each category;
+        # this factor is multiplied by the # of images in the testing set
+        self.max_per_set_factor = -1 # -1 means skip the step
+
 #==============================================================================
 
 class PipelineImage:
@@ -393,8 +399,8 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
     # return a tuple
     return (Xtrain, Ytrain, pi)
 
-def PipelineDetector_evaluate_single_image(pi, detector, category, \
-                                           threshold_duplicates):
+def PipelineDetector_evaluate_bbox_single_image(pi, detector, category,\
+                                            max_per_image = sys.maxint):
     # logging.info('Elaborating test key: {0}'.format(pi.key))
     # extract the features for this image
     Xtest = None
@@ -412,6 +418,12 @@ def PipelineDetector_evaluate_single_image(pi, detector, category, \
     assert len(confidences) == len(bboxes)
     for idx_bb, bb in enumerate(bboxes):
         bb.confidence = confidences[idx_bb]
+    # Keep the max_per_image bboxes
+    idx_ord = np.argsort(confidences.T)[::-1]
+    idx_ord = idx_ord[:min(len(idx_ord), max_per_image)].T
+    return [bboxes[i] for i in idx_ord]
+
+def PipelineDetector_evaluate_single_image(pi, bboxes, threshold_duplicates):
     # perform NMS
     pred_bboxes = BBox.non_maxima_suppression(bboxes, threshold_duplicates)
     # calculate the Stats
@@ -548,15 +560,31 @@ class PipelineDetector:
 
     def evaluate(self):
         """ calculate the stats for the current model """
-        # calculate stats for the individual images
-        parfun = vlg.util.parfun.ParFun.create(self.params.parfun_params_evaluation)
-        parfun.set_fun(PipelineDetector_evaluate_single_image)
+        # Calculate BBoxes for the individual images and filter
+        parfun = vlg.util.parfun.ParFun.create(\
+                                        self.params.parfun_params_evaluation)
+        parfun.set_fun(PipelineDetector_evaluate_bbox_single_image)
         for pi in self.test_set:
             parfun.add_task(pi, self.detector, self.category, \
+                            self.params.max_per_image)
+        bboxes_all = parfun.run()
+        assert len(bboxes_all)==len(self.test_set)
+        # Filter bboxes (if max_per_set_factor is set)
+        logging.info('Aggregating bounding boxes...')
+        bboxes_all = self.aggregate_filter_bboxes_(bboxes_all, \
+                        max_per_set_factor = self.params.max_per_set_factor)
+        # Run the stats pipeline (with NMS)
+        logging.info('Computing Stats...')
+        parfun = vlg.util.parfun.ParFun.create(\
+                                        self.params.parfun_params_evaluation)
+        parfun.set_fun(PipelineDetector_evaluate_single_image)
+        for i in range(len(self.test_set)):
+            pi = self.test_set[i]
+            parfun.add_task(pi, bboxes_all[i], \
                             self.params.threshold_duplicates)
         stats_all = parfun.run()
         assert len(stats_all)==len(self.test_set)
-        # aggregate the stats for this detector
+        # Aggregate the stats for this detector
         stats, hist_overlap = Stats.aggregate_results(stats_all)
         return stats
 
@@ -587,6 +615,54 @@ class PipelineDetector:
                     + self.params.max_num_neg_bbox_per_image*len(self.train_set)
         Xtrain, Ytrain = self.create_buffer_(num_dims, buffer_size)
         return Xtrain, Ytrain
+
+    def aggregate_filter_bboxes_(self, bboxes_all, max_per_set_factor = -1):
+        """
+        Aggregate the results, considering a max number of bboxes for each
+        category.
+        - bboxes_all is a list of lists. (images X bboxes for each image)
+        - max_per_set_factor is multipled by the # of images and it gives
+            the max # of bboxes taken per category. If 0.0, filtering is not
+                applied.
+        """
+        # Run Girshick aggregator, sorting and filtering
+        if max_per_set_factor > 0:
+            max_per_set = max_per_set_factor*len(self.test_set)
+            bboxes_out = []
+            scores_out = []
+            top_scores = []
+            n_bboxes = 0
+            confidence_threshold = -sys.maxint
+            for bboxes in bboxes_all:
+                # thresholding wrt confidence_threshold:
+                bboxes_th = []
+                scores_th = []
+                for bbox in bboxes:
+                    if bbox.confidence > confidence_threshold:
+                        bboxes_th.append(bbox)
+                        scores_th.append(bbox.confidence)
+                # sorting bboxes
+                idx_ord = np.argsort(np.array(scores_th).T).T[::-1]
+                n_bboxes += len(idx_ord)
+                bboxes_out.append([bboxes_th[i] for i in idx_ord])
+                # Update top_scores and confidence_threshold
+                top_scores.extend([scores_th[i] for i in idx_ord])
+                top_scores.sort() # sort
+                top_scores.reverse() # descend order
+                if n_bboxes > max_per_set:
+                    top_scores = top_scores[:int(max_per_set)]
+                    confidence_threshold = top_scores[-1]
+            # Further filter bboxes
+            bboxes_final = []
+            for bboxes in bboxes_out:
+                bboxes_this_image = []
+                for bbox in bboxes:
+                    if bbox.confidence >= confidence_threshold:
+                        bboxes_this_image.append(bbox)
+                bboxes_final.append(bboxes_this_image)
+        else:
+            bboxes_final = bboxes_all
+        return bboxes_final
 
     @staticmethod
     def create_buffer_(num_dims, buffer_size):
