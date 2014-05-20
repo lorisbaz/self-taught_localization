@@ -78,6 +78,6 @@ if __name__ == "__main__":
                 progress_bar_params = params.progress_bar_params)
 
     # run just the first category
-    params.categories_to_process = [11]
+    params.categories_to_process = []
     # *** run the pipeline
     PipelineDetector.train_evaluate_detectors(params)
