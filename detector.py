@@ -108,6 +108,7 @@ class DetectorLinearSVMParams(DetectorParams):
         """
         self.Call = [10**x for x in range(-4, 3)]
         self.numCV = 5
+        self.B = 1.0
 
 class DetectorLinearSVM(Detector):
     """
@@ -137,13 +138,13 @@ class DetectorLinearSVM(Detector):
             logging.info('Train C={0}'.format(C))
             # validation mode
             if len(Xval) and len(Yval):
-                svm = self.build_svm_(C)
+                svm = self.build_svm_(C, self.params.B)
                 svm.fit(Xtrain, Ytrain)
                 Spred = svm.decision_function(Xval)
                 ap = sklearn.metrics.average_precision_score(Yval, Spred)
             # cross-validation mode
             else:
-                svm = self.build_svm_(C)
+                svm = self.build_svm_(C, self.params.B)
                 n_samples = Ytrain.shape[0]
                 cv_mode = sklearn.cross_validation.KFold( \
                                n_samples, n_folds=self.numCV, \
@@ -158,7 +159,7 @@ class DetectorLinearSVM(Detector):
                 bestAP = ap
                 bestC = C
         # re-train the SVM on the whole dataset using the best C
-        self.svm = self.build_svm_(bestC)
+        self.svm = self.build_svm_(bestC, self.params.B)
         self.svm.fit(Xtrain, Ytrain)
         assert self.svm.classes_[1] == 1
 
@@ -170,9 +171,9 @@ class DetectorLinearSVM(Detector):
 	return Spred
 
     @staticmethod
-    def build_svm_(C):
+    def build_svm_(C, B):
         svm = sklearn.svm.LinearSVC( \
                 penalty='l2', loss='l1', dual=True, tol=0.0001,
-                C=C, fit_intercept=True, intercept_scaling=1, \
+                C=C, fit_intercept=True, intercept_scaling=B, \
                 class_weight='auto', verbose=0, random_state=0)
         return svm
