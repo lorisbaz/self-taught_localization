@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # *** PipelineDetectorParams
     params = PipelineDetectorParams()
     # experiment name
-    params.exp_name = 'exp25_05_TEMP10'
+    params.exp_name = 'exp25_05_TEMP11'
     # input
     params.exp_name_input_train = 'exp24_07'
     params.exp_name_input_test = 'exp24_06'
@@ -42,13 +42,14 @@ if __name__ == "__main__":
     params.field_name_pos_bboxes = 'GT'
     params.field_name_bboxes = 'PRED:SELECTIVESEARCH'
     # neg_bboxes_overlapping_with_pos_params
-    params.neg_bboxes_overlapping_with_pos_params = [0.0, 0.3, 0.3, 0.7]
+    params.neg_bboxes_overlapping_with_pos_params = [0.0, 0.3, 1.0, 1.0]
+    params.num_neg_bboxes_per_pos_image_during_init = 50
     # number of iterations
     params.num_iterations = 3
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
-    parfun_tmpdir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP2'
+    parfun_tmpdir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP'
     if 0:  # -- Anthill
         params.parfun_params_categories = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=6, \
