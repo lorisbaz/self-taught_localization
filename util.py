@@ -1,11 +1,19 @@
 import logging
 # Log format (Note: this has to be here, because other import suppress it)
-logging.basicConfig(level=logging.INFO, \
-              format='[%(asctime)s %(filename)s:%(lineno)d] %(message)s', \
-              datefmt='%m/%d/%Y %H:%M:%S')
+LOG_FORMATTER = logging.Formatter( \
+                '[%(asctime)s %(filename)s:%(lineno)d] %(message)s', \
+                datefmt='%m/%d/%Y %H:%M:%S')
+consoleHandler = logging.StreamHandler()
+consoleHandler.setFormatter(LOG_FORMATTER)
+logging.getLogger().addHandler(consoleHandler)
+logging.getLogger().setLevel(logging.INFO)
+
+# Display info machine for debugging purposes
+import os
+logging.info(os.uname())
+
 import cPickle as pickle
 import numpy as np
-import os
 import os.path
 import random
 import scipy.misc
@@ -17,10 +25,6 @@ import subprocess
 import tempfile
 
 from bbox import *
-
-# Display info machine for debugging purposes
-logging.info(os.uname())
-
 
 class TempFile:
     def __init__(self, mapped_file='', copy=True):
