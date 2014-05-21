@@ -30,6 +30,13 @@ class Params:
         self.task = []
         # FeatureExtractorParams
         self.feature_extractor_params = None
+        # Max num of bboxes selected for each method
+        # 'CAFFE' means graysegm, graybox and sliding window
+        self.max_num_bboxes = {'OBFSEARCH_GT': 10, \
+                               'OBFSEARCH_TOPC': 10, \
+                               'CAFFE': 10, \
+                               'SELECTIVESEARCH': sys.maxint}
+
 
 def pipeline(inputdb, output_dir, params):
     # Instantiate some objects, and open the database
@@ -57,16 +64,26 @@ def pipeline(inputdb, output_dir, params):
         # Register FeatureExtractorParams
         anno.register_feature_extractor(feature_extractor_params, \
                                         params.save_features_cache)
+        # Extract features GT
+        for label in anno.gt_objects.keys():
+            anno.extract_features(anno.gt_objects[label].bboxes)
         # Filter the ouput pred bboxes (textout is NOT used!)
         if params.max_num_bboxes>0:
             for this_method in anno.pred_objects.keys():
+                if isinstance(params.max_num_bboxes, dict):
+                    if params.max_num_bboxes.has_key(this_method):
+                        max_num_bboxes = params.max_num_bboxes[this_method]
+                    else:
+                        logging.info('Warning: params.max_num_bboxes has not'\
+                                'the field {0}. We keep all the bboxes.'\
+                                .format(this_method))
+                        max_num_bboxes = sys.maxint
+                else: # if a single value is provided, we use for all
+                    max_num_bboxes = params.max_num_bboxes
                 textout, pred_objects = anno.export_pred_bboxes_to_text( \
-                            this_method, params.max_num_bboxes, \
+                            this_method, max_num_bboxes, \
                             output_filtered_pred_obj = True)
                 anno.pred_objects[this_method] = pred_objects
-        # extract features GT
-        for label in anno.gt_objects.keys():
-            anno.extract_features(anno.gt_objects[label].bboxes)
         # extract features pred_objects from different METHOD(s)
         for this_method in anno.pred_objects.keys():
             for label in anno.pred_objects[this_method].keys():
@@ -101,19 +118,19 @@ def pipeline_merge(inputdbs, outputdb, params):
                 # init
                 logging.info('***** Merging annotated images for ' + \
                                         os.path.basename(anno.image_name))
-                anno_out = anno
+                anno_out = anno # this step copies the GT as well
             else:
                 # merge the pred objects that are not present
-                for classifier in anno.pred_objects.keys():
-                    if not anno_out.pred_objects.has_key(classifier):
-                        anno_out.pred_objects[classifier] = \
-                                                anno.pred_objects[classifier]
+                for this_method in anno.pred_objects.keys():
+                    if not anno_out.pred_objects.has_key(this_method):
+                        anno_out.pred_objects[this_method] = \
+                                                anno.pred_objects[this_method]
                     else:
                         logging.info('Key {0} already present'.\
-                                                        format(classifier))
+                                                    format(this_method))
         stuff = ['GT']
-        stuff.extend(anno.pred_objects.keys())
-        logging.info('- Classifier {0}'.format(stuff))
+        stuff.extend(anno_out.pred_objects.keys())
+        logging.info('- Method {0}'.format(stuff))
         # adding the AnnotatedImage with the heatmaps to the database
         logging.info(str(anno_out))
         db_output[image_key] = pickle.dumps(anno_out, protocol=2)
