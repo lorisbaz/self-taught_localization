@@ -15,9 +15,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params.conf = conf
     # experiment name
-    params.exp_name = 'exp24_09'
+    params.exp_name = 'exp24_10'
     # input
-    params.exp_name_input = ['exp23_08stats_NMS_05', 'exp14_08']
+    params.exp_name_input = ['exp23_07stats_NMS_05', 'exp14_04']
                             # [ObfSearch, SelSearch]
     # Filter num bboxes (only if the field is present the are used)
     params.max_num_bboxes = {'OBFSEARCH_GT': 10, \
