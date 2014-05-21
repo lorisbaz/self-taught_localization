@@ -10,7 +10,7 @@ if __name__ == "__main__":
     conf = Configuration()
     # *** FeatureExtractor
     feature_extractor_params = load_obj_from_file_using_pickle( \
-                                       'featextractor_specs/000.pkl')
+                                       'featextractor_specs/001.pkl')
     # *** Detector
     detector_params = DetectorLinearSVMParams()
     detector_params.Call = [1e-3]
@@ -19,15 +19,15 @@ if __name__ == "__main__":
     # *** PipelineDetectorParams
     params = PipelineDetectorParams()
     # experiment name
-    params.exp_name = 'exp25_02'
+    params.exp_name = 'exp25_08_C=1e-3'
     # input
-    params.exp_name_input_train = 'exp24_03'
-    params.exp_name_input_test = 'exp24_05'
+    params.exp_name_input_train = 'exp24_07'
+    params.exp_name_input_test = 'exp24_06'
     # categories, splits
     params.categories_file = 'pascal2007/categories.txt'
     params.splits_dir = 'pascal2007'
-    params.split_train_name = 'trainvalDBG'
-    params.split_test_name = 'testDBG'
+    params.split_train_name = 'trainval'
+    params.split_test_name = 'test'
     # input/output dirs
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
@@ -42,8 +42,8 @@ if __name__ == "__main__":
     # field names for the pos/neg bboxes
     params.field_name_pos_bboxes = 'GT'
     params.field_name_bboxes = 'PRED:SELECTIVESEARCH'
-    params.negatives_threshold_confidence_single_image = -2
-    params.negatives_threshold_confidence_entire_set = -2
+    params.negatives_threshold_confidence_single_image = -1.0001
+    params.negatives_threshold_confidence_entire_set = 1.2
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
@@ -60,7 +60,7 @@ if __name__ == "__main__":
         params.parfun_params_training = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=2, \
                         progress_bar_params = params.progress_bar_params, \
-                        tmp_dir = parfun_tmpdir, max_tasks=100)
+                        tmp_dir = parfun_tmpdir, max_tasks=1000)
     if 0:  # -- Local, multi-core
         params.parfun_params_training = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 8, \
@@ -68,12 +68,12 @@ if __name__ == "__main__":
     if 1:  # -- Local
         params.parfun_params_training = vlg.util.parfun.ParFunDummyParams()
     # ParFun EVALUATION
-    if 0:  # -- Anthill
+    if 1:  # -- Anthill
         params.parfun_params_evaluation = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=2, \
                         progress_bar_params = params.progress_bar_params, \
-                        tmp_dir = parfun_tmpdir, max_tasks=100)
-    if 1:  # -- Local, multi-core
+                        tmp_dir = parfun_tmpdir, max_tasks=1000)
+    if 0:  # -- Local, multi-core
         params.parfun_params_evaluation = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 12, \
                 progress_bar_params = params.progress_bar_params)
