@@ -105,15 +105,21 @@ class DetectorLinearSVMParams(DetectorParams):
          Call: list of hyperparameters C for the SVM
          numCV: number of CV fold to execute (if at training time the
                 validation set is not specifyed)
+         B: regularization of the bias (i.e. param intercept_scaling in sklearn)
+         class_weight: either 'auto' or a dictionary {label -1/2 -> weight}
         """
         self.Call = [10**x for x in range(-4, 3)]
         self.numCV = 5
+        self.B = 1.0
+        self.class_weight = 'auto'
 
 class DetectorLinearSVM(Detector):
     """
     Simple implementation of a detector: L2-L1 Batch Linear SVM.
     We use the Average Precision for model selection.
     If the validation set is not specifyed, we do Cross-Validation.
+    If the Call list contains a single element, we just train the model
+    using that parameter, whether Xval is specified or not.
     """
     def __init__(self, params):
         """ *** PRIVATE CONSTRUCTOR *** """
@@ -125,10 +131,19 @@ class DetectorLinearSVM(Detector):
     def train(self, Xtrain, Ytrain, Xval=[], Yval=[]):
         # check the input
         Detector.train(self, Xtrain, Ytrain, Xval, Yval)
+        if isinstance(self.params.class_weight, str):
+            assert self.params.class_weight == 'auto'
+        else:
+            assert isinstance(self.params.class_weight, dict)
+            assert 1 in self.params.class_weight
+            assert -1 in self.params.class_weight
         # for each hyperparameter:
         bestAP = -sys.float_info.max
         bestC = None
         for C in self.Call:
+            if len(self.Call) == 1:
+                bestC = self.Call[0]
+                break
             logging.info('Train C={0}'.format(C))
             # validation mode
             if len(Xval) and len(Yval):
@@ -164,10 +179,11 @@ class DetectorLinearSVM(Detector):
         Spred = self.svm.decision_function(Xtest)
 	return Spred
 
-    @staticmethod
-    def build_svm_(C):
+    def build_svm_(self, C):
+        B = self.params.B
         svm = sklearn.svm.LinearSVC( \
                 penalty='l2', loss='l1', dual=True, tol=0.0001,
-                C=C, fit_intercept=True, intercept_scaling=1, \
-                class_weight='auto', verbose=0, random_state=0)
+                C=C, fit_intercept=True, intercept_scaling=B, \
+                class_weight=self.params.class_weight, \
+                verbose=0, random_state=0)
         return svm

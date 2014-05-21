@@ -29,6 +29,15 @@ class DetectorLinearSVMTest(unittest.TestCase):
         det.train(self.Xtrain, self.Ytrain, self.Xval, self.Yval)
         Spred = det.predict(self.Xval)
 
+    def test_train_val2(self):
+        params = DetectorLinearSVMParams()
+        params.class_weight = {}
+        params.class_weight[1] = 1.0
+        params.class_weight[-1] = 0.001
+        det = DetectorLinearSVM(params)
+        det.train(self.Xtrain, self.Ytrain, self.Xval, self.Yval)
+        Spred = det.predict(self.Xval)
+
     def test_train_cv(self):
         params = DetectorLinearSVMParams()
         det = DetectorLinearSVM(params)
