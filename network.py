@@ -276,7 +276,10 @@ class NetworkCaffe(Network):
             mean_img_filename = params.mean_img_filename
             caffe_mode = params.caffe_mode
             center_only = params.center_only
-            wnid_subset = params.wnid_subset
+            try:
+                wnid_subset = params.wnid_subset
+            except: # this was done for the detection challenge 2013
+                wnid_subset = []
         else:
             assert isinstance(model_spec_filename, str)
             assert model_filename != None
@@ -376,11 +379,11 @@ class NetworkCaffe(Network):
         input_blob = [np.ascontiguousarray(image[np.newaxis], dtype=np.float32)]
         # forward pass to the network
         num = 1
-        # hack to get the fc7 features
-        if layer_name == 'softmax' or layer_name == 'prob':
-            num_output=1000
-        elif layer_name == 'fc7':
-            num_output=4096
+        try:
+            last_layer = self.net_.caffenet.blobs.items()[-1]
+            num_output = len(last_layer[1].data.flatten())
+        except: # it means you have the old version of caffe
+            num_output = 1000
         output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
         self.net_.caffenet.Forward(input_blob, output_blobs)
         #assert layer_name == 'softmax', 'layer_name not supported'

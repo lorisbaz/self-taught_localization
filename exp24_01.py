@@ -30,7 +30,7 @@ if __name__ == "__main__":
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     params.input_dir = conf.experiments_output_directory \
-                        + '/' + params.exp_name_input 
+                        + '/' + params.exp_name_input
     # parallelize the script on Anthill?
     params.run_on_anthill = True
     # list of tasks to execute

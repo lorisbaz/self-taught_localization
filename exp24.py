@@ -23,8 +23,6 @@ class Params:
         self.name_pred_objects = ''
         # save features to file
         self.save_features_cache = True
-        # Max number of buonding boxes that are stored
-        self.max_num_bboxes = 1000
         # Usual parameters to run the exp on the cluster
         self.run_on_anthill = True
         self.task = []
