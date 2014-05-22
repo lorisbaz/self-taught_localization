@@ -19,7 +19,7 @@ if __name__ == "__main__":
     # *** PipelineDetectorParams
     params = PipelineDetectorParams()
     # experiment name
-    params.exp_name = 'exp25_08_C=1e-3'
+    params.exp_name = 'exp25_08_C=1e-3_SCALE=0.3'
     # input
     params.exp_name_input_train = 'exp24_07'
     params.exp_name_input_test = 'exp24_06'
@@ -37,6 +37,8 @@ if __name__ == "__main__":
                         + '/' + params.exp_name_input_test
     # FeatureExtractor module to use (parameters object)
     params.feature_extractor_params = feature_extractor_params
+    # FeatProcessorParams
+    params.feature_processor_params = FeatProcessorScaleParams(0.30)
     # Detector module to use (parameters object)
     params.detector_params = detector_params
     # field names for the pos/neg bboxes
