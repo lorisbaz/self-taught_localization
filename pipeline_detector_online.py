@@ -20,6 +20,7 @@ from heatextractor import *
 import vlg.util.pbar
 from util import *
 from stats import *
+from featprocessing import *
 
 class PipelineDetectorParams:
 
@@ -85,7 +86,8 @@ class PipelineDetectorParams:
         self.parfun_params_training = vlg.util.parfun.ParFunDummyParams()
         # ParFunParams (for the evaluation)
         self.parfun_params_evaluation = vlg.util.parfun.ParFunDummyParams()
-
+        # Feature preprocessing: FeatProcessorParams
+        self.feature_processor_params = FeatProcessorIdentityParams()
 
         # name of the split for the training set
         self.split_train_name = 'train'
@@ -311,7 +313,8 @@ def pipeline_single_detector(cl, params):
     return 0
 
 def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
-            threshold_confidence, num_neg_bboxes_per_pos_image_during_init):
+            threshold_confidence, num_neg_bboxes_per_pos_image_during_init, \
+            feature_processor):
     """ Given a PipelineImage, it evaluates the detector on all the
     bboxes, and then select only the ones that have confidence score
     above a certain threshold.
@@ -340,6 +343,7 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
             if not bb.mark:
                 continue
             feat = pi.get_ai().extract_features(bb)
+            feature_processor.process(feat)
             bb.confidence = detector.predict(feat)
             if bb.confidence < threshold_confidence:
                 bb.mark = False
@@ -352,6 +356,7 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
     idx = 0
     for bb in pos_bboxes:
         feat = pi.get_ai().extract_features(bb)
+        feature_processor.process(feat)
         if Xtrain == None:
             Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
         Xtrain[idx, :] = feat
@@ -359,6 +364,7 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
         idx += 1
     for bb in neg_bboxes:
         feat = pi.get_ai().extract_features(bb)
+        feature_processor.process(feat)
         if Xtrain == None:
             Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
         Xtrain[idx, :] = feat
@@ -370,13 +376,15 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
     return (Xtrain, Ytrain, pi)
 
 def PipelineDetector_evaluate_single_image(pi, detector, category, \
-                                           threshold_duplicates):
+                                           threshold_duplicates, \
+                                           feature_processor):
     # logging.info('Elaborating test key: {0}'.format(pi.key))
     # extract the features for this image
     Xtest = None
     bboxes = pi.get_bboxes()
     for idx_bb, bb in enumerate(bboxes):
         feat = pi.get_ai().extract_features(bb)
+        feature_processor.process(feat)
         if Xtest == None:
             Xtest = np.empty((len(bboxes),feat.size), dtype=float)
         Xtest[idx_bb, :] = feat
@@ -420,6 +428,7 @@ class PipelineDetector:
         self.detector_output_dir = '{0}/{1}'.format(params.output_dir, category)
         self.iteration = 0
         self.detector = None
+        self.feature_processor = None
 
     def init(self):
         logging.info('Initializing the detector for {0}'.format(self.category))
@@ -465,6 +474,9 @@ class PipelineDetector:
                 logging.info('The file {0} does not exist'.format(pi.fname))
         assert not error, 'Some required files were not found. Abort.'
         logging.info('Initialization complete')
+        # create the feature processor
+        self.feature_processor = FeatProcessor.create_feat_processor( \
+                                    self.params.feature_processor_params)
 
     def train_evaluate(self):
         for iteration in range(self.params.num_iterations):
@@ -516,7 +528,8 @@ class PipelineDetector:
             out = PipelineDetector_train_elaborate_single_image( \
                     pi, self.detector, self.iteration, \
                     self.params.negatives_threshold_confidence_single_image, \
-                    self.params.num_neg_bboxes_per_pos_image_during_init)
+                    self.params.num_neg_bboxes_per_pos_image_during_init, \
+                    self.feature_processor)
             (Xtrain_pi, Ytrain_pi, pi_out) = out
             # put all the features together in a single matrix
             if Xtrain == None:
@@ -564,7 +577,8 @@ class PipelineDetector:
         parfun.set_fun(PipelineDetector_evaluate_single_image)
         for pi in self.test_set:
             parfun.add_task(pi, self.detector, self.category, \
-                            self.params.threshold_duplicates)
+                            self.params.threshold_duplicates, \
+                            self.feature_processor)
         stats_all = parfun.run()
         assert len(stats_all)==len(self.test_set)
         # aggregate the stats for this detector
