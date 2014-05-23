@@ -136,18 +136,6 @@ class PipelineDetectorTest(unittest.TestCase):
         pt.init()
         pt.train_evaluate()
 
-    def test_init_train_evaluate2(self):
-        category = self.category
-        params = self.params
-        params.max_num_neg_bbox_per_image = 5
-        params.num_neg_bboxes_per_pos_image_during_init = 1
-        params.field_name_for_pred_objects_in_AnnotatedImage = 'SELECTIVESEARCH'
-        params.max_per_image = 2
-        params.max_per_set_factor = 1.0
-        pt = PipelineDetector(category, params)
-        pt.init()
-        pt.train_evaluate()
-
     def test_train(self):
         # single core version
         category = self.category
@@ -191,22 +179,6 @@ class PipelineDetectorTest(unittest.TestCase):
         params = self.params
         params.max_num_neg_bbox_per_image = 5
         params.num_neg_bboxes_per_pos_image_during_init = 1
-        pt = PipelineDetector(category, params)
-        pt.iteration = 0
-        pt.test_set = self.pipeline_images
-        pt.train_set = pt.test_set
-        pt.train()
-        # multiple cores
-        pt.params.num_cores = 2
-        stats = pt.evaluate()
-
-    def test_evaluate3(self):
-        category = self.category
-        params = self.params
-        params.max_num_neg_bbox_per_image = 5
-        params.num_neg_bboxes_per_pos_image_during_init = 1
-        params.max_per_image = 2
-        params.max_per_set_factor = 1.0
         pt = PipelineDetector(category, params)
         pt.iteration = 0
         pt.test_set = self.pipeline_images
