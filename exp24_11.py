@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # feature layer: we are loading the Girshick caffe model (slightly
     # different from the imagenet one)
     params.feature_extractor_params = load_obj_from_file_using_pickle( \
-                                       'featextractor_specs/000.pkl')
+                                       'featextractor_specs/001.pkl')
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name

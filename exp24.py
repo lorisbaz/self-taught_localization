@@ -33,7 +33,8 @@ class Params:
         self.max_num_bboxes = {'OBFSEARCH_GT': 10, \
                                'OBFSEARCH_TOPC': 10, \
                                'CAFFE': 10, \
-                               'SELECTIVESEARCH': sys.maxint}
+                               'SELECTIVESEARCH': sys.maxint,\
+                               'FULLIMAGE': sys.maxint}
 
 
 def pipeline(inputdb, output_dir, params):
