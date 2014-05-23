@@ -510,9 +510,10 @@ class PipelineDetector:
         self.detector = None
         Xtrain = None
         Ytrain = None
+        num_negatives_added = 0
         progress = vlg.util.pbar.ProgressBar.create(self.params.progress_bar_params)
         progress.set_max_val(len(self.train_set))
-        for pi in self.train_set:
+        for idx_pi, pi in enumerate(self.train_set):
             progress.next()
             logging.info('Elaborating key {0}'.format(pi.key))
             # extract the training set for this example
@@ -537,6 +538,7 @@ class PipelineDetector:
             num_examples = len(Ytrain)
             num_pos_examples = len([y for y in Ytrain if y==1])
             num_neg_examples = len([y for y in Ytrain if y==-1])
+            num_negatives_added += len([y for y in Ytrain_pi if y==-1])
             logging.info('The training set has {0} positive and {1} negative '\
                      'examples'.format(num_pos_examples, num_neg_examples))
             assert Xtrain.shape[0] == num_examples
@@ -546,19 +548,25 @@ class PipelineDetector:
                 logging.info('We skip the training because one of the classes '\
                              'is not represented')
                 continue
-            # train the detector
-            logging.info('Train the detector')
-            if self.detector == None:
-                self.detector = Detector.create_detector(self.params.detector_params)
-            self.detector.train(Xtrain, Ytrain)
-            # we remove the easy examples
-            scores = self.detector.predict(Xtrain)
-            thresh = self.params.negatives_threshold_confidence_entire_set
-            examples_to_keep = [(Ytrain[i]==1) or (Ytrain[i]==-1 and s>=thresh) \
-                                for i, s in enumerate(scores)]
-            examples_to_keep = np.array(examples_to_keep)
-            Xtrain = Xtrain[examples_to_keep, :]
-            Ytrain = Ytrain[examples_to_keep]
+            # if necessary, we update the detector
+            if (idx_pi == 0) \
+                    or (idx_pi == len(self.train_set)-1) \
+                    or (num_negatives_added >= 2000):
+                logging.info('Train the detector')
+                num_negatives_added = 0
+                # training
+                if self.detector == None:
+                    self.detector = Detector.create_detector( \
+                                        self.params.detector_params)
+                self.detector.train(Xtrain, Ytrain)
+                # we remove the easy examples
+                scores = self.detector.predict(Xtrain)
+                thresh = self.params.negatives_threshold_confidence_entire_set
+                examples_to_keep = [(Ytrain[i]==1) or (Ytrain[i]==-1 and s>=thresh) \
+                                    for i, s in enumerate(scores)]
+                examples_to_keep = np.array(examples_to_keep)
+                Xtrain = Xtrain[examples_to_keep, :]
+                Ytrain = Ytrain[examples_to_keep]
         progress.finish()
 
     def evaluate(self):
