@@ -23,8 +23,8 @@ if __name__ == "__main__":
     params.exp_name_input_train = 'exp24_11'
     params.exp_name_input_test = 'exp24_12'
     # categories, splits
-    params.categories_file = 'ILSVRC2012_loc/200sub/categories.txt'
-    params.splits_dir = 'ILSVRC2012_loc/200sub/'
+    params.categories_file = 'ILSVRC2013_clsloc/200RND/categories.txt'
+    params.splits_dir = 'ILSVRC2013_clsloc/200RND/'
     params.split_train_name = 'train'
     params.split_test_name = 'val'
     # input/output dirs
@@ -43,6 +43,8 @@ if __name__ == "__main__":
     params.field_name_bboxes = 'PRED:SELECTIVESEARCH'
     # neg_bboxes_overlapping_with_pos_params
     params.neg_bboxes_overlapping_with_pos_params = [0.0, 0.3, 0.3, 0.7]
+    # max_train_neg_images_per_category
+    #params.max_train_neg_images_per_category = 500
     # number of iterations
     params.num_iterations = 3
     # visualization

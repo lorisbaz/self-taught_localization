@@ -48,10 +48,10 @@ def pipeline(inputdb, output_dir, params):
     # loop over the images
     for image_key in db_keys:
         # create a file for each image
-        if ('JPEG' in image_key) or ('png' in image_key):
-            pkl_filename = image_key.replace('JPEG','pkl')
-        else:
-            pkl_filename = image_key + '.pkl'
+        #if ('JPEG' in image_key) or ('png' in image_key):
+        #    pkl_filename = image_key.replace('JPEG','pkl')
+        #else:
+        pkl_filename = image_key + '.pkl'
         pkl_filename = output_dir + '/' + pkl_filename
         pkl_file = open(pkl_filename, 'wb')
         # get database entry
