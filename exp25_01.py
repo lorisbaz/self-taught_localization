@@ -68,11 +68,11 @@ if __name__ == "__main__":
                         time_requested=10, memory_requested=2, \
                         progress_bar_params = params.progress_bar_params, \
                         tmp_dir = parfun_tmpdir, max_tasks=100)
-    if 1:  # -- Local, multi-core
+    if 0:  # -- Local, multi-core
         params.parfun_params_evaluation = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 8, \
                 progress_bar_params = params.progress_bar_params)
-    if 0:  # -- Local
+    if 1:  # -- Local
         params.parfun_params_evaluation = vlg.util.parfun.ParFunDummyParams()
     # run just the first category
     params.categories_to_process = [0]

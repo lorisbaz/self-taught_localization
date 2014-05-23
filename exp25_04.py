@@ -85,6 +85,6 @@ if __name__ == "__main__":
         params.parfun_params_evaluation = vlg.util.parfun.ParFunDummyParams()
 
     # run just the first category
-    params.categories_to_process = [0]
+    params.categories_to_process = range(1, 20, 1)
     # *** run the pipeline
     PipelineDetector.train_evaluate_detectors(params)

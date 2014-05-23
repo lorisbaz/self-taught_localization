@@ -131,6 +131,8 @@ class PipelineImage:
         self.fname = fname
         # the parameters to use for the feature extractor module
         self.feature_extractor_params = feature_extractor_params
+        # the bboxes (retrieved from the AI)
+        self.bboxes_ = None
         # Each element of this list is a boolean  indicating whether
         # or not the bbox has been already used as a negative example.
         self.bboxes_mark_ = None
@@ -150,60 +152,43 @@ class PipelineImage:
         self.neg_bboxes_overlapping_with_pos_params = \
                 neg_bboxes_overlapping_with_pos_params
 
-    def save_marks_and_confidences(self):
-        """
-        Store the confidence and mark values of the bboxes retrieved with
-        get_bboxes()
-        """
-        self.bboxes_mark_ = None
-        self.bboxes_confidence_ = None
-        bboxes = self.get_bboxes()
-        self.bboxes_mark_ = [False]*len(bboxes)
-        self.bboxes_confidence_ = [0.0]*len(bboxes)
-        assert len(self.bboxes_mark_)==len(bboxes)
-        assert len(self.bboxes_confidence_)==len(bboxes)
-        # store
-        for idx_bb, bb in enumerate(bboxes):
-            self.bboxes_mark_[idx_bb] = bb.mark
-            self.bboxes_confidence_[idx_bb] = bb.confidence
-
     def get_bboxes(self):
         """
         Retrieve the list of bounding boxes to use for prediction
         (as well as for the neg set).
         The BBox objects have an extra boolean field 'mark'.
-        Note that if you want to make to save the confidence
-        and mark values, you need to call save_marks_and_confidences()
         """
+        if self.bboxes_ != None:
+            return self.bboxes_
+        # extract the bboxes
         assert self.field_name_bboxes != None
         ai = self.get_ai()
         parts = self.field_name_bboxes.split(':')
-        bboxes = None
         if parts[0] == 'PRED':
             assert len(parts)==2
             assert len(ai.pred_objects[parts[1]]) == 1
             category = ai.pred_objects[parts[1]].keys()[0]
-            bboxes = ai.pred_objects[parts[1]][category].bboxes
+            self.bboxes_ = ai.pred_objects[parts[1]][category].bboxes
         else:
             raise ValueError('parts[0]:{0} not recognized'.format(parts[0]))
-        for idx_bb, bb in enumerate(bboxes):
+        for idx_bb, bb in enumerate(self.bboxes_):
             # if the mark field does not exist, we create it
             if not hasattr(bb, 'mark'):
                 bb.mark = False
             # if we have previsouly stored the confidences and marks,
             # we substitute them here
             if self.bboxes_mark_ != None:
-                assert len(bboxes)==len(self.bboxes_mark_)
+                assert len(self.bboxes_)==len(self.bboxes_mark_)
                 bb.mark = self.bboxes_mark_[idx_bb]
             if self.bboxes_confidence_ != None:
-                assert len(bboxes)==len(self.bboxes_confidence_)
+                assert len(self.bboxes_)==len(self.bboxes_confidence_)
                 bb.confidence = self.bboxes_confidence_[idx_bb]
-        if len(bboxes) <= 0:
+        if len(self.bboxes_) <= 0:
             logging.warning('Warning. The AnnotatedImage {0} '\
                 'does not contain bboxes under the field {1}'\
                 .format(fname, self.field_name_bboxes))
         # return
-        return bboxes
+        return self.bboxes_
 
     def get_pos_bboxes(self):
         """
@@ -277,7 +262,18 @@ class PipelineImage:
         """
         Clear the (eventually) loaded AnnotedImage from the memory
         """
+        # clear the AI
         self.ai_ = None
+        # save marks and bboxes, amd clear
+        self.bboxes_mark_ = [False]*len(self.bboxes_)
+        self.bboxes_confidence_ = [0.0]*len(self.bboxes_)
+        assert len(self.bboxes_mark_)==len(self.bboxes_)
+        assert len(self.bboxes_confidence_)==len(self.bboxes_)
+        for idx_bb, bb in enumerate(self.bboxes_):
+            self.bboxes_mark_[idx_bb] = bb.mark
+            self.bboxes_confidence_[idx_bb] = bb.confidence
+        self.bboxes_ = None
+        # run the GC
         gc.collect()
 
     def train_elaborate_pos_example_(self, iteration,
@@ -295,8 +291,6 @@ class PipelineImage:
                 pos_bboxes, self.get_bboxes(), \
                 num_neg_bboxes_per_pos_image_during_init, \
                 self.neg_bboxes_overlapping_with_pos_params)
-            # save the marks
-            self.save_marks_and_confidences()
         else:
             # TODO. add negative examples from the positive image?
             #       For now, do nothing.
@@ -332,10 +326,8 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
                             num_neg_bboxes_per_pos_image_during_init)
     elif pi.label == -1:
         # elaborate NEGATIVE image. we simply use all the bboxes
-        bboxes = pi.get_bboxes()
-        for bb in bboxes:
+        for bb in pi.get_bboxes():
             bb.mark = True
-        pi.save_marks_and_confidences()
     # evaluate the model learned in the previous iteration
     bboxes = pi.get_bboxes()
     if detector != None:
@@ -347,7 +339,6 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
             bb.confidence = detector.predict(feat)
             if bb.confidence < threshold_confidence:
                 bb.mark = False
-    pi.save_marks_and_confidences()
     # extract the features
     Xtrain = None
     Ytrain = None
@@ -519,9 +510,10 @@ class PipelineDetector:
         self.detector = None
         Xtrain = None
         Ytrain = None
+        num_negatives_added = 0
         progress = vlg.util.pbar.ProgressBar.create(self.params.progress_bar_params)
         progress.set_max_val(len(self.train_set))
-        for pi in self.train_set:
+        for idx_pi, pi in enumerate(self.train_set):
             progress.next()
             logging.info('Elaborating key {0}'.format(pi.key))
             # extract the training set for this example
@@ -546,6 +538,7 @@ class PipelineDetector:
             num_examples = len(Ytrain)
             num_pos_examples = len([y for y in Ytrain if y==1])
             num_neg_examples = len([y for y in Ytrain if y==-1])
+            num_negatives_added += len([y for y in Ytrain_pi if y==-1])
             logging.info('The training set has {0} positive and {1} negative '\
                      'examples'.format(num_pos_examples, num_neg_examples))
             assert Xtrain.shape[0] == num_examples
@@ -555,19 +548,25 @@ class PipelineDetector:
                 logging.info('We skip the training because one of the classes '\
                              'is not represented')
                 continue
-            # train the detector
-            logging.info('Train the detector')
-            if self.detector == None:
-                self.detector = Detector.create_detector(self.params.detector_params)
-            self.detector.train(Xtrain, Ytrain)
-            # we remove the easy examples
-            scores = self.detector.predict(Xtrain)
-            thresh = self.params.negatives_threshold_confidence_entire_set
-            examples_to_keep = [(Ytrain[i]==1) or (Ytrain[i]==-1 and s>=thresh) \
-                                for i, s in enumerate(scores)]
-            examples_to_keep = np.array(examples_to_keep)
-            Xtrain = Xtrain[examples_to_keep, :]
-            Ytrain = Ytrain[examples_to_keep]
+            # if necessary, we update the detector
+            if (idx_pi == 0) \
+                    or (idx_pi == len(self.train_set)-1) \
+                    or (num_negatives_added >= 2000):
+                logging.info('Train the detector')
+                num_negatives_added = 0
+                # training
+                if self.detector == None:
+                    self.detector = Detector.create_detector( \
+                                        self.params.detector_params)
+                self.detector.train(Xtrain, Ytrain)
+                # we remove the easy examples
+                scores = self.detector.predict(Xtrain)
+                thresh = self.params.negatives_threshold_confidence_entire_set
+                examples_to_keep = [(Ytrain[i]==1) or (Ytrain[i]==-1 and s>=thresh) \
+                                    for i, s in enumerate(scores)]
+                examples_to_keep = np.array(examples_to_keep)
+                Xtrain = Xtrain[examples_to_keep, :]
+                Ytrain = Ytrain[examples_to_keep]
         progress.finish()
 
     def evaluate(self):
