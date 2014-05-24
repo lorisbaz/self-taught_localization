@@ -25,6 +25,9 @@ if __name__ == "__main__":
     params.splits_dir = 'pascal2007'
     params.split_train_name = 'trainvalDBG'
     params.split_test_name = 'testDBG'
+    # negative mining
+    params.negative_mining = 'batch'
+    params.num_iterations = 2
     # input/output dirs
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name

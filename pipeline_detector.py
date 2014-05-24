@@ -20,6 +20,7 @@ from heatextractor import *
 import vlg.util.pbar
 from util import *
 from stats import *
+from featprocessing import *
 
 class PipelineDetectorParams:
 
@@ -85,26 +86,39 @@ class PipelineDetectorParams:
         self.parfun_params_training = vlg.util.parfun.ParFunDummyParams()
         # ParFunParams (for the evaluation)
         self.parfun_params_evaluation = vlg.util.parfun.ParFunDummyParams()
-
+        # Feature preprocessing: FeatProcessorParams
+        self.feature_processor_params = FeatProcessorIdentityParams()
 
         # name of the split for the training set
         self.split_train_name = 'train'
         # name of the split for the testing set
         self.split_test_name = 'test'
 
+		# type of negative mining ('batch' or 'online')
+        self.negative_mining = 'batch'
         # number of iterations to perform
         self.num_iterations = 3
+
+		# BATCH negative mining options
         # max total number of negative bbox per image
-        self.max_num_neg_bbox_per_image = 10
+        self.max_num_neg_bbox_per_image = 30
         # num of negative bbox per image to add during the iterations
         self.num_neg_bboxes_to_add_per_image_per_iter = 1
         # num of negative bboxes from a positive image to add during the init
-        self.num_neg_bboxes_per_pos_image_during_init = 5
+        self.num_neg_bboxes_per_pos_image_during_init = 20
+
+		# ONLINE negative mining options
+        # threshold for the confidence score for the negative examples
+        self.negatives_threshold_confidence_single_image = -1.0001
+        # threshold for the confidence score for the negative examples
+        self.negatives_threshold_confidence_entire_set = 1.2
+
         # while selecting the neg bboxes that slightly overlap with a pos bbox
         # Params: [min_overlap, max_overlap, max_overlap_with_pos, nms_overlap]
         self.neg_bboxes_overlapping_with_pos_params = [0.2, 0.5, 0.5, 0.7]
         # thresholds to define duplicate boxes for the evaluation
         self.threshold_duplicates = 0.3
+
         # max number of positive images per category
         self.max_train_pos_images_per_category = sys.maxint
         # max number of negative images per category
@@ -162,7 +176,6 @@ class PipelineImage:
         assert self.field_name_bboxes != None
         ai = self.get_ai()
         parts = self.field_name_bboxes.split(':')
-        bboxes = None
         if parts[0] == 'PRED':
             assert len(parts)==2
             assert len(ai.pred_objects[parts[1]]) == 1
@@ -333,7 +346,7 @@ def pipeline_single_detector(cl, params):
     detector.train_evaluate()
     return 0
 
-def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
+def PipelineDetector_train_elaborate_single_image_batch(pi, detector, iteration, \
         num_neg_bboxes_per_pos_image_during_init, \
         num_neg_bboxes_to_add_per_image_per_iter, \
         max_num_neg_bbox_per_image):
@@ -383,14 +396,76 @@ def PipelineDetector_train_elaborate_single_image(pi, detector, iteration, \
     # return a tuple
     return (Xtrain, Ytrain, pi)
 
+def PipelineDetector_train_elaborate_single_image_online(pi, detector, iteration, \
+            threshold_confidence, feature_processor):
+    """ Given a PipelineImage, it evaluates the detector on all the
+    bboxes, and then select only the ones that have confidence score
+    above a certain threshold.
+    If the detector is not given, we select all the bboxes. """
+    #logging.info('Elaborating train key: {0}'.format(pi.key))
+    assert (pi.label == 1) or (pi.label == -1)
+    assert iteration == 0 # TODO: support multiple iterations
+    # select pos and neg bboxes, building our train set
+    pos_bboxes = []
+    if pi.label == 1:
+        # elaborate POSITIVE image.
+        # Note: the method marks the negatives self.bboxes
+        num_neg_bboxes_per_pos_image_during_init = 10000
+        pos_bboxes = pi.train_elaborate_pos_example_( \
+                            iteration, \
+                            num_neg_bboxes_per_pos_image_during_init)
+    elif pi.label == -1:
+        # elaborate NEGATIVE image. we simply use all the bboxes
+        for bb in pi.get_bboxes():
+            bb.mark = True
+    # evaluate the model learned in the previous iteration
+    bboxes = pi.get_bboxes()
+    if detector != None:
+        for bb in bboxes:
+            if not bb.mark:
+                continue
+            feat = pi.get_ai().extract_features(bb)
+            feature_processor.process(feat)
+            bb.confidence = detector.predict(feat)
+            if bb.confidence < threshold_confidence:
+                bb.mark = False
+    # extract the features
+    Xtrain = None
+    Ytrain = None
+    neg_bboxes = [b for b in pi.get_bboxes() if b.mark]
+    n = len(pos_bboxes) + len(neg_bboxes)
+    idx = 0
+    for bb in pos_bboxes:
+        feat = pi.get_ai().extract_features(bb)
+        feature_processor.process(feat)
+        if Xtrain == None:
+            Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
+        Xtrain[idx, :] = feat
+        Ytrain[idx] = 1
+        idx += 1
+    for bb in neg_bboxes:
+        feat = pi.get_ai().extract_features(bb)
+        feature_processor.process(feat)
+        if Xtrain == None:
+            Xtrain, Ytrain = PipelineDetector.create_buffer_(feat.size, n)
+        Xtrain[idx, :] = feat
+        Ytrain[idx] = -1
+        idx += 1
+    # clear the AnnotatedImage
+    pi.clear_ai()
+    # return a tuple
+    return (Xtrain, Ytrain, pi)
+
 def PipelineDetector_evaluate_single_image(pi, detector, category, \
-                                           threshold_duplicates):
+                                           threshold_duplicates, \
+                                           feature_processor):
     # logging.info('Elaborating test key: {0}'.format(pi.key))
     # extract the features for this image
     Xtest = None
     bboxes = pi.get_bboxes()
     for idx_bb, bb in enumerate(bboxes):
         feat = pi.get_ai().extract_features(bb)
+        feature_processor.process(feat)
         if Xtest == None:
             Xtest = np.empty((len(bboxes),feat.size), dtype=float)
         Xtest[idx_bb, :] = feat
@@ -426,6 +501,10 @@ class PipelineDetector:
         assert params.detector_params != None
         assert params.field_name_pos_bboxes != None
         assert params.field_name_bboxes != None
+        # TODO. fix this limitation
+        if params.negative_mining == 'online':
+            assert params.num_iterations == 1, \
+                'Currently only one iteration is supported in online mode'
         # init
         self.category = category
         self.params = params
@@ -434,12 +513,22 @@ class PipelineDetector:
         self.detector_output_dir = '{0}/{1}'.format(params.output_dir, category)
         self.iteration = 0
         self.detector = Detector.create_detector(params.detector_params)
+        self.feature_processor = None
 
     def init(self):
         logging.info('Initializing the detector for {0}'.format(self.category))
         # create output directory for this detector
         if os.path.exists(self.detector_output_dir) == False:
             os.makedirs(self.detector_output_dir)
+        # log to both console as well as to a text file
+        logging.getLogger().handlers = []
+        logging.getLogger().setLevel(logging.INFO)
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setFormatter(LOG_FORMATTER)
+        logging.getLogger().addHandler(consoleHandler)
+        fileHandler = logging.FileHandler(self.detector_output_dir + '/out.log')
+        fileHandler.setFormatter(LOG_FORMATTER)
+        logging.getLogger().addHandler(fileHandler)
         # read the training set
         logging.info('Read the training set files')
         fname = '{0}/{1}_{2}.txt'.format(self.params.splits_dir, self.category,\
@@ -470,6 +559,9 @@ class PipelineDetector:
                 logging.info('The file {0} does not exist'.format(pi.fname))
         assert not error, 'Some required files were not found. Abort.'
         logging.info('Initialization complete')
+        # create the feature processor
+        self.feature_processor = FeatProcessor.create_feat_processor( \
+                                    self.params.feature_processor_params)
 
     def train_evaluate(self):
         for iteration in range(self.params.num_iterations):
@@ -487,7 +579,12 @@ class PipelineDetector:
                 # train the detector and save the model
                 logging.info('Training the  model for the iteration {0}.'\
                              .format(iteration))
-                self.train()
+                if self.params.negative_mining == 'batch':
+                    self.train_batch()
+                elif self.params.negative_mining == 'online':
+                    self.train_online()
+                else:
+                    raise RuntimeError('self.params.negative_mining invalid')
                 logging.info('Saving the model to {0}'.format(fname))
                 self.save(fname)
             # check if we have already evaluated the model for this iteration
@@ -506,12 +603,12 @@ class PipelineDetector:
                 dump_obj_to_file_using_pickle(stats, fname, 'binary')
                 stats.save_mat(fname_mat)
 
-    def train(self):
+    def train_batch(self):
         """ Train an iteration of the detector """
         # extract the features from the individual images
         logging.info('Collecting the training features')
         parfun = vlg.util.parfun.ParFun.create(self.params.parfun_params_training)
-        parfun.set_fun(PipelineDetector_train_elaborate_single_image)
+        parfun.set_fun(PipelineDetector_train_elaborate_single_image_batch)
         for pi in self.train_set:
             parfun.add_task(pi, self.detector, self.iteration, \
                     self.params.num_neg_bboxes_per_pos_image_during_init, \
@@ -536,6 +633,70 @@ class PipelineDetector:
         logging.info('Train the detector')
         self.detector.train(Xtrain, Ytrain)
 
+    def train_online(self):
+        """ Train an iteration of the detector """
+        logging.info('Training')
+        self.detector = None
+        Xtrain = None
+        Ytrain = None
+        num_negatives_added = 0
+        progress = vlg.util.pbar.ProgressBar.create(self.params.progress_bar_params)
+        progress.set_max_val(len(self.train_set))
+        for idx_pi, pi in enumerate(self.train_set):
+            progress.next()
+            logging.info('Elaborating key {0}'.format(pi.key))
+            # extract the training set for this example
+            out = PipelineDetector_train_elaborate_single_image_online( \
+                    pi, self.detector, self.iteration, \
+                    self.params.negatives_threshold_confidence_single_image, \
+                    self.feature_processor)
+            (Xtrain_pi, Ytrain_pi, pi_out) = out
+            # put all the features together in a single matrix
+            if Xtrain == None:
+                Xtrain = Xtrain_pi
+                Ytrain = Ytrain_pi
+            else:
+                if Xtrain_pi == None:
+                    logging.info('We skip the training because this image did '\
+                                 'not provide any training example')
+                    continue
+                else:
+                    Xtrain = np.vstack([Xtrain, Xtrain_pi])
+                    Ytrain = np.concatenate([Ytrain, Ytrain_pi])
+            num_examples = len(Ytrain)
+            num_pos_examples = len([y for y in Ytrain if y==1])
+            num_neg_examples = len([y for y in Ytrain if y==-1])
+            num_negatives_added += len([y for y in Ytrain_pi if y==-1])
+            logging.info('The training set has {0} positive and {1} negative '\
+                     'examples'.format(num_pos_examples, num_neg_examples))
+            assert Xtrain.shape[0] == num_examples
+            assert Ytrain.size == num_examples
+            # if the training set has no positives, we skip the training
+            if num_pos_examples==0 or num_neg_examples==0:
+                logging.info('We skip the training because one of the classes '\
+                             'is not represented')
+                continue
+            # if necessary, we update the detector
+            if (idx_pi == 0) \
+                    or (idx_pi == len(self.train_set)-1) \
+                    or (num_negatives_added >= 2000):
+                logging.info('Train the detector')
+                num_negatives_added = 0
+                # training
+                if self.detector == None:
+                    self.detector = Detector.create_detector( \
+                                        self.params.detector_params)
+                self.detector.train(Xtrain, Ytrain)
+                # we remove the easy examples
+                scores = self.detector.predict(Xtrain)
+                thresh = self.params.negatives_threshold_confidence_entire_set
+                examples_to_keep = [(Ytrain[i]==1) or (Ytrain[i]==-1 and s>=thresh) \
+                                    for i, s in enumerate(scores)]
+                examples_to_keep = np.array(examples_to_keep)
+                Xtrain = Xtrain[examples_to_keep, :]
+                Ytrain = Ytrain[examples_to_keep]
+        progress.finish()
+
     def evaluate(self):
         """ calculate the stats for the current model """
         # calculate stats for the individual images
@@ -543,7 +704,8 @@ class PipelineDetector:
         parfun.set_fun(PipelineDetector_evaluate_single_image)
         for pi in self.test_set:
             parfun.add_task(pi, self.detector, self.category, \
-                            self.params.threshold_duplicates)
+                            self.params.threshold_duplicates, \
+                            self.feature_processor)
         stats_all = parfun.run()
         assert len(stats_all)==len(self.test_set)
         # aggregate the stats for this detector
