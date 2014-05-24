@@ -113,6 +113,9 @@ class PipelineDetectorParams:
         # threshold for the confidence score for the negative examples
         self.negatives_threshold_confidence_entire_set = 1.2
 
+        # number of positive bboxes to select, based on the confidence score
+        # which is assumed to be present and meaningful
+        self.max_num_pos_bboxes_per_image = sys.maxint
         # while selecting the neg bboxes that slightly overlap with a pos bbox
         # Params: [min_overlap, max_overlap, max_overlap_with_pos, nms_overlap]
         self.neg_bboxes_overlapping_with_pos_params = [0.2, 0.5, 0.5, 0.7]
@@ -129,12 +132,14 @@ class PipelineDetectorParams:
 class PipelineImage:
     def __init__(self, key, label, fname, feature_extractor_params, \
                  field_name_pos_bboxes, field_name_bboxes, \
-                 neg_bboxes_overlapping_with_pos_params):
+                 neg_bboxes_overlapping_with_pos_params, \
+                 max_num_pos_bboxes_per_image):
         # check input
         assert isinstance(key, str)
         assert isinstance(label, int)
         assert isinstance(fname, str)
         assert isinstance(feature_extractor_params, FeatureExtractorParams)
+        assert max_num_pos_bboxes_per_image > 0
         # the key of the image
         self.key = key
         # the label (+1, -1)
@@ -163,6 +168,8 @@ class PipelineImage:
         # with a pos bbox
         self.neg_bboxes_overlapping_with_pos_params = \
                 neg_bboxes_overlapping_with_pos_params
+        # max_num_pos_bboxes_per_image
+        self.max_num_pos_bboxes_per_image = max_num_pos_bboxes_per_image
 
     def get_bboxes(self):
         """
@@ -208,17 +215,22 @@ class PipelineImage:
         Returns a list of Bbox objects.
         Note that len(self.bboxes_marked)==len(out)
         """
+        assert self.max_num_pos_bboxes_per_image > 0
         assert self.field_name_pos_bboxes != None
+        # retrieve the correct field
         parts = self.field_name_pos_bboxes.split(':')
         ai = self.get_ai()
         if parts[0] == 'GT':
             assert len(parts)==2
-            return ai.gt_objects[parts[1]].bboxes
+            pos_bboxes = copy.copy(ai.gt_objects[parts[1]].bboxes)
         elif parts[0] == 'PRED':
             assert len(parts)==3
-            return ai.pred_objects[parts[1]][parts[2]].bboxes
+            pos_bboxes = copy.copy(ai.pred_objects[parts[1]][parts[2]].bboxes)
         else:
             raise ValueError('parts[0]:{0} not recognized'.format(parts[0]))
+        # sort the bboxes by confidence value, and pick the top-K
+        pos_bboxes = sorted(pos_bboxes, key=lambda bb: -bb.confidence)
+        return pos_bboxes[0:self.max_num_pos_bboxes_per_image]
 
     def get_gt_bboxes(self):
         """
@@ -834,7 +846,8 @@ class PipelineDetector:
                     key, label, fname, \
                     params.feature_extractor_params, \
                     pos_bboxes_field_name, bboxes_field_name, \
-                    params.neg_bboxes_overlapping_with_pos_params)
+                    params.neg_bboxes_overlapping_with_pos_params, \
+                    params.max_num_pos_bboxes_per_image)
             # append the PipelineImage
             out.append(pi)
         return out
