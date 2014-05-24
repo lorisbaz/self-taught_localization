@@ -56,19 +56,23 @@ for i=1:numel(params.exps)
   S=load([params.exp_dir '/' params.exps{i}{1} '/mat/recall_vs_numPredBboxesImage.mat']);  
   % plot the mean recall per class
   [X, Y] = cut_tail_with_equal_values(S.x_values, S.mean_recall);
+  print_matlab_plot_txt(X, Y, params.exps{i}, 'num_bboxes', 'mean_recall');
   plot(h_mean_recall, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the MABO
   [X, Y] = cut_tail_with_equal_values(S.x_values, S.mean_ABO);
+  print_matlab_plot_txt(X, Y, params.exps{i}, 'num_bboxes', 'mabo');
   plot(h_mean_mabo, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the Precision
   [X, Y] = cut_tail_with_equal_values(S.x_values, S.precision);
+  print_matlab_plot_txt(X, Y, params.exps{i}, 'num_bboxes', 'precision');
   plot(h_precision, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   % plot the Precision    
   if params.mean_precision
       [X, Y] = cut_tail_with_equal_values(S.x_values, S.mean_precision);
+      print_matlab_plot_txt(X, Y, params.exps{i}, 'num_bboxes', 'mean_precision');
       plot(h_mean_precision, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
       h=legend(h_mean_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
   end
@@ -115,5 +119,31 @@ if params.save_output_files
     saveas(h_mean_precision, [params.prefix_output_files '_precision.png'])
   end
 end
+
+end
+
+
+function print_matlab_plot_txt(X, Y, exp, Xquantity, Yquantity)
+
+assert(numel(X) == numel(Y));
+assert(numel(X) > 0);
+% print header
+fprintf('****** %s / %s *** %s   **********\n', exp{1}, Yquantity, exp{2});
+% print X
+fprintf('%s = [ ', Xquantity);
+for i=1:numel(X)-1
+  fprintf('%f, ' , X(i));
+end
+fprintf('%f ];\n' , X(end));
+% print Y
+fprintf('%s = [ ', Yquantity);
+for i=1:numel(Y)-1
+  fprintf('%f, ' , Y(i));
+end
+fprintf('%f ];\n' , Y(end));
+fprintf('****************************************************\n')
+
+%plot(ntt, acc, '-x', 'DisplayName', classemes.legend, 'Color', classemes.color);
+%h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
 end
