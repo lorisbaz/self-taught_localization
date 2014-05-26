@@ -18,7 +18,7 @@ if __name__ == "__main__":
     params = exp28.Params()
     # experiment name
     params.exp_name = 'exp28_01'
-    params.exp_name_input = 'exp03_06' # take results from here
+    params.exp_name_input = 'exp03_07' # take results from here
     # Sliding win params (bbox size, stride)
     params.slide_win = [(50, 10), (75, 15), (100, 15), (125, 20), \
                         (150, 20), (175, 25), (200, 25)]
