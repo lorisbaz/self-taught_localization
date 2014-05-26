@@ -16,14 +16,9 @@ if __name__ == "__main__":
     params.conf = conf
     # experiment name
     params.exp_name = 'exp24_12'
-    # input
-    params.exp_name_input = ['exp23_10stats_NMS_05', 'exp14_05', 'FULLIMAGE']
-                            # [OBFSEARCH_GT, SELECTIVESEARCH, FULLIMAGE]
-    # Filter num bboxes (only if the field is present the are used)
-    params.max_num_bboxes = {'OBFSEARCH_GT': sys.maxint, \
-                             'OBFSEARCH_TOPC': sys.maxint,\
-                             'SELECTIVESEARCH': sys.maxint,\
-                             'FULLIMAGE': sys.maxint}
+    # input [OBFSEARCH_GT, SELECTIVESEARCH, FULLIMAGE]
+    params.exp_name_input = ['exp23_10stats_NMS_05', 'exp14_05']
+    params.full_image_boxes = True
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # feature layer: we are loading the Girshick caffe model (slightly
@@ -37,7 +32,7 @@ if __name__ == "__main__":
     for names in params.exp_name_input:
         params.input_dir.append(conf.experiments_output_directory + '/' + names)
     # parallelize the script on Anthill?
-    params.run_on_anthill = False
+    params.run_on_anthill = True
     # list of tasks to execute
     params.task = []
     logging.info('Started')

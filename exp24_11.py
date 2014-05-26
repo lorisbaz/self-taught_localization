@@ -16,13 +16,9 @@ if __name__ == "__main__":
     params.conf = conf
     # experiment name
     params.exp_name = 'exp24_11'
-    # input
+    # input [OBFSEARCH_GT, SELECTIVESEARCH, FULLIMAGE]
     params.exp_name_input = ['exp23_11stats_NMS_05', 'exp14_07']
-                            # [OBFSEARCH_GT, SELECTIVESEARCH]
-    # Filter num bboxes (only if the field is present the are used)
-    params.max_num_bboxes = {'OBFSEARCH_GT': 10, \
-                             'OBFSEARCH_TOPC': 10,\
-                             'SELECTIVESEARCH': sys.maxint}
+    params.full_image_boxes = True
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # feature layer: we are loading the Girshick caffe model (slightly

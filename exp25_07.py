@@ -12,7 +12,7 @@ if __name__ == "__main__":
     conf = Configuration()
     # *** FeatureExtractor
     feature_extractor_params = load_obj_from_file_using_pickle( \
-                                       'featextractor_specs/000.pkl')
+                                       'featextractor_specs/001.pkl')
     # *** Detector
     detector_params = DetectorLinearSVMParams()
     # *** PipelineDetectorParams
@@ -46,36 +46,36 @@ if __name__ == "__main__":
     # max_train_neg_images_per_category
     #params.max_train_neg_images_per_category = 500
     # number of iterations
-    params.num_iterations = 3
+    params.num_iterations = 2
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
     parfun_tmpdir = \
             '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP2'
-    if 0:  # -- Anthill
+    if 1:  # -- Anthill
         params.parfun_params_categories = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=6, \
                         progress_bar_params = params.progress_bar_params, \
                         tmp_dir = parfun_tmpdir, max_tasks=100)
-    if 1:  # -- Local
+    if 0:  # -- Local
         params.parfun_params_categories = vlg.util.parfun.ParFunDummyParams()
     # ParFun TRAINING
-    if 1:  # -- Anthill
+    if 0:  # -- Anthill
         params.parfun_params_training = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=2, \
                         progress_bar_params = params.progress_bar_params, \
                         tmp_dir = parfun_tmpdir, max_tasks=1000)
-    if 0:  # -- Local, multi-core
+    if 1:  # -- Local, multi-core
         params.parfun_params_training = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 12, \
                 progress_bar_params = params.progress_bar_params)
     # ParFun EVALUATION
-    if 1:  # -- Anthill
+    if 0:  # -- Anthill
         params.parfun_params_evaluation = vlg.util.parfun.ParFunAnthillParams( \
                         time_requested=10, memory_requested=2, \
                         progress_bar_params = params.progress_bar_params, \
                         tmp_dir = parfun_tmpdir, max_tasks=1000)
-    if 0:  # -- Local, multi-core
+    if 1:  # -- Local, multi-core
         params.parfun_params_evaluation = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 12, \
                 progress_bar_params = params.progress_bar_params)

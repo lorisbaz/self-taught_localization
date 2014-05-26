@@ -14,6 +14,7 @@ import shutil
 from vlg.util.parfun import *
 
 from annotatedimage import *
+from bbox import *
 from configuration import *
 from featextractor import *
 
@@ -28,11 +29,13 @@ class Params:
         self.task = []
         # FeatureExtractorParams
         self.feature_extractor_params = None
+        # Compute the FULLIMAGE features
+        self.full_image_boxes = True
         # Max num of bboxes selected for each method
         # 'CAFFE' means graysegm, graybox and sliding window
-        self.max_num_bboxes = {'OBFSEARCH_GT': 10, \
-                               'OBFSEARCH_TOPC': 10, \
-                               'CAFFE': 10, \
+        self.max_num_bboxes = {'OBFSEARCH_GT': sys.maxint, \
+                               'OBFSEARCH_TOPC': sys.maxint, \
+                               'CAFFE': sys.maxint, \
                                'SELECTIVESEARCH': sys.maxint,\
                                'FULLIMAGE': sys.maxint}
 
@@ -127,6 +130,13 @@ def pipeline_merge(inputdbs, outputdb, params):
                     else:
                         logging.info('Key {0} already present'.\
                                                     format(this_method))
+            # Add full-image bboxes, if asked
+            if params.full_image_boxes:
+                anno.pred_objects['FULLIMAGE'] = {}
+                for label in anno.gt_objects.keys():
+                    annoobj = AnnotatedObject(label)
+                    annoobj.bboxes = [BBox(0.0, 0.0, 1.0, 1.0)]
+                    anno.pred_objects['FULLIMAGE'][label] = annoobj
         stuff = ['GT']
         stuff.extend(anno_out.pred_objects.keys())
         logging.info('- Method {0}'.format(stuff))
