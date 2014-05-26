@@ -101,8 +101,20 @@ class BBox:
         """
         Calculates the Jaccard similarity (the similarity used in the
         PASCAL VOC)
+        Note: the are could be computed as:
+           area_intersection = bbox.copy().intersect(self).area()
+              but we replicate the code for efficency reason.
         """
-        area_intersection = bbox.copy().intersect(self).area()
+        xmin = max(self.xmin, bbox.xmin)
+        ymin = max(self.ymin, bbox.ymin)
+        xmax = min(self.xmax, bbox.xmax)
+        ymax = min(self.ymax, bbox.ymax)
+        if (xmin > xmax) or (ymin > ymax):
+            xmin = 0.0
+            ymin = 0.0
+            xmax = 0.0
+            ymax = 0.0
+        area_intersection = np.abs(xmax-xmin)*np.abs(ymax-ymin)
         area_union = self.area() + bbox.area() - area_intersection
         return area_intersection / float(area_union)
 

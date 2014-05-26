@@ -25,6 +25,9 @@ if __name__ == "__main__":
     params.splits_dir = 'pascal2007'
     params.split_train_name = 'trainvalDBG'
     params.split_test_name = 'testDBG'
+    # negative mining
+    params.negative_mining = 'batch'
+    params.num_iterations = 2
     # input/output dirs
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
@@ -56,11 +59,11 @@ if __name__ == "__main__":
                         time_requested=10, memory_requested=2, \
                         progress_bar_params = params.progress_bar_params, \
                         tmp_dir = parfun_tmpdir, max_tasks=100)
-    if 1:  # -- Local, multi-core
+    if 0:  # -- Local, multi-core
         params.parfun_params_training = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 8, \
                 progress_bar_params = params.progress_bar_params)
-    if 0:  # -- Local
+    if 1:  # -- Local
         params.parfun_params_training = vlg.util.parfun.ParFunDummyParams()
     # ParFun EVALUATION
     if 0:  # -- Anthill
