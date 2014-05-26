@@ -27,6 +27,9 @@ if __name__ == "__main__":
     params.splits_dir = 'ILSVRC2013_clsloc/200RND/'
     params.split_train_name = 'train'
     params.split_test_name = 'val'
+    # number of iterations
+    params.negative_mining = 'batch'
+    params.num_iterations = 2
     # input/output dirs
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
@@ -43,10 +46,6 @@ if __name__ == "__main__":
     params.field_name_bboxes = 'PRED:SELECTIVESEARCH'
     # neg_bboxes_overlapping_with_pos_params
     params.neg_bboxes_overlapping_with_pos_params = [0.0, 0.3, 0.3, 0.7]
-    # max_train_neg_images_per_category
-    #params.max_train_neg_images_per_category = 500
-    # number of iterations
-    params.num_iterations = 2
     # visualization
     params.progress_bar_params = vlg.util.pbar.ProgressBarPlusParams()
     # ParFun Categories
