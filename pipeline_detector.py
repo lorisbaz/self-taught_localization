@@ -98,6 +98,8 @@ class PipelineDetectorParams:
         self.negative_mining = 'batch'
         # number of iterations to perform
         self.num_iterations = 3
+        # list of iterations for which we want to perform the evaluation
+        self.iterations_to_evaluate = range(self.num_iterations)
 
 		# BATCH negative mining options
         # max total number of negative bbox per image
@@ -608,12 +610,16 @@ class PipelineDetector:
                 logging.info('The stats file for iteration {0} already '\
                              'exists: {1}'.format(iteration, fname))
             else:
-                logging.info('Evaluation the model of iteration {0}'.format( \
-                             iteration))
-                stats = self.evaluate()
-                logging.info('AP: {0}'.format(stats.average_prec))
-                dump_obj_to_file_using_pickle(stats, fname, 'binary')
-                stats.save_mat(fname_mat)
+                if self.iteration in self.params.iterations_to_evaluate:
+                    logging.info('Evaluation the model of iteration {0}'.format( \
+                                 iteration))
+                    stats = self.evaluate()
+                    logging.info('AP: {0}'.format(stats.average_prec))
+                    dump_obj_to_file_using_pickle(stats, fname, 'binary')
+                    stats.save_mat(fname_mat)
+                else:
+                    logging.info('Skip the evaluation for the '\
+                                 'iteration {0}'.format(iteration))
 
     def train_batch(self):
         """ Train an iteration of the detector """

@@ -28,6 +28,7 @@ if __name__ == "__main__":
     # negative mining
     params.negative_mining = 'batch'
     params.num_iterations = 2
+    params.iterations_to_evaluate = [1]
     # input/output dirs
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
