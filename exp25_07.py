@@ -30,6 +30,8 @@ if __name__ == "__main__":
     # number of iterations
     params.negative_mining = 'batch'
     params.num_iterations = 2
+    # perform the evaluation only in the last iteration
+    params.eval_iterations = [params.num_iterations - 1]
     # input/output dirs
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
