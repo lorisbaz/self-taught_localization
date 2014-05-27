@@ -8,20 +8,20 @@ from vlg.util.parfun import *
 from heatmap import *
 from network import *
 from configuration import *
-from windowslider import *
+from imgsegmentation import *
+from heatextractor import *
 from compute_statistics_exp import *
-import exp28
+from htmlreport import *
+import exp23
 
 if __name__ == "__main__":
     # load configurations and parameters
     conf = Configuration()
-    params = exp28.Params()
+    params = exp23.Params()
     # experiment name
-    params.exp_name = 'exp28_02'
-    params.exp_name_input = 'exp03_07' # take results from here
-    # Sliding win params (bbox size, stride)
-    params.slide_win = [(50, 10), (75, 15), (100, 15), (125, 20), \
-                        (150, 20), (175, 25), (200, 25)]
+    params.exp_name = 'exp23_16'
+    # input (GT AnnotatatedImages)
+    params.exp_name_input = 'exp03_05'
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # default Configuration, image and label files
@@ -29,11 +29,16 @@ if __name__ == "__main__":
     # select network: 'CAFFE' or 'DECAF'
     params.classifier = 'CAFFE'
     params.center_only = True
-    # select top C classes used to generate the heatmaps
-    params.topC = 5
-    params.use_fullimg_GT_label = False # if True, params.topC ignored
-    if params.use_fullimg_GT_label:
-        params.topC = 0
+    # select top C classes used to generate the predicted bboxes
+    params.topC = 5     # if 0, take the max across classes
+    # method for calculating the confidence
+    params.heatextractor_confidence_tech = 'full_obf_positive'
+    # obfuscation search params
+    params.ss_version = 'fast'
+    params.min_sz_segm = 5 # keep this low (because we resize!!)
+    params.alpha = np.array([1/3.0, 1/3.0, 1/3.0])
+    params.obfuscate_bbox = True
+    params.use_fullimg_GT_label = True # if true params.topC is not used!
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
@@ -41,12 +46,12 @@ if __name__ == "__main__":
                         + '/' + params.exp_name_input
     # parallelize the script on Anthill?
     params.run_on_anthill = True
-    # Set jobname in case the process stop or crush
-    params.task = [] # specify tasks to debug
+    # list of tasks to execute
+    params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    if 0:
-        exp28.run_exp(params)
+    if 1:
+        exp23.run_exp(params)
     # RUN THE STATISTICS PIPELINE
     if 0:
         compute_statistics_exp(input_exp=params.exp_name)
