@@ -53,7 +53,7 @@ if __name__ == "__main__":
             '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation/TEMP2'
     if 1:  # -- Anthill
         params.parfun_params_categories = vlg.util.parfun.ParFunAnthillParams( \
-                        time_requested=10, memory_requested=6, \
+                        time_requested=24, memory_requested=6, \
                         progress_bar_params = params.progress_bar_params, \
                         tmp_dir = parfun_tmpdir, max_tasks=100)
     if 0:  # -- Local
@@ -68,6 +68,8 @@ if __name__ == "__main__":
         params.parfun_params_training = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 12, \
                 progress_bar_params = params.progress_bar_params)
+    if 0:  # -- Local
+        params.parfun_params_training = vlg.util.parfun.ParFunDummyParams()
     # ParFun EVALUATION
     if 0:  # -- Anthill
         params.parfun_params_evaluation = vlg.util.parfun.ParFunAnthillParams( \
@@ -78,7 +80,8 @@ if __name__ == "__main__":
         params.parfun_params_evaluation = vlg.util.parfun.ParFunProcessesParams( \
                 num_processes = 12, \
                 progress_bar_params = params.progress_bar_params)
-
+    if 0:  # -- Local
+        params.parfun_params_evaluation = vlg.util.parfun.ParFunDummyParams()
     # run just the first category
     params.categories_to_process = []
     # *** run the pipeline
