@@ -23,6 +23,6 @@ plot(num_bboxes, mean_precision, '-o', 'DisplayName', SS.legend, 'Color', SS.col
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
 
-legend(h, 'Location', 'SouthEast');
+legend(h, 'Location', 'Best');
 
 end

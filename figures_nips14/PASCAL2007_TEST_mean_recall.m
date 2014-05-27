@@ -29,6 +29,6 @@ mean_recall = [ 0.224509, 0.292273, 0.332364, 0.362532, 0.383733, 0.403439, 0.41
 plot(num_bboxes, mean_recall, '-o', 'DisplayName', OBFStopC.legend, 'Color', OBFStopC.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
-legend(h, 'Location', 'SouthEast');
+legend(h, 'Location', 'Best');
 
 end

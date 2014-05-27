@@ -30,10 +30,13 @@ plot(num_bboxes, mean_recall, '-o', 'DisplayName', OBFSgt.legend, 'Color', OBFSg
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
 
-%{'exp23_09stats_NMS_05','ObfuscationSearch, topC=5'}, ...
-% TODO
+% ****** exp23_09stats_NMS_05 / mean_recall *** ObfuscationSearch, topC=5   **********
+num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000000, 8.000000, 9.000000, 10.000000, 11.000000, 12.000000, 13.000000, 14.000000, 15.000000, 20.000000, 30.000000, 50.000000, 100.000000, 200.000000, 500.000000, 1000.000000 ];
+mean_recall = [ 0.482297, 0.581159, 0.629804, 0.662464, 0.686653, 0.705994, 0.721132, 0.735902, 0.747617, 0.758061, 0.765104, 0.772347, 0.779051, 0.784795, 0.790938, 0.810537, 0.833687, 0.858368, 0.879430, 0.895763, 0.912901, 0.913431 ];
+plot(num_bboxes, mean_recall, '-o', 'DisplayName', OBFStopC.legend, 'Color', OBFStopC.color);
+h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
 
-legend(h, 'Location', 'SouthEast');
+legend(h, 'Location', 'Best');
 
 end

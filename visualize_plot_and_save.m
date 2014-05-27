@@ -128,7 +128,7 @@ function print_matlab_plot_txt(X, Y, exp, Xquantity, Yquantity)
 assert(numel(X) == numel(Y));
 assert(numel(X) > 0);
 % print header
-fprintf('****** %s / %s *** %s   **********\n', exp{1}, Yquantity, exp{2});
+fprintf('%% ****** %s / %s *** %s   **********\n', exp{1}, Yquantity, exp{2});
 % print X
 fprintf('%s = [ ', Xquantity);
 for i=1:numel(X)-1

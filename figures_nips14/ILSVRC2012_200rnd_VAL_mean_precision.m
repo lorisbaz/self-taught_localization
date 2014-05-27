@@ -44,6 +44,12 @@ plot(num_bboxes, mean_precision, '-o', 'DisplayName', OBFSgt.legend, 'Color', OB
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
 
-legend(h, 'Location', 'SouthEast');
+% ****** exp28_01stats_NMS_05 / mean_precision *** SlidingWindow, topC=5   **********
+num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000000, 8.000000, 9.000000, 10.000000, 11.000000, 12.000000, 13.000000, 14.000000, 15.000000, 20.000000, 30.000000, 50.000000, 100.000000, 200.000000, 500.000000, 1000.000000, 2000.000000 ];
+mean_precision = [ 0.030600, 0.027450, 0.024333, 0.022125, 0.020260, 0.018683, 0.017286, 0.016337, 0.015578, 0.014710, 0.014191, 0.013692, 0.013154, 0.012771, 0.012333, 0.010484, 0.008190, 0.005881, 0.003565, 0.002097, 0.001008, 0.000645, 0.000625 ];
+plot(num_bboxes, mean_precision, '-o', 'DisplayName', SW.legend, 'Color', SW.color);
+h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+
+legend(h, 'Location', 'Best');
 
 end

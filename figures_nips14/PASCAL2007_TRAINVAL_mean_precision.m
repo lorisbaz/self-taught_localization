@@ -29,6 +29,6 @@ mean_precision = [ 0.280615, 0.185418, 0.141736, 0.117292, 0.100262, 0.088371, 0
 plot(num_bboxes, mean_precision, '-o', 'DisplayName', OBFStopC.legend, 'Color', OBFStopC.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
-legend(h, 'Location', 'SouthEast');
+legend(h, 'Location', 'Best');
 
 end

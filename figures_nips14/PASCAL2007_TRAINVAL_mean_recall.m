@@ -30,6 +30,6 @@ plot(num_bboxes, mean_recall, '-o', 'DisplayName', OBFStopC.legend, 'Color', OBF
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
 
-legend(h, 'Location', 'SouthEast');
+legend(h, 'Location', 'Best');
 
 end

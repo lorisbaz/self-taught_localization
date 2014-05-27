@@ -15,7 +15,7 @@ from htmlreport import *
 import exp23
 
 if __name__ == "__main__":
-    # load configurations and parameters  
+    # load configurations and parameters
     conf = Configuration()
     params = exp23.Params()
     # experiment name
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # select top C classes used to generate the predicted bboxes
     params.topC = 5     # if 0, take the max across classes
     # method for calculating the confidence
-    params.heatextractor_confidence_tech = 'full_obf_positive'     
+    params.heatextractor_confidence_tech = 'full_obf_positive'
     # obfuscation search params
     params.ss_version = 'fast'
     params.min_sz_segm = 5 # keep this low (because we resize!!)
@@ -42,20 +42,20 @@ if __name__ == "__main__":
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
     params.input_dir = conf.experiments_output_directory \
-                        + '/' + params.exp_name_input 
+                        + '/' + params.exp_name_input
     # parallelize the script on Anthill?
-    params.run_on_anthill = True 
+    params.run_on_anthill = True
     # list of tasks to execute
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    if 1:
+    if 0:
         exp23.run_exp(params)
     # RUN THE STATISTICS PIPELINE
-    if 1:
+    if 0:
         compute_statistics_exp(input_exp=params.exp_name)
     # RUN THE STATISTICS PIPELINE WITH NMS
-    if 1:
+    if 0:
         # NMS=0.3
         params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_03')
         params_stats.nms_execution = True
@@ -68,7 +68,7 @@ if __name__ == "__main__":
         params_stats.nms_iou_threshold = 0.5
         params_stats.delete_pred_objects = False
         compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
-    if 1:
+    if 0:
         # NMS=0.9
         params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_09')
         params_stats.nms_execution = True

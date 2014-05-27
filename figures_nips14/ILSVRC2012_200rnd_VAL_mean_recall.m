@@ -44,6 +44,12 @@ plot(num_bboxes, mean_recall, '-o', 'DisplayName', OBFSgt.legend, 'Color', OBFSg
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
 
-legend(h, 'Location', 'SouthEast');
+% ****** exp28_01stats_NMS_05 / mean_recall *** SlidingWindow, topC=5   **********
+num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000000, 8.000000, 9.000000, 10.000000, 11.000000, 12.000000, 13.000000, 14.000000, 15.000000, 20.000000, 30.000000, 50.000000, 100.000000, 200.000000, 500.000000, 1000.000000, 2000.000000 ];
+mean_recall = [ 0.021431, 0.037567, 0.049603, 0.059719, 0.067987, 0.075290, 0.081113, 0.087289, 0.093312, 0.097808, 0.103665, 0.108682, 0.112520, 0.117061, 0.121215, 0.136355, 0.157485, 0.183314, 0.216552, 0.247016, 0.284081, 0.305698, 0.307066 ];
+plot(num_bboxes, mean_recall, '-o', 'DisplayName', SW.legend, 'Color', SW.color);
+h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+
+legend(h, 'Location', 'Best');
 
 end

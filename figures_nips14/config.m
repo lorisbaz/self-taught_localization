@@ -51,4 +51,8 @@ OBFSgt.legend = 'Obfuscation Search bboxes, GT (our method)';
 SWheat.color = MATLAB.Color.greyMed;
 SWheat.legend = 'Sliding Window heatmap';
 
+% SlidingWindow
+SW.color = MATLAB.Color.orangeLight;
+SW.legend = 'Sliding Window';
+
 
