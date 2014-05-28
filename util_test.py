@@ -22,39 +22,51 @@ class UtilTest(unittest.TestCase):
         # bboxes = [bboxes(:,1)./img_width , bboxes(:,2)./img_height , bboxes(:,3)./img_width , bboxes(:,4)./img_height]
         image = skimage.io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         images = [image]
-        bboxes = util.selective_search(images, ss_version='quality')        
+        bboxes = util.selective_search(images, ss_version='quality')
         self.assertAlmostEqual(len(bboxes[0]), 5290)
         # test first bbox
         self.assertAlmostEqual(bboxes[0][0].xmin, 0.614000000000000)
         self.assertAlmostEqual(bboxes[0][0].ymin, 0.285333333333333)
-        self.assertAlmostEqual(bboxes[0][0].xmax, 0.900000000000000)        
+        self.assertAlmostEqual(bboxes[0][0].xmax, 0.900000000000000)
         self.assertAlmostEqual(bboxes[0][0].ymax, 0.496000000000000)
-        self.assertAlmostEqual(bboxes[0][0].confidence, -0.003179143813317)        
+        self.assertAlmostEqual(bboxes[0][0].confidence, -0.003179143813317)
         # test second bbox
         self.assertAlmostEqual(bboxes[0][1].xmin, 0.0)
         self.assertAlmostEqual(bboxes[0][1].ymin, 0.0)
-        self.assertAlmostEqual(bboxes[0][1].xmax, 1.0)        
+        self.assertAlmostEqual(bboxes[0][1].xmax, 1.0)
         self.assertAlmostEqual(bboxes[0][1].ymax, 1.0)
-        self.assertAlmostEqual(bboxes[0][1].confidence, -0.003873535513487)        
+        self.assertAlmostEqual(bboxes[0][1].confidence, -0.003873535513487)
 
     def test_selective_search2(self):
         image = skimage.io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         images = [image, image]
-        bboxes = util.selective_search(images, ss_version='fast')        
+        bboxes = util.selective_search(images, ss_version='fast')
         self.assertAlmostEqual(len(bboxes[0]), 834)
         self.assertAlmostEqual(len(bboxes[1]), 834)
         # test first image, first bbox
         self.assertAlmostEqual(bboxes[0][0].xmin, 0.09)
         self.assertAlmostEqual(bboxes[0][0].ymin, 0.0)
-        self.assertAlmostEqual(bboxes[0][0].xmax, 1.0)        
+        self.assertAlmostEqual(bboxes[0][0].xmax, 1.0)
         self.assertAlmostEqual(bboxes[0][0].ymax, 0.288)
-        self.assertAlmostEqual(bboxes[0][0].confidence, -0.002731697745111)        
+        self.assertAlmostEqual(bboxes[0][0].confidence, -0.002731697745111)
         # test second image, first bbox
         self.assertAlmostEqual(bboxes[1][0].xmin, 0.09)
         self.assertAlmostEqual(bboxes[1][0].ymin, 0.0)
-        self.assertAlmostEqual(bboxes[1][0].xmax, 1.0)        
+        self.assertAlmostEqual(bboxes[1][0].xmax, 1.0)
         self.assertAlmostEqual(bboxes[1][0].ymax, 0.288)
-        self.assertAlmostEqual(bboxes[1][0].confidence, -0.002731697745111) 
+        self.assertAlmostEqual(bboxes[1][0].confidence, -0.002731697745111)
+
+    def test_bing(self):
+        image = skimage.io.imread('/home/anthill/aleb/clients/bing/VOC2007/JPEGImages/000001.jpg')
+        images = [image]
+        bboxes = util.bing(images)
+        self.assertAlmostEqual(len(bboxes[0]), 1943)
+        # test first image, first bbox
+        self.assertAlmostEqual(bboxes[0][0].xmin, 0.0)
+        self.assertAlmostEqual(bboxes[0][0].ymin, 256/500.0)
+        self.assertAlmostEqual(bboxes[0][0].xmax, 353/353.0)
+        self.assertAlmostEqual(bboxes[0][0].ymax, 500/500.0)
+        self.assertAlmostEqual(bboxes[0][0].confidence, -0.317388)
 
     def test_randperm_deterministic(self):
         t = util.randperm_deterministic(5)
@@ -87,7 +99,7 @@ class UtilTestTempFile(unittest.TestCase):
     def test_tmpfile(self):
         """
         We try to map a file that is on ironfs.
-        """        
+        """
         tmp = util.TempFile(self.mapped_file, copy=True)
         # test get_temp_filename
         tmp.get_temp_filename()
@@ -100,7 +112,7 @@ class UtilTestTempFile(unittest.TestCase):
         # make sure we write the content back to the mapped file
         fd = open(self.mapped_file, 'r')
         line = fd.readline()
-        fd.close()  
+        fd.close()
         self.assertEqual(line, 'THIS IS A TEST')
 
     @unittest.skipIf(os.uname()[1] != 'anthill.cs.dartmouth.edu',
@@ -114,7 +126,7 @@ class UtilTestTempFile(unittest.TestCase):
         # make sure we write the content back to the mapped file
         fd = open(self.mapped_file, 'r')
         line = fd.readline()
-        fd.close()  
+        fd.close()
         self.assertEqual(line, 'THIS IS A TEST')
 
 #=============================================================================
