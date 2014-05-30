@@ -28,7 +28,7 @@ params.save_output_files = 0;
 params.visualize_iter_number = 0;
 
 % *** specify experiments
-params.exps = {{'exp25_07','exp25_07'}};
+params.exps = {{'exp25_07','GT'}};
 
 % *** load results
 results = collectResults(params);
@@ -79,12 +79,9 @@ set(gca, 'YTickLabel', s);
 % *** MAP
 text(0.8, 10, sprintf('MAP(max)=%.3f\nMAP=%.3f',mean(max_val),mean(last_val)), 'FontSize',14);    
 
-% print last_val
-fprintf('last_val = ['); 
-for i=1:length(last_val)
-   fprintf('%.2f ', last_val(i));
-end
-fprintf('];\n');
+% print AP
+print_matlab_plot_txt(last_val, params.exps{1}, 'average_precision')
+
 
 % *** save figures
 if params.save_output_files
@@ -120,5 +117,24 @@ for idxCl = 1:opts.num_classes
         end
     end
 end
+
+end
+
+
+function print_matlab_plot_txt(Y, exp, Yquantity)
+
+assert(numel(Y) > 0);
+% print header
+fprintf('%% ****** %s / %s *** %s   **********\n', exp{1}, Yquantity, exp{2});
+% print Y
+fprintf('%s = [ ', Yquantity);
+for i=1:numel(Y)-1
+  fprintf('%f, ' , Y(i));
+end
+fprintf('%f ];\n' , Y(end));
+fprintf('****************************************************\n')
+
+%plot(ntt, acc, '-x', 'DisplayName', classemes.legend, 'Color', classemes.color);
+%h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
 end

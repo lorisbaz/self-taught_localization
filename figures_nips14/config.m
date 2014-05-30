@@ -55,4 +55,6 @@ SWheat.legend = 'Sliding Window heatmap';
 SW.color = MATLAB.Color.orangeLight;
 SW.legend = 'Sliding Window';
 
-
+% GT detection
+GTdet.color = MATLAB.Color.green;
+GTdet.legend = 'Ground truth';

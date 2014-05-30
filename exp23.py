@@ -92,6 +92,8 @@ def pipeline(inputdb, outputdb, params):
                                                          label=GT_label)
         anno.pred_objects[classifier_name] = {}
         for this_label in segment_lists.keys():
+            if not params.use_fullimg_GT_label:
+                assert this_label != 'none'
             # Convert the segmentation lists to BBoxes
             pred_bboxes_unnorm = segments_to_bboxes(segment_lists[this_label])
             # Normalize the bboxes
