@@ -228,6 +228,80 @@ def selective_search(images, ss_version):
     # return
     return bboxes_all
 
+def bing(images):
+    """
+    Extract the BING subwindows from the given input images.
+    This function runs the software
+    /home/anthill/aleb/clients/bing/Src/BING_linux
+
+    INPUT:
+     images: list of N ndarray elements, each element is an image
+
+    OUTPUT:
+     bboxes_all: list of N lists. The i-th sub-list is a list of BBox objects,
+                 which are the SS subwindows associated to the i-th image.
+                 Note that the confidence value is available, and that the
+                 coordinates are 0-1 normalized.
+    """
+    # dump the images of the AnnotatedImages to temporary files
+    bboxes_all = []
+    for i in range(len(images)):
+        image = images[i]
+        (fd, tmpfile_in) = tempfile.mkstemp(suffix = '.jpg')
+        os.close(fd)
+        img = skimage.io.imsave(tmpfile_in, image)
+        # create temporary files for the output file
+        (fd, tmpfile_out) = tempfile.mkstemp(suffix = '.txt')
+        os.close(fd)
+        # run the BING code
+        command = '/home/anthill/aleb/clients/bing/Src/BING_linux '\
+          'extract {0} {1}'.format(tmpfile_in, tmpfile_out);
+        logging.info('Executing command ' + command)
+        if os.system(command) != 0:
+            logging.error('Matlab SS script did not exit successfully!')
+            bboxes_all.append( [] )
+            continue
+        # load the output file, and create the BBox objects
+        try:
+            fd = open(tmpfile_out, 'r')
+        except:
+            logging.error('Exception while loading ' + mat_temp_files[i])
+            bboxes_all.append( [] )
+            continue
+        # width:353
+        field, delimiter, text = fd.readline().partition(':')
+        assert field == 'width'
+        img_width = int( text )
+        assert img_width > 0
+        # height:500
+        field, delimiter, text = fd.readline().partition(':')
+        assert field == 'height'
+        img_height = int( text )
+        assert img_height > 0
+        # numBBoxes:1937
+        field, delimiter, text = fd.readline().partition(':')
+        assert field == 'numBBoxes'
+        numBBoxes = int( text )
+        assert numBBoxes > 0
+        # -0.316005, 1, 257, 353, 500
+        bbs = []
+        for line in fd.readlines():
+            fields = line.split(',')
+            assert len(fields) == 5
+            bb = BBox(int(fields[1].strip()) - 1, int(fields[2].strip()) - 1, \
+                      int(fields[3].strip()), int(fields[4].strip()), \
+                      float(fields[0].strip()))
+            bb.normalize_to_outer_box(BBox(0, 0, img_width, img_height))
+            bbs.append(bb)
+        bboxes_all.append(bbs)
+        fd.close()
+        assert len(bbs) == numBBoxes
+        # delete all the temporary files
+        os.remove(tmpfile_in)
+        os.remove(tmpfile_out)
+    # return
+    assert len(bboxes_all) == len(images)
+    return bboxes_all
 
 def reRank_pred_objects(pred_objects, image, net, full_img_class = False, \
                         GT_label = None):
