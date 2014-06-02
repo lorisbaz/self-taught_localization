@@ -53,6 +53,8 @@ class ComputeStatParams:
         # delete the pred_objects from the AnnotatedImages, to save storage
         # and speed-up the unpickling
         self.delete_pred_objects = True
+        # BING EVAL
+        self.bing_eval = False
         # input/output directory
         self.output_dir = conf.experiments_output_directory \
                             + '/' + self.exp_name
@@ -89,10 +91,114 @@ def compute_statistics_exp(input_exp, run_on_anthill = True, \
     logging.info('Started')
     # RUN THE EXPERIMENT
     if stats_per_class:
+        assert params.bing_eval == False
         run_exp_per_class(params)
     else:
-        run_exp(params)
+        if params.bing_eval:
+            run_exp_bing(params)
+        else:
+            run_exp(params)
 
+#==============================================================================
+
+def pipeline_bing(inputdb, params):
+    # Instantiate some objects, and open the database
+    conf = params.conf
+    db_input = bsddb.btopen(inputdb, 'r')
+    db_keys = db_input.keys()
+    stats_all = []
+    # loop over the images
+    for image_key in db_keys:
+        # get database entry
+        anno = pickle.loads(db_input[image_key])
+        logging.info('***** Elaborating statistics ' + \
+                      os.path.basename(anno.image_name))
+        # Flat Gt and Pred objects to BBoxes
+        gt_bboxes, gt_lab = Stats.flat_anno_bboxes(anno.gt_objects)
+        assert len(anno.pred_objects.keys()) == 1 # TODO: support more cls
+        for classifier in anno.pred_objects.keys():
+            pred_bboxes, pred_lab = Stats.flat_anno_bboxes( \
+                                    anno.pred_objects[classifier])
+            # compute the recall for this image only
+            N = 2000
+            recall_bing = np.zeros(shape=(N,1))
+            detected = [0]*len(gt_bboxes)
+            score = [0.0]*len(gt_bboxes)
+            for pred_idx in range(N):
+                if pred_idx >= len(pred_bboxes):
+                    recall_bing[pred_idx] = sum(detected) / float(len(gt_bboxes))
+                    continue
+                pred_bb = pred_bboxes[pred_idx]
+                for gt_idx, gt_bb in enumerate(gt_bboxes):
+                    ov = pred_bb.jaccard_similarity(gt_bb)
+                    s = max(ov, score[gt_idx])
+                    if s > 0.5:
+                        detected[gt_idx] = 1
+                recall_bing[pred_idx] = sum(detected) / float(len(gt_bboxes))
+        stats = Stats()
+        stats.recall = recall_bing
+        stats_all.append(stats)
+        logging.info('End record')
+    return stats_all
+
+def run_exp_bing(params):
+    """
+    This evaluation implements the recall calculation as done in the BING,
+    project, in particular what is coded in
+    BING/Src/Objectness.cpp::evaluatePerImgRecall
+
+    Note that this script does not dump to the disk anything, it just prints
+    on the stdout the recall.
+
+    To use this eval, use the following template code:
+    csparams = ComputeStatParams(params.exp_name)
+    csparams.bing_eval = True
+    compute_statistics_exp(input_exp=params.exp_name, \
+                           stats_per_class=False, params=csparams)
+    """
+    # create output directory
+    if os.path.exists(params.output_dir) == False:
+        os.makedirs(params.output_dir)
+    imgs_output_dir = params.output_dir + '/imgs'
+    if os.path.exists(imgs_output_dir) == False:
+        os.makedirs(imgs_output_dir)
+    mat_output_dir = params.output_dir + '/mat'
+    if os.path.exists(mat_output_dir) == False:
+        os.makedirs(mat_output_dir)
+    # list the databases chuncks
+    n_chunks = len(glob.glob(params.input_dir + '/*.db'))
+    # run the pipeline
+    parfun = None
+    if params.run_on_anthill:
+        jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
+        parfun = ParFunAnthill(pipeline_bing, time_requested=2, \
+            memory_requested=1, job_name=jobname)
+    else:
+        parfun = ParFunDummy(pipeline_bing)
+    if params.task==None or len(params.task)==0:
+        idx_to_process = range(n_chunks)
+    else:
+        idx_to_process = params.task
+    for i in idx_to_process:
+        inputdb = params.input_dir + '/%05d'%i + '.db'
+        parfun.add_task(inputdb, params)
+    stats_all = parfun.run()
+    stats_all = [s for s2 in stats_all for s in s2]
+    # collect the results, and save them under the directory 'imgs'
+    logging.info('** Collecting stats **')
+    N = 2000
+    recall_bing = np.zeros(shape=(N, 1))
+    for stats in stats_all:
+        recall_bing += stats.recall
+    recall_bing /= len(stats_all)
+    # print
+    print 'Recall BING'
+    for i in [1, 10, 100, 1000, 2000]:
+        print '{0}:{1}'.format(i, recall_bing[i-1])
+    # exit
+    logging.info('End of the script')
+
+#==============================================================================
 
 # === Stats considering all the GT bboxes (kept for back-compatibility) === #
 def pipeline(inputdb, outputdb, params):

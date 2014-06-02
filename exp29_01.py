@@ -40,3 +40,11 @@ if __name__ == "__main__":
     # RUN THE STATISTICS PIPELINE
     if 1:
         compute_statistics_exp(input_exp=params.exp_name)
+    # RUN THE STATISTICS PIPELINE, using the BING eval protocol
+    if 0:
+        csparams = ComputeStatParams(params.exp_name)
+        csparams.bing_eval = True
+        csparams.run_on_anthill = True
+        csparams.task = []
+        compute_statistics_exp(input_exp=params.exp_name, \
+                               stats_per_class=False, params=csparams)
