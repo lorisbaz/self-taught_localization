@@ -242,7 +242,7 @@ def run_exp(params):
     # exit
     logging.info('End of the script')
 
-
+#==============================================================================
 
 # === Code to compute statistics for each class === #
 def pipeline_per_class(inputdb, outputdb, params):
@@ -354,10 +354,12 @@ def run_exp_per_class(params):
             assert len(anno.stats.keys()) == 1, 'Only one classifier is supp.'
             classifier = anno.stats.keys()[0]
             for label in anno.stats[classifier].keys():
+                if len(anno.stats[classifier][label].confidence) == 0:
+                    logging.warning('Empty stats! db:{0} key:{1} label:{2}'\
+                                    .format(outputdb, image_key, label))
                 if not(stats_list.has_key(label)): # init first time...
-                    stats_list[label] = [anno.stats[classifier][label]]
-                else: #... then append
-                    stats_list[label].append(anno.stats[classifier][label])
+                    stats_list[label] = []
+                stats_list[label].append(anno.stats[classifier][label])
     # ** Aggregate results
     logging.info('** Aggregating stats **')
     num_bins = 32
@@ -437,4 +439,3 @@ def run_exp_per_class(params):
                     'x_values': params.stats_using_num_pred_bboxes_image})
     # exit
     logging.info('End of the script')
-

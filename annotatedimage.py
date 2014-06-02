@@ -94,7 +94,7 @@ class AnnotatedImage:
         if 'feature_extractor_' in d:
             del d['feature_extractor_']
         return d
-    
+
     def set_image(self, img):
         """
         Set the image, given a ndarray-image
@@ -146,7 +146,8 @@ class AnnotatedImage:
 
     def export_pred_bboxes_to_text(self, name_pred_objects, \
                                    max_num_bboxes = sys.maxint,\
-                                   output_filtered_pred_obj = False):
+                                   output_filtered_pred_obj = False, \
+                                   bbox_integer_coordinates = False):
         """
         Export the predicted bboxes to a text representation with multi lines,
         each line, with the following tab-separated fields:
@@ -154,7 +155,7 @@ class AnnotatedImage:
                xmin ymin xmax ymax bbox_confidence>
 
         If max_num_bboxes is set, for each image and class label
-        we sort the bboxes by 
+        we sort the bboxes by
         confidence and we export only the top-max_num_bboxes bboxes per label.
         """
         assert name_pred_objects in self.pred_objects
@@ -181,14 +182,22 @@ class AnnotatedImage:
             output_object[label].bboxes = bboxes
             for bbox in bboxes:
                 bbox_confidence = bbox.confidence
+                xmin = bbox.xmin
+                ymin = bbox.ymin
+                xmax = bbox.xmax
+                ymax = bbox.ymax
+                if bbox_integer_coordinates:
+                    xmin = int(xmin*self.image_width)
+                    ymin = int(ymin*self.image_height)
+                    xmax = int(xmax*self.image_width)
+                    ymax = int(ymax*self.image_height)
                 line = '{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\n'\
                        .format( \
                        self.image_name, self.image_width, self.image_height, \
                        anno_object.label, full_image_confidence, \
-                       bbox.xmin, bbox.ymin, bbox.xmax, bbox.ymax, \
-                       bbox_confidence)
+                       xmin, ymin, xmax, ymax, bbox_confidence)
                 out = out + line
-        if output_filtered_pred_obj:        
+        if output_filtered_pred_obj:
             return out, output_object
         else:
             return out
@@ -240,8 +249,3 @@ class AnnotatedImage:
         self.feature_extractor_ = FeatureExtractor.create_feature_extractor( \
                     self, feature_extractor_params)
         self.save_features_cache_ = save_features_cache
-
-
-    
-	
-

@@ -13,7 +13,7 @@ plot_defs;
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
 params.dataset_name = 'PASCAL2007test';
 params.prefix_output_files = strcat('results_',params.dataset_name);
-params.save_output_files = 1;
+params.save_output_files = 0;
 params.set_log_scale = 1;
 params.mean_precision = 1;
 params.MATLAB = MATLAB;

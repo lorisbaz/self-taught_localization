@@ -35,6 +35,8 @@ if __name__ == "__main__":
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    exp29.run_exp(params)
+    if 1:
+        exp29.run_exp(params)
     # RUN THE STATISTICS PIPELINE
-    compute_statistics_exp(input_exp=params.exp_name)
+    if 0:
+        compute_statistics_exp(input_exp=params.exp_name)

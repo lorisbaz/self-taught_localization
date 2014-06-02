@@ -259,7 +259,7 @@ def bing(images):
           'extract {0} {1}'.format(tmpfile_in, tmpfile_out);
         logging.info('Executing command ' + command)
         if os.system(command) != 0:
-            logging.error('Matlab SS script did not exit successfully!')
+            logging.error('BING program did not exit successfully!')
             bboxes_all.append( [] )
             continue
         # load the output file, and create the BBox objects
@@ -394,16 +394,20 @@ def load_obj_from_file_using_pickle(fname):
     fd.close()
     return obj
 
-def load_obj_from_db(inputdb, idx):
-	"""
-	inputdb is the .db file, and idx is the index of the key in the file.
-	"""
-	db_input = bsddb.btopen(inputdb, 'r')
-	db_keys = db_input.keys()
-	image_key = db_keys[idx]
-	anno_img = pickle.loads(db_input[image_key])
-	db_input.close()
-	return anno_img
+def load_obj_from_db(inputdb, idx=None, key=None):
+    """
+    inputdb is the .db file. You can specify either:
+    - idx which is the index of the key in the file, xor
+    - the key
+    """
+    assert (idx != None) or (key != None)
+    db_input = bsddb.btopen(inputdb, 'r')
+    db_keys = db_input.keys()
+    if idx != None:
+        key = db_keys[idx]
+    anno_img = pickle.loads(db_input[key])
+    db_input.close()
+    return anno_img
 
 def remove_slash_and_extension_from_image_key(image_key, remove_string = ''):
     """

@@ -80,7 +80,7 @@ def run_exp(params):
     if params.run_on_anthill:
         jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
     	parfun = ParFunAnthill(pipeline, time_requested=1, \
-            job_name=jobname)
+            job_name=jobname, hostname_requested='gridiron*')
     else:
         parfun = ParFunDummy(pipeline)
     if params.task==None or len(params.task)==0:

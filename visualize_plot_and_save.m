@@ -39,6 +39,16 @@ xlabel('Num subwindows')
 ylabel('Precision')
 title(strcat('Results on ', params.dataset_name))
 
+% create the figure for the Recall
+figure;
+h_recall = gca;
+hold on;
+grid on;
+axis([1, 50, 0, 0.6]);
+xlabel('Num subwindows')
+ylabel('Recall')
+title(strcat('Results on ', params.dataset_name))
+
 if params.mean_precision
     % create the figure for the Precision
     figure;
@@ -69,6 +79,11 @@ for i=1:numel(params.exps)
   print_matlab_plot_txt(X, Y, params.exps{i}, 'num_bboxes', 'precision');
   plot(h_precision, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
   h=legend(h_precision, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
+  % plot the Recall
+  [X, Y] = cut_tail_with_equal_values(S.x_values, S.recall);
+  print_matlab_plot_txt(X, Y, params.exps{i}, 'num_bboxes', 'recall');
+  plot(h_recall, X, Y, '-', 'DisplayName', params.exps{i}{2}, 'Color', MATLAB.Colors_all{i}, 'Marker', MATLAB.LineSpec.markers(i));
+  h=legend(h_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');  
   % plot the Precision    
   if params.mean_precision
       [X, Y] = cut_tail_with_equal_values(S.x_values, S.mean_precision);
@@ -93,6 +108,9 @@ if params.PASCAL2007_test
     % plot the mean recall per class
     plot(h_mean_recall, x_values, S.BING_RGB_HSV_Gray_CVPR14(x_values), '-o', 'DisplayName', 'BING_RGB_HSV_Gray_CVPR14', 'Color', MATLAB.Color.greenDark);
     h=legend(h_mean_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
+    % plot the recall
+    plot(h_recall, x_values, S.BING_RGB_HSV_Gray_CVPR14(x_values), '-o', 'DisplayName', 'BING_RGB_HSV_Gray_CVPR14', 'Color', MATLAB.Color.greenDark);
+    h=legend(h_recall, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');    
     % plot the MABO
     plot(h_mean_mabo, x_values, S.MABO(x_values), '-o', 'DisplayName', 'BING (?)', 'Color', MATLAB.Color.greenDark);
     h=legend(h_mean_mabo, '-DynamicLegend'); set(h,'Interpreter','none', 'Location', 'Best');
