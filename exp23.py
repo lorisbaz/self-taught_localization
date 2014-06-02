@@ -31,7 +31,8 @@ class Params:
         # If True, we select the subset of classes that overlap between
         # ILSVRC2012-class and ILSVRC2013-det
         self.select_subset_overlap_ilsvrc2012_ilsvrc2013 = False
-
+        # For obf search. Use similarity instead of diversity
+        self.similarity = False
 
 def pipeline(inputdb, outputdb, params):
     # Instantiate some objects, and open the database
@@ -59,7 +60,8 @@ def pipeline(inputdb, outputdb, params):
     segmenter = ImgSegm_ObfuscationSearch(net, params.ss_version, \
                                    params.min_sz_segm, topC = params.topC,\
                                    alpha = params.alpha, \
-                                   obfuscate_bbox = params.obfuscate_bbox)
+                                   obfuscate_bbox = params.obfuscate_bbox, \
+                                   similarity = params.similarity)
     # retrieve all the AnnotatedImages and images from the database
     logging.info('Opening ' + inputdb)
     db_input = bsddb.btopen(inputdb, 'r')

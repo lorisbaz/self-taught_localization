@@ -227,6 +227,9 @@ class PipelineImage:
             pos_bboxes = copy.copy(ai.gt_objects[parts[1]].bboxes)
         elif parts[0] == 'PRED':
             assert len(parts)==3
+            # no concept of GT for sel search and obf search topc
+            if parts[1] == 'SELECTIVESEARCH' or parts[1] == 'OBFSEARCH_TOPC':
+                parts[2] = 'none'
             pos_bboxes = copy.copy(ai.pred_objects[parts[1]][parts[2]].bboxes)
         else:
             raise ValueError('parts[0]:{0} not recognized'.format(parts[0]))

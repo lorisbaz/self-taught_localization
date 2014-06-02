@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # *** PipelineDetectorParams
     params = PipelineDetectorParams()
     # experiment name
-    params.exp_name = 'exp25_09'
+    params.exp_name = 'exp25_10'
     # input
     params.exp_name_input_train = 'exp24_11'
     params.exp_name_input_test = 'exp24_12'
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # Detector module to use (parameters object)
     params.detector_params = detector_params
     # field names for the pos/neg bboxes
-    params.field_name_pos_bboxes = 'PRED:OBFSEARCH_GT'
+    params.field_name_pos_bboxes = 'PRED:SELECTIVESEARCH'
     params.field_name_bboxes = 'PRED:SELECTIVESEARCH'
     # number of positive bboxes to select, based on the confidence score
     params.max_num_pos_bboxes_per_image = 3
