@@ -12,6 +12,7 @@ logging.getLogger().setLevel(logging.INFO)
 import os
 logging.info(os.uname())
 
+import bsddb
 import cPickle as pickle
 import numpy as np
 import os.path
@@ -392,6 +393,17 @@ def load_obj_from_file_using_pickle(fname):
     obj = pickle.load(fd)
     fd.close()
     return obj
+
+def load_obj_from_db(inputdb, idx):
+	"""
+	inputdb is the .db file, and idx is the index of the key in the file.
+	"""
+	db_input = bsddb.btopen(inputdb, 'r')
+	db_keys = db_input.keys()
+	image_key = db_keys[idx]
+	anno_img = pickle.loads(db_input[image_key])
+	db_input.close()
+	return anno_img
 
 def remove_slash_and_extension_from_image_key(image_key, remove_string = ''):
     """
