@@ -12,6 +12,7 @@ try:
     import caffe.imagenet
 except:
     print "Warning: Caffe not loaded. \n"
+import matplotlib.pyplot as plt
 
 import util
 
@@ -413,3 +414,91 @@ class NetworkCaffe(Network):
                 if wnid not in self.wnid_subset:
                     scores[self.get_label_id(wnid)] = 0.0
         return scores
+
+    def extract_all(self, img):
+        """
+        Evaluates an image with caffe and extracts features for each layer.
+        """
+        # if the image in in grayscale, we make it to 3-channels
+        if img.ndim == 2:
+            img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
+        elif img.shape[2] == 4:
+            img = img[:, :, :3]
+        # first, extract the 227x227 center, and convert it to BGR
+        dim = self.get_input_dim()
+        image = util.crop_image_center(img)
+        image_reshape = skimage.transform.resize(image, (dim, dim))
+        image_reshape = (image_reshape * 255)[:, :, ::-1]
+        # subtract the mean, cropping the 256x256 mean image
+        xoff = (caffe.imagenet.IMAGENET_MEAN.shape[1] - dim)/2
+        yoff = (caffe.imagenet.IMAGENET_MEAN.shape[0] - dim)/2
+        image_reshape -= caffe.imagenet\
+                            .IMAGENET_MEAN[yoff+yoff+dim, xoff:xoff+dim]
+        # oversample code
+        image = image_reshape.swapaxes(1, 2).swapaxes(0, 1)
+        input_blob = [np.ascontiguousarray(image[np.newaxis], dtype=np.float32)]
+        # forward pass to the network
+        num = 1
+        try:
+            last_layer = self.net_.caffenet.blobs.items()[-1]
+            num_output = len(last_layer[1].data.flatten())
+        except: # it means you have the old version of caffe
+            num_output = 1000
+        output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
+        self.net_.caffenet.Forward(input_blob, output_blobs)
+        net_representation = {k: output for k, output in \
+                                    self.net_.caffenet.blobs.items()}
+        return net_representation
+
+    def visualize_features(self, net_representation, layers = [], \
+                                fig_handle = 0):
+        i = 1
+        if layers == []:
+            layers = net_representation.keys()
+        for layer in layers:
+            feat  = net_representation[layer].data[0].copy()
+            fig_handle.add_subplot(4,5,i)
+            plt.title(layer)
+            if layer == 'data':
+                # input
+                image = feat
+                image -= image.min()
+                image /= image.max()
+                self.showimage_(image.transpose(1, 2, 0))
+            elif 'fc' in layer or 'prob' in layer:
+                # full connections
+                plt.bar(range(len(feat.flat)), feat.flat)
+            else: # 'conv' in layer or 'pool' in layer or 'norm' in layer
+                # conv layers
+                self.vis_square_(feat, padval=1)
+            i += 1
+
+    def showimage_(self, im):
+        """
+        The network takes BGR images, so we need to switch
+        color channels
+        """
+        if im.ndim == 3:
+            im = im[:, :, ::-1]
+        plt.imshow(im)
+
+    def vis_square_(self, data, padsize=1, padval=0):
+        """
+        Take an array of shape (n, height, width) or (n, height, width,
+        channels) and visualize each (height, width) thing in a grid of
+        size approx. sqrt(n) by sqrt(n)
+        """
+        data -= data.min()
+        data /= data.max()
+        # force the number of filters to be square
+        n = int(np.ceil(np.sqrt(data.shape[0])))
+        padding = ((0, n ** 2 - data.shape[0]), (0, padsize), (0, padsize)) \
+                    + ((0, 0),) * (data.ndim - 3)
+        data = np.pad(data, padding, mode='constant', \
+                                constant_values=(padval, padval))
+        # tile the filters into an image
+        data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) \
+                    + tuple(range(4, data.ndim + 1)))
+        data = data.reshape((n * data.shape[1], n * data.shape[3]) \
+                    + data.shape[4:])
+        self.showimage_(data)
