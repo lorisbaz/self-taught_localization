@@ -76,6 +76,8 @@ def run_exp(params):
     # list the databases chuncks
     n_chunks = len(glob.glob(params.input_dir + '/*.db'))
     # run the pipeline
+    # TODO / NOTE: we use only gridiron, because the BING binary is not
+    #              compatible for some reason with the katana nodes.
     parfun = None
     if params.run_on_anthill:
         jobname = 'Job{0}'.format(params.exp_name).replace('exp','')

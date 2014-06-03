@@ -38,5 +38,5 @@ if __name__ == "__main__":
     if 1:
         exp29.run_exp(params)
     # RUN THE STATISTICS PIPELINE
-    if 0:
+    if 1:
         compute_statistics_exp(input_exp=params.exp_name)

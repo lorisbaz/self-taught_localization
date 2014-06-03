@@ -29,6 +29,14 @@ mean_precision = [ 0.280615, 0.185418, 0.141736, 0.117292, 0.100262, 0.088371, 0
 plot(num_bboxes, mean_precision, '-o', 'DisplayName', OBFStopC.legend, 'Color', OBFStopC.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
+
+% ****** exp29_02stats / mean_precision *** BING (our code)   **********
+num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000000, 8.000000, 9.000000, 10.000000, 11.000000, 12.000000, 13.000000, 14.000000, 15.000000, 20.000000, 30.000000, 50.000000, 100.000000, 200.000000, 500.000000, 1000.000000, 2000.000000, 3000.000000 ];
+mean_precision = [ 0.238228, 0.143336, 0.108723, 0.088350, 0.075752, 0.067822, 0.061629, 0.056677, 0.053033, 0.049161, 0.045992, 0.043289, 0.041008, 0.039004, 0.037187, 0.030176, 0.023027, 0.017056, 0.010484, 0.006013, 0.002729, 0.001458, 0.000771, 0.000769 ];
+plot(num_bboxes, mean_precision, '-o', 'DisplayName', BING.legend, 'Color', BING.color);
+h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+
+
 legend(h, 'Location', 'Best');
 
 end

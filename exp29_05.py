@@ -19,9 +19,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp29.Params()
     # experiment name
-    params.exp_name = 'exp29_03'
+    params.exp_name = 'exp29_05'
     # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp03_06'
+    params.exp_name_input = 'exp03_05'
     # default Configuration, image and label files
     params.conf = conf
     # input/output directory

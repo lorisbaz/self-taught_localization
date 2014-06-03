@@ -37,7 +37,11 @@ conf.fs = 18;
 
 % Selective Search
 SS.color = MATLAB.Color.greyMed;
-SS.legend = 'Selective Search [??]';
+SS.legend = 'Selective Search (fast mode) [??]';
+
+% BING
+BING.color = MATLAB.Color.brownDark;
+BING.legend = 'BING (MAXBGR) [??]';
 
 % Obfuscation Search (bboxes, TopC=5)
 OBFStopC.color = MATLAB.Color.red;

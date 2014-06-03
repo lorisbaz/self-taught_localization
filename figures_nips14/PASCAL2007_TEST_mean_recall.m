@@ -29,6 +29,15 @@ mean_recall = [ 0.224509, 0.292273, 0.332364, 0.362532, 0.383733, 0.403439, 0.41
 plot(num_bboxes, mean_recall, '-o', 'DisplayName', OBFStopC.legend, 'Color', OBFStopC.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
+
+% ****** exp29_01stats / mean_recall *** BING (fast)   **********
+num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000000, 8.000000, 9.000000, 10.000000, 11.000000, 12.000000, 13.000000, 14.000000, 15.000000, 20.000000, 30.000000, 50.000000, 100.000000, 200.000000, 500.000000, 1000.000000, 2000.000000 ];
+mean_recall = [ 0.183130, 0.221510, 0.253493, 0.274258, 0.291050, 0.308807, 0.330156, 0.344653, 0.360848, 0.373523, 0.383629, 0.393071, 0.402645, 0.410476, 0.417072, 0.447038, 0.502958, 0.610037, 0.726196, 0.815141, 0.902832, 0.949988, 0.963377 ];
+plot(num_bboxes, mean_recall, '-o', 'DisplayName', BING.legend, 'Color', BING.color);
+h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+
+
+
 legend(h, 'Location', 'Best');
 
 end
