@@ -477,7 +477,7 @@ class NetworkCaffe(Network):
                 # conv layers
                 self.vis_square_(feat[::subsample_kernels,:,:], padval=1)
             if not dump_image_path == '':
-                plt.savefig(dump_image_path + '/' + layer + '.JPEG')
+                plt.savefig(dump_image_path + '/' + layer + '.png')
             i += 1
 
     def showimage_(self, im):
