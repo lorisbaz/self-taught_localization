@@ -37,7 +37,8 @@ class Params:
                                'OBFSEARCH_TOPC': sys.maxint, \
                                'CAFFE': sys.maxint, \
                                'SELECTIVESEARCH': sys.maxint,\
-                               'FULLIMAGE': sys.maxint}
+                               'FULLIMAGE': sys.maxint, \
+                               'BING': sys.maxint}
 
 
 def pipeline(inputdb, output_dir, params):

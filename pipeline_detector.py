@@ -228,7 +228,8 @@ class PipelineImage:
         elif parts[0] == 'PRED':
             assert len(parts)==3
             # no concept of GT for sel search and obf search topc
-            if parts[1] == 'SELECTIVESEARCH' or parts[1] == 'OBFSEARCH_TOPC':
+            if parts[1] == 'SELECTIVESEARCH' or parts[1] == 'OBFSEARCH_TOPC'\
+                    or parts[1] == 'BING':
                 parts[2] = 'none'
             pos_bboxes = copy.copy(ai.pred_objects[parts[1]][parts[2]].bboxes)
         else:

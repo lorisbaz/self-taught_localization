@@ -451,13 +451,18 @@ class NetworkCaffe(Network):
         return net_representation
 
     def visualize_features(self, net_representation, layers = [], \
-                                fig_handle = 0):
+                                fig_handle = 0, subsample_kernels = 4,\
+                                dump_image_path = ''):
+        plt.rcParams['image.interpolation'] = 'nearest'
         i = 1
         if layers == []:
             layers = net_representation.keys()
         for layer in layers:
             feat  = net_representation[layer].data[0].copy()
-            fig_handle.add_subplot(4,5,i)
+            if dump_image_path == '':
+                fig_handle.add_subplot(4,4,i)
+            else:
+                fig_handle.clf()
             plt.title(layer)
             if layer == 'data':
                 # input
@@ -467,10 +472,12 @@ class NetworkCaffe(Network):
                 self.showimage_(image.transpose(1, 2, 0))
             elif 'fc' in layer or 'prob' in layer:
                 # full connections
-                plt.bar(range(len(feat.flat)), feat.flat)
+                plt.plot(feat.flat)
             else: # 'conv' in layer or 'pool' in layer or 'norm' in layer
                 # conv layers
-                self.vis_square_(feat, padval=1)
+                self.vis_square_(feat[::subsample_kernels,:,:], padval=1)
+            if not dump_image_path == '':
+                plt.savefig(dump_image_path + '/' + layer + '.JPEG')
             i += 1
 
     def showimage_(self, im):
@@ -481,6 +488,7 @@ class NetworkCaffe(Network):
         if im.ndim == 3:
             im = im[:, :, ::-1]
         plt.imshow(im)
+        plt.axis('off')
 
     def vis_square_(self, data, padsize=1, padval=0):
         """

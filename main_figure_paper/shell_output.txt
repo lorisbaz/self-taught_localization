@@ -1,0 +1,23 @@
+[06/04/2014 13:38:36 example_feature_visualization.py:58] Opening /home/ironfs/scratch/vlg/Data_projects/grayobfuscation/exp03_07/00001.db
+[06/04/2014 13:38:36 example_feature_visualization.py:69] Original image
+[06/04/2014 13:38:36 example_feature_visualization.py:76] ID prediction: goldfish, Carassius auratus and score [[[[ 0.99995494]]]]
+[06/04/2014 13:38:36 example_feature_visualization.py:76] ID prediction: eft and score [[[[  4.38955176e-05]]]]
+[06/04/2014 13:38:36 example_feature_visualization.py:76] ID prediction: axolotl, mud puppy, Ambystoma mexicanum and score [[[[  8.58828628e-07]]]]
+[06/04/2014 13:38:36 example_feature_visualization.py:76] ID prediction: flamingo and score [[[[  5.83276467e-08]]]]
+[06/04/2014 13:38:36 example_feature_visualization.py:76] ID prediction: common newt, Triturus vulgaris and score [[[[  5.24963113e-08]]]]
+[06/04/2014 13:38:36 example_feature_visualization.py:78] Score using the GT label [[ 0.99995494]]
+[06/04/2014 13:38:38 example_feature_visualization.py:91] Obfuscating the main object
+[06/04/2014 13:38:38 example_feature_visualization.py:98] ID prediction: envelope and score [[[[ 0.23302212]]]]
+[06/04/2014 13:38:38 example_feature_visualization.py:98] ID prediction: table lamp and score [[[[ 0.08013115]]]]
+[06/04/2014 13:38:38 example_feature_visualization.py:98] ID prediction: candle, taper, wax light and score [[[[ 0.07079033]]]]
+[06/04/2014 13:38:38 example_feature_visualization.py:98] ID prediction: paper towel and score [[[[ 0.04735572]]]]
+[06/04/2014 13:38:38 example_feature_visualization.py:98] ID prediction: matchstick and score [[[[ 0.04728829]]]]
+[06/04/2014 13:38:38 example_feature_visualization.py:100] Score using the GT label [[ 0.00201733]]
+[06/04/2014 13:38:40 example_feature_visualization.py:113] Obfuscating other parts of the image
+[06/04/2014 13:38:40 example_feature_visualization.py:120] ID prediction: goldfish, Carassius auratus and score [[[[ 0.9965803]]]]
+[06/04/2014 13:38:40 example_feature_visualization.py:120] ID prediction: eft and score [[[[ 0.00220559]]]]
+[06/04/2014 13:38:40 example_feature_visualization.py:120] ID prediction: piggy bank, penny bank and score [[[[ 0.00040622]]]]
+[06/04/2014 13:38:40 example_feature_visualization.py:120] ID prediction: pencil sharpener and score [[[[  8.59795109e-05]]]]
+[06/04/2014 13:38:40 example_feature_visualization.py:120] ID prediction: nipple and score [[[[  7.41145195e-05]]]]
+[06/04/2014 13:38:40 example_feature_visualization.py:122] Score using the GT label [[ 0.9965803]]
+
