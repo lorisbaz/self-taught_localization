@@ -80,7 +80,7 @@ class HtmlReport():
                             text = desc, bboxes = np_bbox, \
                             isgt = False) # predicted bboxes
                 # Add the heatmaps
-                if heatmaps_view:
+                if heatmaps_view and len(ann_pred.heatmaps)>0:
                     heatmaps = []
                     max_value = sys.float_info.min
                     for heat in ann_pred.heatmaps:
@@ -99,7 +99,7 @@ class HtmlReport():
                     self.add_image_embedded(heatmap_avg*visual_factor, \
                                  max_size = img_max_size, \
                                  text = desc)
-    
+
 
     def add_image_embedded(self, img_o, proportion = 1.0, max_size = -1, \
                            text = '', bboxes = [], isgt = False):
@@ -245,5 +245,3 @@ class HtmlReport():
         # add values to bodyopt
         self.bodyopt_+= 'drawEverything({0},\'{1}\',\'{2}\');' \
                         .format(bboxes_str, text, color)
-
-
