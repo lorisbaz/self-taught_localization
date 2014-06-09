@@ -452,17 +452,14 @@ class NetworkCaffe(Network):
 
     def visualize_features(self, net_representation, layers = [], \
                                 fig_handle = 0, subsample_kernels = 4,\
-                                dump_image_path = ''):
+                                dump_image_path = '', string_drop=''):
         plt.rcParams['image.interpolation'] = 'nearest'
         i = 1
         if layers == []:
             layers = net_representation.keys()
         for layer in layers:
             feat  = net_representation[layer].data[0].copy()
-            if dump_image_path == '':
-                fig_handle.add_subplot(4,4,i)
-            else:
-                fig_handle.clf()
+            fig_handle.add_subplot(3,len(layers),len(layers)+i)
             plt.title(layer)
             if layer == 'data':
                 # input
@@ -470,15 +467,22 @@ class NetworkCaffe(Network):
                 image -= image.min()
                 image /= image.max()
                 self.showimage_(image.transpose(1, 2, 0))
+                if not string_drop=='':
+                    plt.text(-10, 300, string_drop, backgroundcolor='white')
             elif 'fc' in layer or 'prob' in layer:
                 # full connections
                 plt.plot(feat.flat)
+                plt.xticks([0, len(feat.flat)])
+                plt.yticks([np.ceil(np.min(feat.flat)), \
+                                        np.floor(np.max(feat.flat))])
             else: # 'conv' in layer or 'pool' in layer or 'norm' in layer
                 # conv layers
                 self.vis_square_(feat[::subsample_kernels,:,:], padval=1)
-            if not dump_image_path == '':
-                plt.savefig(dump_image_path + '/' + layer + '.png')
             i += 1
+        if not dump_image_path == '':
+            plt.savefig(dump_image_path + '.eps', dpi = 100,\
+                                        bbox_inches = 'tight')
+
 
     def showimage_(self, im):
         """
