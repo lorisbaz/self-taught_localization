@@ -5,21 +5,16 @@ import os.path
 import skimage.io
 from vlg.util.parfun import *
 
-from heatmap import *
-from network import *
 from configuration import *
-from imgsegmentation import *
-from heatextractor import *
 from compute_statistics_exp import *
-from htmlreport import *
-import exp23
+import exp30
 
 if __name__ == "__main__":
     # load configurations and parameters
     conf = Configuration()
-    params = exp23.Params()
+    params = exp30.Params()
     # experiment name
-    params.exp_name = 'exp23_11'
+    params.exp_name = 'exp30_01'
     # input (GT AnnotatatedImages)
     params.exp_name_input = 'exp03_07'
     # Num elements in batch (for decaf/caffe eval)
@@ -34,7 +29,6 @@ if __name__ == "__main__":
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # obfuscation search params
-    params.ss_version = 'fast'
     params.min_sz_segm = 5 # keep this low (because we resize!!)
     params.alpha = np.array([1/3.0, 1/3.0, 1/3.0])
     params.obfuscate_bbox = True
@@ -51,7 +45,7 @@ if __name__ == "__main__":
     logging.info('Started')
     # RUN THE EXPERIMENT
     if 1:
-        exp23.run_exp(params)
+        exp30.run_exp(params)
     # RUN THE STATISTICS PIPELINE
     if 0:
         compute_statistics_exp(input_exp=params.exp_name)

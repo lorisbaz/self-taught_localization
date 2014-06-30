@@ -34,7 +34,7 @@ figure;
 h_precision = gca;
 hold on;
 grid on;
-axis([1, 50, 0, 0.6]);
+axis([1, 50, 0, 1]);
 xlabel('Num subwindows')
 ylabel('Precision')
 title(strcat('Results on ', params.dataset_name))
@@ -44,7 +44,7 @@ figure;
 h_recall = gca;
 hold on;
 grid on;
-axis([1, 50, 0, 0.6]);
+axis([1, 50, 0, 1]);
 xlabel('Num subwindows')
 ylabel('Recall')
 title(strcat('Results on ', params.dataset_name))

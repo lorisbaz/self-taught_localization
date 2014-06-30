@@ -53,6 +53,66 @@ class ImgSegmFelzen(ImgSegm):
             segmentations.append(segm_mask)
         return segmentations
 
+
+#=============================================================================
+class ImgSegmMatWraper(ImgSegm):
+    """
+    Extract a set of segmentations using the selective search matlab wrapper
+    of the Felzenszwalb method. Note: Selective Search results are not in the
+    output!
+    """
+
+    def __init__(self, ss_version = 'fast'):
+        """
+        Segmentation parameters for the selective search algorithm.
+        """
+        self.ss_version_ = ss_version
+
+    def extract(self, image):
+        """
+        Performs segmentation and returns a set of nd.array
+        """
+        # Print
+        logging.info('Running MATLAB selective search.')
+        # dump the images of the AnnotatedImages to temporary files
+        (fd, img_temp_file) = tempfile.mkstemp(suffix = '.bmp')
+        os.close(fd)
+        if len(np.shape(image))==2: # gray img
+            img = np.zeros((np.shape(image)[0], np.shape(image)[1], 3))
+            img[:,:,0] = image
+            img[:,:,1] = image
+            img[:,:,2] = image
+            image = img
+        img = skimage.io.imsave(img_temp_file, image)
+        # create temporary files for the .mat files
+        (fd, mat_temp_file) = tempfile.mkstemp(suffix = '.mat')
+        os.close(fd)
+        # run the Selective Search Matlab wrapper
+        img_temp_files_cell = '{\'' + img_temp_file + '\'}'
+        mat_temp_files_cell = '{\'' + mat_temp_file + '\'}'
+        matlab_cmd = 'selective_search_obfuscation({0}, {1}, \'{2}\')'\
+                        .format(img_temp_files_cell, mat_temp_files_cell, \
+                                self.ss_version_)
+        command = "matlab -nojvm -nodesktop -r \"try; " + matlab_cmd + \
+                "; catch; exit; end; exit\""
+        logging.info('Executing command ' + command)
+        if os.system(command) != 0:
+            logging.error('Matlab SS script did not exit successfully!')
+            return []
+        # load the .mat file
+        try:
+            segm_mat = scipy.io.loadmat(mat_temp_file)
+        except:
+            logging.error('Exception while loading ' + mat_temp_file)
+        # delete all the temporary files
+        os.remove(img_temp_file)
+        os.remove(mat_temp_file)
+        # Load only first-level segmentation (i.e., Felzenswalb)
+        segm_masks = segm_mat.get('blobIndIm')
+
+        return segm_masks
+
+
 #=============================================================================
 class ImgSegmFromMatFiles(ImgSegm):
     """
@@ -67,8 +127,8 @@ class ImgSegmFromMatFiles(ImgSegm):
                  start_lv=1 , num_levels=3):
         """
         Segmentation files stored in directory
-	    - directory: where segmentation files are stored
-	    - img_root_dir: where images are stored
+        - directory: where segmentation files are stored
+        - img_root_dir: where images are stored
         - subset_par: if True take a subset of segmentations paramters
                       to speed up the obfuscation part
         - num_levels: number of levels for each parameterv
@@ -85,7 +145,7 @@ class ImgSegmFromMatFiles(ImgSegm):
         """
         Load segmentation, parse the mat files and returns a set of nd.array
         """
-	    # Print
+        # Print
         logging.info('Loading segmentations from disk')
         # Load file
         segm_mat = io.loadmat(self.directory_ + '/' + self.segmname_)
@@ -105,9 +165,9 @@ class ImgSegmFromMatFiles(ImgSegm):
             segmentations = []
             # make sure that is uint16 (I spent a day to find this bug!!)
             segm_L1[0,i] = np.uint16(segm_L1[0,i])
-	        # append first-level segmentation
+            # append first-level segmentation
             segmentations.append(segm_L1[0,i])
-	        # get useful info
+            # get useful info
             segm_mask_Li = np.copy(segm_L1[0,i])
             leaves = segm_tree[0,i]['leaves'][0][0] # crazy indexing...
             nodes = segm_tree[0,i]['nodes'][0][0]   # believe or not,
@@ -128,7 +188,7 @@ class ImgSegmFromMatFiles(ImgSegm):
                         js.append(j)
                         num_new_segm_Li1 += 1
 
-		        # remove already-visited nodes
+                # remove already-visited nodes
                 segm_mask_Li = np.copy(segm_mask_Li1)
                 nodes = np.delete(nodes, js, axis=0)
                 maxid_segm_Li = n_segm_Li + num_new_segm_Li1
@@ -192,14 +252,17 @@ class ImgSegmFromMatFiles_List(ImgSegm):
        usual dataset key (i.e. the image name with the .JPEG extension),
     2) call extract passing the image. Note that if segm_type_load=='warped',
        the warp the bboxes and segments according the size of this image.
+    *********************************************************
+    ************** DEPRECATED *******************************
+    *********************************************************
     """
 
     def __init__(self, directory, img_root_dir, segm_type_load='original',\
                     min_sz_segm=30, subset_par=False):
         """
         Segmentation files stored in directory
-	    - directory: where segmentation files are stored
-	    - img_root_dir: where images are stored
+        - directory: where segmentation files are stored
+        - img_root_dir: where images are stored
         - segm_type_load:
                 'original' just the normal segments
                 'warped' the coordinates of the segments are resized so
@@ -228,7 +291,7 @@ class ImgSegmFromMatFiles_List(ImgSegm):
           The bbox is the outer rectable enclosing the segment.
           The mask contains only 0, 1 values, and it is relative to the bbox.
         """
-	    # Print
+        # Print
         logging.info('Loading segmentations from disk')
         # sizes
         warped_sz = np.shape(image)[0:2]
@@ -323,7 +386,7 @@ class ImgSegm_SelSearch_Wrap(ImgSegm):
           The bbox is the outer rectable enclosing the segment.
           The mask contains only 0, 1 values, and it is relative to the bbox.
         """
-	    # Print
+        # Print
         logging.info('Running MATLAB selective search.')
         # dump the images of the AnnotatedImages to temporary files
         (fd, img_temp_file) = tempfile.mkstemp(suffix = '.bmp')
@@ -425,7 +488,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
           The mask contains only 0, 1 values, and it is relative to the bbox.
           The conficende is max(1 - classification accuracy of obfuscation)
         """
-	    # Print
+        # Print
         logging.info('Running MATLAB selective search.')
         # dump the images of the AnnotatedImages to temporary files
         (fd, img_temp_file) = tempfile.mkstemp(suffix = '.bmp')
@@ -689,7 +752,7 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
 #          The mask contains only 0, 1 values, and it is relative to the bbox.
 #          The conficende is max(1 - classification accuracy of obfuscation)
 #        """
-#	    # Print
+#       # Print
 #        logging.info('Running MATLAB selective search.')
 #        # dump the images of the AnnotatedImages to temporary files
 #        (fd, img_temp_file) = tempfile.mkstemp(suffix = '.bmp')
@@ -848,5 +911,3 @@ class ImgSegm_ObfuscationSearch(ImgSegm):
 ##            pl.show()
 #            segm_all_list.append(ZZ)
 #        return segm_all_list
-
-
