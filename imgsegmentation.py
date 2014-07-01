@@ -90,7 +90,7 @@ class ImgSegmMatWraper(ImgSegm):
         # run the Selective Search Matlab wrapper
         img_temp_files_cell = '{\'' + img_temp_file + '\'}'
         mat_temp_files_cell = '{\'' + mat_temp_file + '\'}'
-        matlab_cmd = 'selective_search_obfuscation({0}, {1}, \'{2}\')'\
+        matlab_cmd = 'selective_search_obfuscation_optimized({0}, {1}, \'{2}\')'\
                         .format(img_temp_files_cell, mat_temp_files_cell, \
                                 self.ss_version_)
         command = "matlab -nojvm -nodesktop -r \"try; " + matlab_cmd + \

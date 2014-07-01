@@ -101,7 +101,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
             max_segm_id = np.max(segm_ids)
             confidence = np.zeros(len(segm_ids))
             logging.info('segm_mask {0} / {1} ({2} segments)'.format( \
-                         s, np.shape(segm_masks)[1], max_segm_id))
+                         s + 1, np.shape(segm_masks)[1], max_segm_id))
             # Generate the basic segments
             for id_segment in segm_ids: # for each segment of level 0
                 # compute bbox (for filtering)

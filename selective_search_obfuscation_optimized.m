@@ -1,11 +1,10 @@
-function selective_search_obfuscation(testIms, outFiles, ss_version)
-% Extract the SelectiveSearch bboxes and masks that will be used for
-% obfuscation
+function selective_search_obfuscation_optimized(testIms, outFiles, ss_version)
+% Extract the Felzenswalb bboxes and masks used by selective search
 %
 % Each MAT output file will contain the following variables:
 %  img_width: width of the image
 %  img_height: height of the image
-%  hBlobs: structure that contains 'mask', 'rect', 'size'
+%  blobIndIm: structure that contains 'mask', 'rect', 'size'
 %
 % Example usage:
 %  selective_search_obfuscation({'ILSVRC2012_val_00000001_n01751748.JPEG',
@@ -31,10 +30,6 @@ addpath('./HierSegmentation_SelSearch/utils')
 % select the color spaces
 colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
 
-% Here you specify which similarity functions to use in merging
-simFunctionHandles = {@SSSimColourTextureSizeFillOrig, @SSSimTextureSizeFill, ...
-                      @SSSimBoxFillOrig, @SSSimSize};
-
 % Thresholds for the Felzenszwalb and Huttenlocher segmentation algorithm.
 % Note that by default, we set minSize = k, and sigma = 0.8.
 ks = [50 100 150 300]; % controls size of segments of initial segmentation. 
@@ -43,7 +38,6 @@ sigma = 0.8;
 % SelectiveSearch version
 if strcmp(ss_version, 'fast')
   colorTypes = colorTypes(1:2); % 'Fast' uses HSV and Lab
-  simFunctionHandles = simFunctionHandles(1:2); % Two different merging strategies
   ks = ks(1:2);
 else
   assert(strcmp(ss_version, 'quality'));
@@ -63,7 +57,8 @@ for i=1:length(testIms)
         im = repmat(im, [1, 1, 3]);
       end      
       % try many Segmentation thresholds k
-      idx = 1; idx2 = 1;
+      idx = 1;
+      blobIndIm = cell(1, length(ks)*length(colorTypes));
       for j=1:length(ks)
           k = ks(j); 
           minSize = k; % We set minSize = k
@@ -72,24 +67,9 @@ for i=1:length(testIms)
               colorType = colorTypes{n};
               fprintf('k=%d, colorType=%s\n', k, colorType);
               tic;
-              [boxesT{idx} blobIndIm{idx} blobBoxes hierarchy priorityT{idx}] = ...
-                    Image2HierarchicalGrouping(im, sigma, k, minSize, colorType,...
-                    simFunctionHandles);
+              [colourIm, imageToSegment] = Image2ColourSpace(im, colorType);
+              [blobIndIm{idx}, blobBoxes, neighbours] = mexFelzenSegmentIndex(imageToSegment, sigma, k, minSize);
               totalTime = totalTime + toc;
-              
-              % Get blobs of initial segmentation
-              segmentation = SegmentIndices2Blobs(blobIndIm{idx}, blobBoxes);
-              for h = 1:length(hierarchy)
-                  % recreate the tree to be saved
-                  tree{idx2} = ...
-                      RecreateBlobHierarchyLevelsTree(segmentation, ...
-                      hierarchy{h});
-                  
-                  hBlobs{idx2} = RecreateBlobHierarchyIndIm(blobIndIm{idx}, ...
-                      blobBoxes, hierarchy{h});
-                  
-                  idx2 = idx2 + 1;
-              end
               
               idx = idx + 1;
           end
@@ -98,7 +78,7 @@ for i=1:length(testIms)
       % saving
       img_width = size(im, 2);
       img_height = size(im, 1);
-      save(outFiles{i}, 'blobIndIm', 'tree','hBlobs', 'img_width', 'img_height');
+      save(outFiles{i}, 'blobIndIm', 'img_width', 'img_height');
     catch Exception
       Exception
       fprintf('AN ERROR HAS OCCURED!\n');      
