@@ -430,3 +430,19 @@ def get_wnids(classid_wnid_words_file):
     fd.close()
     assert len(locids) == len(wnids)
     return locids, wnids
+
+def compare_feature_vec(feature_vec_i, feature_vec_j, \
+                        similarity = 'hist_intersection', normalize = True):
+    """
+    Compare two feature vectors with the selected similarity.
+    """
+    # normalize the features
+    if normalize:
+        feature_vec_i = feature_vec_i/np.float(np.sum(feature_vec_i))
+        feature_vec_j = feature_vec_j/np.float(np.sum(feature_vec_j))
+    # compute the distance
+    if similarity == 'hist_intersection':
+        out_dist = np.sum(np.minimum(feature_vec_i, feature_vec_j))
+    else:
+        raise NotImplementedError()
+    return out_dist

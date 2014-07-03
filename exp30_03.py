@@ -7,14 +7,14 @@ from vlg.util.parfun import *
 
 from configuration import *
 from compute_statistics_exp import *
-import exp30_alphas
+import exp30
 
 if __name__ == "__main__":
     # load configurations and parameters
     conf = Configuration()
-    params = exp30_alphas.Params()
+    params = exp30.Params()
     # experiment name
-    params.exp_name = 'exp30_02_alphas'
+    params.exp_name = 'exp30_03'
     # input (GT AnnotatatedImages)
     params.exp_name_input = 'exp03_07'
     # Num elements in batch (for decaf/caffe eval)
@@ -29,10 +29,9 @@ if __name__ == "__main__":
     # method for calculating the confidence
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # obfuscation search params
-    params.num_of_elements_per_alpha = 10
-    params.num_alphas = 3
     params.min_sz_segm = 5 # keep this low (because we resize!!)
-    params.function_stl = 'similarity'
+    params.alpha = 1/4.0*np.ones((4,))
+    params.function_stl = 'similarity+cnnfeature'
     params.obfuscate_bbox = True
     params.use_fullimg_GT_label = True # if true params.topC is not used!
     # input/output directory
@@ -42,10 +41,20 @@ if __name__ == "__main__":
                         + '/' + params.exp_name_input
     # parallelize the script on Anthill?
     params.run_on_anthill = True
-    # list of tasks (1 task -> 1 set of alphas)
-    params.task = range(0)
-    # list of shards to execute
-    params.execute_shards = range(100) # Subset of shards to run this analysis
+    # list of tasks to execute
+    params.task = []
     logging.info('Started')
-    # RUN the experiment
-    exp30_alphas.run_exp(params)
+    # RUN THE EXPERIMENT
+    if 1:
+        exp30.run_exp(params)
+    # RUN THE STATISTICS PIPELINE
+    if 0:
+        compute_statistics_exp(input_exp=params.exp_name)
+    # RUN THE STATISTICS PIPELINE WITH NMS
+    if 1:
+        # NMS=0.5
+        params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_05')
+        params_stats.nms_execution = True
+        params_stats.nms_iou_threshold = 0.5
+        params_stats.delete_pred_objects = False
+        compute_statistics_exp(input_exp=params.exp_name, params=params_stats)

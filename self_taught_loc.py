@@ -32,7 +32,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
     """
 
     def __init__(self, network, img_segmenter, min_sz_segm = 0, \
-                        topC = 0, alpha = 1, obfuscate_bbox = False, \
+                        topC = 0, alpha = np.ones((4,)), obfuscate_bbox = False, \
                         function_stl = 'diversity'):
         """
         - network: neural net used for classification
@@ -48,6 +48,9 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                 'similarity': 1 - max((1-drop_segment_1), (1-drop_segment_2)) *
                               |(1-drop_segment_1) - (1-drop_segment_2)|
                 'union' [TODOO!]: merge the segments and obfuscate
+                'similarity+cnnfeature': same as similarity + an additional term
+                    that considers the similarity between segments using the CNN
+                    feature representation ('fc7')
         """
         self.img_segmenter_ = img_segmenter
         self.min_sz_segm_ = min_sz_segm
@@ -118,11 +121,14 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                     confidence = self.obfuscation_confidence_(image, \
                          segm_mask, id_segment, caffe_rep_full, class_guess, \
                          xmin, xmax, ymin, ymax)
+                    # compute CNN features
+                    feature_vec = self.extract_bbox_cnnfeature_(image, \
+                                                    xmin, xmax, ymin, ymax)
                     # Build the list of segments with positive confidence
                     mask_tmp = np.copy(mask[ymin:ymax,xmin:xmax])
                     bbox = BBox(xmin, ymin, xmax, ymax, max(confidence, 0.0))
                     segm_all.append({'bbox': bbox, 'mask': mask_tmp, \
-                                         'id': id_segment})
+                                     'id': id_segment, 'feature': feature_vec})
             # Init the similarity matrix (contains only neighbouring pairs)
             similarity = self.compute_similarity_sets_(segm_all, segm_all, \
                                                        self.alpha_, image_sz)
@@ -204,8 +210,12 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                                     xmin, xmax, ymin, ymax)
         # create bbox object
         bbox = BBox(xmin, ymin, xmax, ymax, conf)
+        # compute CNN features
+        feature_vec = self.extract_bbox_cnnfeature_(image, xmin, xmax, \
+                                                    ymin, ymax)
         # save output structure
-        segment = {'bbox': bbox, 'mask': mask_tmp, 'id': max_segm_id}
+        segment = {'bbox': bbox, 'mask': mask_tmp, 'id': max_segm_id, \
+                   'feature': feature_vec}
 
         return segment, segm_mask_support
 
@@ -255,12 +265,27 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                                     caffe_rep_obf[idx_sort]), 0.0)
         return confidence
 
+    def extract_bbox_cnnfeature_(self, image, xmin, xmax, ymin, ymax, \
+                                    padding = 0, layer = 'fc7'):
+        """
+        Compute the cnn feature vector for a given bbox.
+        [TODO] implement padding to include the context
+        """
+        if 'cnnfeature' in self.function_stl_:
+            # crop image
+            image_box = np.copy(image[ymin:ymax, xmin:xmax])
+            # predict CNN reponse for obfuscation
+            caffe_rep = self.net_.evaluate(image_box, layer_name = layer)
+            # select the feature layer
+            return caffe_rep
+        else:
+            return 0.0
 
     def compute_similarity_sets_(self, segm_set1, segm_set2, alpha, image_sz):
         """
         Compute the similarity matrix between two segment sets, using the
         obfuscation, the fill and the size metrics. They are combined by the
-        ndarray alpha of size (3,).
+        ndarray alpha of size (4,).
         """
         img_area = np.float(np.prod(image_sz))
         similarity = np.zeros((len(segm_set1), len(segm_set2)))
@@ -273,7 +298,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                     if self.function_stl_=='diversity':
                         s_obf = np.linalg.norm(segm_i['bbox'].confidence-\
                                             segm_j['bbox'].confidence)
-                    elif self.function_stl_=='similarity':
+                    elif 'similarity' in self.function_stl_:
                         s_obf = 1 - max(1-segm_i['bbox'].confidence, \
                                         1-segm_j['bbox'].confidence) * \
                                         abs((1-segm_i['bbox'].confidence)-\
@@ -291,6 +316,10 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                     # Merge measures
                     similarity[i,j] = alpha[0]*s_obf + alpha[1]*s_size \
                                         + alpha[2]*s_fill
+                    if 'cnnfeature' in self.function_stl_:
+                        s_feature = compare_feature_vec(\
+                                        segm_i['feature'], segm_j['feature'])
+                        similarity[i,j] += alpha[3]*s_feature
         return similarity
 
 #   def nms(self):

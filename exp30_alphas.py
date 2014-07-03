@@ -146,9 +146,9 @@ def pipeline(input_dir, output_dir, alphas, idx_process, params):
     compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
 
     # clean results
-    # for shard in params.execute_shards:
-    #     shutil.rmtree(params_stats.input_dir +  '/%05d'%shard + '.db')
-    #     shutil.rmtree(params_stats.output_dir + '/%05d'%shard + '.db')
+    for shard in params.execute_shards:
+        shutil.rmtree(params_stats.input_dir +  '/%05d'%shard + '.db')
+        shutil.rmtree(params_stats.output_dir + '/%05d'%shard + '.db')
 
     return 0
 
@@ -158,21 +158,31 @@ def run_exp(params):
         os.makedirs(params.output_dir)
     # Create the alpha grid
     alpha = []
-    for i in range(params.num_alphas):
+    for i in range(params.num_alphas-1):
         alpha.append(np.linspace(0, 1, params.num_of_elements_per_alpha))
         if i == 0:
             list_var_alpha = 'alpha[' + str(i) + ']'
         else:
             list_var_alpha = list_var_alpha + ' ,alpha[' + str(i) + ']'
     alphas = eval('np.meshgrid(' + list_var_alpha + ')')
-    alphas = np.reshape(alphas, (params.num_alphas, \
-                        params.num_of_elements_per_alpha**params.num_alphas))
-    # Count alphas which sum is <= 1.0
-    tasks_to_execute = np.sum(alphas, axis=0)<=1.0
-    alphas = alphas[:, tasks_to_execute]
+    alphas = np.reshape(alphas, (params.num_alphas-1, \
+                        params.num_of_elements_per_alpha**(params.num_alphas-1)))
+    # compute the last as 1-sum of the others
+    alpha_last = 1 - np.sum(alphas, axis=0)
+    # keep the alphas in the simplex
+    keep_alphas = alpha_last >= 0.0
+    alphas = np.append(alphas[:, keep_alphas], \
+                    np.expand_dims(alpha_last[:, keep_alphas], axis=0), axis=0)
     # save the alphas to mat
     scipy.io.savemat(params.output_dir + 'list_of_alphas.mat', \
                     {'alphas': alphas})
+    # # Decomment if you want to visualize the simplex points
+    # from mpl_toolkits.mplot3d import Axes3D
+    # import matplotlib.pyplot as plt
+    # fig = plt.figure()
+    # ax = fig.add_subplot(111, projection='3d')
+    # ax.scatter(alphas[0,:], alphas[1,:], alphas[2,:])
+    # plt.show()
     # run the pipeline
     n_tasks = np.shape(alphas)[1]
     parfun = None
