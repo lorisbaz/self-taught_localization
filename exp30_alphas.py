@@ -188,7 +188,7 @@ def run_exp(params):
     parfun = None
     if params.run_on_anthill:
         jobname = 'Job{0}'.format(params.exp_name).replace('exp','')
-        parfun = ParFunAnthill(pipeline, time_requested=23, \
+        parfun = ParFunAnthill(pipeline, time_requested=48, \
             job_name=jobname)
     else:
         parfun = ParFunDummy(pipeline)
