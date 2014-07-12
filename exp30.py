@@ -34,6 +34,9 @@ class Params:
         self.select_subset_overlap_ilsvrc2012_ilsvrc2013 = False
         # For obf search. Use similarity instead of diversity
         self.function_stl = 'diversity'
+        # If cnnfeature are used, we can include some padding to the
+        # bbox where feature are extracted. value in [0.0, 1.0]
+        self.padding = 0.0
 
 def pipeline(inputdb, outputdb, params):
     # Instantiate some objects, and open the database
@@ -65,7 +68,8 @@ def pipeline(inputdb, outputdb, params):
                                    params.min_sz_segm, topC = params.topC,\
                                    alpha = params.alpha, \
                                    obfuscate_bbox = params.obfuscate_bbox, \
-                                   function_stl = params.function_stl)
+                                   function_stl = params.function_stl,\
+                                   padding = params.padding)
     # retrieve all the AnnotatedImages and images from the database
     logging.info('Opening ' + inputdb)
     db_input = bsddb.btopen(inputdb, 'r')
