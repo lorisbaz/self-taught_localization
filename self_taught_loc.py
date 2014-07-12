@@ -33,7 +33,8 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
 
     def __init__(self, network, img_segmenter, min_sz_segm = 0, \
                         topC = 0, alpha = np.ones((4,)), obfuscate_bbox = False, \
-                        function_stl = 'diversity'):
+                        function_stl = 'diversity', padding = 0.0, \
+                        layer = 'fc7'):
         """
         - network: neural net used for classification
         - img_segmenter: segmentation algorithm in the class ImgSegm
@@ -47,10 +48,14 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                 'diversity' (default): drop_segment_1 - drop_segment_2
                 'similarity': 1 - max((1-drop_segment_1), (1-drop_segment_2)) *
                               |(1-drop_segment_1) - (1-drop_segment_2)|
-                'union' [TODOO!]: merge the segments and obfuscate
                 'similarity+cnnfeature': same as similarity + an additional term
                     that considers the similarity between segments using the CNN
                     feature representation ('fc7')
+        - padding: only if cnnfeature is used. It is the percentage
+                espressed between 0.0 and 1.0 of the bbox that is enlaged to
+                contain the context surrounding it
+        - layer: only if cnnfeature is used. The layer of the cnn used by the
+                similarity function.
         """
         self.img_segmenter_ = img_segmenter
         self.min_sz_segm_ = min_sz_segm
@@ -59,8 +64,8 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
         self.alpha_ = alpha
         self.obfuscate_bbox_ = obfuscate_bbox
         self.function_stl_ = function_stl
-        if self.function_stl_=='union':
-            raise NotImplementedError()
+        self.padding_ = padding
+        self.layer_ = layer
 
     @staticmethod
     def segments_to_bboxes(self, segments):
@@ -265,17 +270,33 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                                     caffe_rep_obf[idx_sort]), 0.0)
         return confidence
 
-    def extract_bbox_cnnfeature_(self, image, xmin, xmax, ymin, ymax, \
-                                    padding = 0, layer = 'fc7'):
+    def extract_bbox_cnnfeature_(self, image, xmin, xmax, ymin, ymax):
         """
-        Compute the cnn feature vector for a given bbox.
-        [TODO] implement padding to include the context
+        Compute the cnn feature vector for a given bbox. If padding>0, the bbox
+        is enlarged to include the context.
         """
         if 'cnnfeature' in self.function_stl_:
+            if self.padding_ > 0.0:
+                offsetx = (xmax - xmin)*self.padding_
+                offsety = (ymax - ymin)*self.padding_
+                ymin -= offsety
+                ymax += offsety
+                xmin -= offsetx
+                xmax += offsetx
+                # check that they are still inside the img
+                img_height, img_width = np.shape(image)[0:2]
+                if ymin < 0:
+                    ymin = 0
+                if xmin < 0:
+                    xmin = 0
+                if ymax > img_height:
+                    ymax = img_height
+                if xmax > img_width:
+                    xman = img_width
             # crop image
             image_box = np.copy(image[ymin:ymax, xmin:xmax])
             # predict CNN reponse for obfuscation
-            caffe_rep = self.net_.evaluate(image_box, layer_name = layer)
+            caffe_rep = self.net_.evaluate(image_box, layer_name = self.layer_)
             # select the feature layer
             return caffe_rep
         else:

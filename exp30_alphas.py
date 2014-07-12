@@ -73,65 +73,66 @@ def pipeline(input_dir, output_dir, alphas, idx_process, params):
     if os.path.exists(output_dir + '/%05d'%idx_process) == False:
         os.makedirs(output_dir + '/%05d'%idx_process)
     # perform exp for all the shards
-    for shard in params.execute_shards:
-        inputdb = input_dir + '/%05d'%shard + '.db'
-        outputdb = output_dir + '/%05d'%idx_process  + '/%05d'%shard + '.db'
-        # retrieve all the AnnotatedImages and images from the database
-        logging.info('Opening ' + inputdb)
-        db_input = bsddb.btopen(inputdb, 'r')
-        db_output = bsddb.btopen(outputdb, 'c')
-        db_keys = db_input.keys()
-        if not params.use_fullimg_GT_label:
-            classifier_name = 'OBFSEARCH_TOPC'
-        else:
-            classifier_name = 'OBFSEARCH_GT'
-        # loop over the images
-        for image_key in db_keys:
-            # get database entry
-            anno = pickle.loads(db_input[image_key])
-            # get stuff from database entry
-            img = anno.get_image()
-            logging.info('***** Elaborating ' + os.path.basename(anno.image_name))
-            # resize img to fit the size of the network
-            image_resz = skimage.transform.resize(img,\
-                                        (net.get_input_dim(), net.get_input_dim()))
-            image_resz = skimage.img_as_ubyte(image_resz)
-            img_width, img_height = np.shape(image_resz)[0:2]
-            # extract segments
-            segment_lists = {}
+    if not params.only_evaluation:
+        for shard in params.execute_shards:
+            inputdb = input_dir + '/%05d'%shard + '.db'
+            outputdb = output_dir + '/%05d'%idx_process  + '/%05d'%shard + '.db'
+            # retrieve all the AnnotatedImages and images from the database
+            logging.info('Opening ' + inputdb)
+            db_input = bsddb.btopen(inputdb, 'r')
+            db_output = bsddb.btopen(outputdb, 'c')
+            db_keys = db_input.keys()
             if not params.use_fullimg_GT_label:
-                this_label = 'none'
-                segment_lists[this_label] = stl_grayout.extract_greedy(image_resz)
+                classifier_name = 'OBFSEARCH_TOPC'
             else:
-                for GT_label in  anno.gt_objects.keys():
-                    segment_lists[GT_label] = \
-                             stl_grayout.extract_greedy(image_resz, label=GT_label)
-            anno.pred_objects[classifier_name] = {}
-            for this_label in segment_lists.keys():
+                classifier_name = 'OBFSEARCH_GT'
+            # loop over the images
+            for image_key in db_keys:
+                # get database entry
+                anno = pickle.loads(db_input[image_key])
+                # get stuff from database entry
+                img = anno.get_image()
+                logging.info('***** Elaborating ' + os.path.basename(anno.image_name))
+                # resize img to fit the size of the network
+                image_resz = skimage.transform.resize(img,\
+                                            (net.get_input_dim(), net.get_input_dim()))
+                image_resz = skimage.img_as_ubyte(image_resz)
+                img_width, img_height = np.shape(image_resz)[0:2]
+                # extract segments
+                segment_lists = {}
                 if not params.use_fullimg_GT_label:
-                    assert this_label != 'none'
-                # Convert the segmentation lists to BBoxes
-                pred_bboxes_unnorm = segments_to_bboxes(segment_lists[this_label])
-                # Normalize the bboxes
-                pred_bboxes = []
-                for j in range(np.shape(pred_bboxes_unnorm)[0]):
-                    pred_bboxes_unnorm[j].normalize_to_outer_box(BBox(0, 0, \
-                                                        img_width, img_height))
-                    pred_bboxes.append(pred_bboxes_unnorm[j])
-                # store results
-                pred_obj = AnnotatedObject(label = this_label)
-                pred_obj.bboxes = pred_bboxes
-                anno.pred_objects[classifier_name][this_label] = pred_obj
-                logging.info(str(anno))
-                # adding the AnnotatedImage to the database
-                logging.info('Adding the record to the database')
-                value = pickle.dumps(anno, protocol=2)
-                db_output[image_key] = value
-                logging.info('End record')
-        # write the database
-        logging.info('Writing file ' + outputdb)
-        db_output.sync()
-        db_output.close()
+                    this_label = 'none'
+                    segment_lists[this_label] = stl_grayout.extract_greedy(image_resz)
+                else:
+                    for GT_label in  anno.gt_objects.keys():
+                        segment_lists[GT_label] = \
+                                 stl_grayout.extract_greedy(image_resz, label=GT_label)
+                anno.pred_objects[classifier_name] = {}
+                for this_label in segment_lists.keys():
+                    if not params.use_fullimg_GT_label:
+                        assert this_label != 'none'
+                    # Convert the segmentation lists to BBoxes
+                    pred_bboxes_unnorm = segments_to_bboxes(segment_lists[this_label])
+                    # Normalize the bboxes
+                    pred_bboxes = []
+                    for j in range(np.shape(pred_bboxes_unnorm)[0]):
+                        pred_bboxes_unnorm[j].normalize_to_outer_box(BBox(0, 0, \
+                                                            img_width, img_height))
+                        pred_bboxes.append(pred_bboxes_unnorm[j])
+                    # store results
+                    pred_obj = AnnotatedObject(label = this_label)
+                    pred_obj.bboxes = pred_bboxes
+                    anno.pred_objects[classifier_name][this_label] = pred_obj
+                    logging.info(str(anno))
+                    # adding the AnnotatedImage to the database
+                    logging.info('Adding the record to the database')
+                    value = pickle.dumps(anno, protocol=2)
+                    db_output[image_key] = value
+                    logging.info('End record')
+            # write the database
+            logging.info('Writing file ' + outputdb)
+            db_output.sync()
+            db_output.close()
 
     # Perform NMS = 0.5
     params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_05')
