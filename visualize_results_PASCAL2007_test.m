@@ -13,7 +13,7 @@ plot_defs;
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
 params.dataset_name = 'PASCAL2007test';
 params.prefix_output_files = strcat('results_',params.dataset_name);
-params.save_output_files = 0;
+params.save_output_files = 1;
 params.set_log_scale = 1;
 params.mean_precision = 1;
 params.MATLAB = MATLAB;
@@ -43,7 +43,8 @@ params.PASCAL2007_test = 1;
 %                };             
              
 params.exps = { ...
-               {'exp29_05stats', 'BING (our code)'}, ...
+               {'exp23_07stats_NMS_05','ObfuscationSearch, TopC=5'}, ...
+               {'exp30_07stats_NMS_05','ObfuscationSearch similarity + NET features, TopC=5'}, ...
                };              
              
 % params.exps = {{'exp06_13stats_NMS_05','exp06_13_NMS_05 (GrayBox, topC=5)'}, ...

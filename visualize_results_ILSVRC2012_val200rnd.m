@@ -13,7 +13,7 @@ plot_defs;
 params.exp_dir = '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation';
 params.dataset_name = 'ILSVRC2012val200rnd';
 params.prefix_output_files = strcat('results_',params.dataset_name);
-params.save_output_files = 0;
+params.save_output_files = 1;
 params.set_log_scale = 1;
 params.mean_precision = 1;
 params.MATLAB = MATLAB;
@@ -39,6 +39,7 @@ params.MATLAB = MATLAB;
 
 params.exps = { ...
                {'exp23_10stats_NMS_05','ObfuscationSearch, GT'}, ...
+               {'exp30_05stats_NMS_05','ObfuscationSearch similarity + NET features, GT'}, ...
                };
 
 % params.exps = {{'exp06_21stats','exp06_21 (SlidingWindow, topC=5)'}, ...
