@@ -17,7 +17,7 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp24_14'
     # input [OBFSEARCH_GT, SELECTIVESEARCH, FULLIMAGE]
-    params.exp_name_input = ['exp30_04stats_NMS_05', 'exp14_07']
+    params.exp_name_input = ['exp30_03stats_NMS_05', 'exp14_07']
     params.full_image_boxes = False
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1

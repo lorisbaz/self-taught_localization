@@ -32,7 +32,6 @@ if __name__ == "__main__":
     params.min_sz_segm = 5 # keep this low (because we resize!!)
     params.alpha = 1/4.0*np.ones((4,))
     params.function_stl = 'similarity+cnnfeature'
-    params.padding = 0.2
     params.obfuscate_bbox = True
     params.use_fullimg_GT_label = False # if true params.topC is not used!
     # input/output directory
