@@ -14,7 +14,7 @@ figure;
 h_mean_recall = gca;
 hold on;
 grid on;
-axis([1, 50, 0, 1]);
+axis([1, 10000, 0, 1]);
 xlabel('Num subwindows')
 ylabel('Mean recall per class')
 title(strcat('Results on ', params.dataset_name))

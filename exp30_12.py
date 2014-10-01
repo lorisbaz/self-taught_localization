@@ -13,10 +13,16 @@ if __name__ == "__main__":
     # load configurations and parameters
     conf = Configuration()
     params = exp30.Params()
+    # hack to load the finetuned net
+    conf.ilsvrc2012_caffe_model_spec = \
+                './pascal_finetune_deploy_SingleInput.prototxt'
+    conf.RCNN_models_dir = '/home/anthill/vlg/rcnn/data/caffe_nets'
+    conf.ilsvrc2012_caffe_model = conf.RCNN_models_dir + \
+                '/ilsvrc_2012_train_iter_310k'
     # experiment name
-    params.exp_name = 'exp30_08'
+    params.exp_name = 'exp30_12'
     # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp03_06'
+    params.exp_name_input = 'exp19_01'
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # default Configuration, image and label files
@@ -45,7 +51,7 @@ if __name__ == "__main__":
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    if 0:
+    if 1:
         exp30.run_exp(params)
     # RUN THE STATISTICS PIPELINE
     if 0:

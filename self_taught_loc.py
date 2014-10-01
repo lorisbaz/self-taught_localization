@@ -34,7 +34,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
     def __init__(self, network, img_segmenter, min_sz_segm = 0, \
                         topC = 0, alpha = np.ones((4,)), obfuscate_bbox = False, \
                         function_stl = 'diversity', padding = 0.0, \
-                        layer = 'fc7'):
+                        layer = 'fc7', single_color_space = False):
         """
         - network: neural net used for classification
         - img_segmenter: segmentation algorithm in the class ImgSegm
@@ -56,6 +56,8 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                 contain the context surrounding it
         - layer: only if cnnfeature is used. The layer of the cnn used by the
                 similarity function.
+        - single_color_space: it selects only a single color space of the
+                segmentation algorithm
         """
         self.img_segmenter_ = img_segmenter
         self.min_sz_segm_ = min_sz_segm
@@ -66,6 +68,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
         self.function_stl_ = function_stl
         self.padding_ = padding
         self.layer_ = layer
+        self.single_color_space_ = single_color_space
 
     @staticmethod
     def segments_to_bboxes(self, segments):
@@ -102,7 +105,10 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
         # Our Obfuscation Search---
         segm_all_list = []
         image_sz = np.shape(image)[0:2]
-        for s in range(np.shape(segm_masks)[1]): # for each segm mask
+        num_segmentations = np.shape(segm_masks)[1]
+        if self.single_color_space_:
+            num_segmentations = 1
+        for s in range(num_segmentations): # for each segm mask
             segm_mask = np.uint16(segm_masks[0,s])
             segm_all = []
             segm_ids = np.unique(segm_mask)

@@ -37,6 +37,9 @@ class Params:
         # If cnnfeature are used, we can include some padding to the
         # bbox where feature are extracted. value in [0.0, 1.0]
         self.padding = 0.0
+        # Select a single parametrization of Feltz alg (i.e., single color space
+        # and k)
+        self.single_color_space = False
 
 def pipeline(inputdb, outputdb, params):
     # Instantiate some objects, and open the database
@@ -65,11 +68,12 @@ def pipeline(inputdb, outputdb, params):
     img_segmenter = ImgSegmMatWraper()
     # instantiate STL object
     stl_grayout = SelfTaughtLoc_Grayout(net, img_segmenter, \
-                                   params.min_sz_segm, topC = params.topC,\
-                                   alpha = params.alpha, \
-                                   obfuscate_bbox = params.obfuscate_bbox, \
-                                   function_stl = params.function_stl,\
-                                   padding = params.padding)
+                            params.min_sz_segm, topC = params.topC,\
+                            alpha = params.alpha, \
+                            obfuscate_bbox = params.obfuscate_bbox, \
+                            function_stl = params.function_stl,\
+                            padding = params.padding,\
+                            single_color_space = params.single_color_space)
     # retrieve all the AnnotatedImages and images from the database
     logging.info('Opening ' + inputdb)
     db_input = bsddb.btopen(inputdb, 'r')
