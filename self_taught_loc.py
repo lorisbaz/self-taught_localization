@@ -9,6 +9,7 @@ import tempfile
 import logging
 import os
 from bbox import *
+from reranker import *
 
 class SelfTaughtLoc:
     """class for Self Taught Localizer"""
