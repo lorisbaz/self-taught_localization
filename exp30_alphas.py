@@ -37,6 +37,12 @@ class Params:
         self.function_stl = 'diversity'
         # Number of alphas to use for creating the simplex (sampling)
         self.num_of_elements_per_alpha = 10
+        # If cnnfeature are used, we can include some padding to the
+        # bbox where feature are extracted. value in [0.0, 1.0]
+        self.padding = 0.0
+        # Select a single parametrization of Feltz alg (i.e., single color space
+        # and k)
+        self.single_color_space = False
 
 def pipeline(input_dir, output_dir, alphas, idx_process, params):
     # Instantiate some objects, and open the database
@@ -65,10 +71,12 @@ def pipeline(input_dir, output_dir, alphas, idx_process, params):
     img_segmenter = ImgSegmMatWraper()
     # instantiate STL object
     stl_grayout = SelfTaughtLoc_Grayout(net, img_segmenter, \
-                                   params.min_sz_segm, topC = params.topC,\
-                                   alpha = alphas, \
-                                   obfuscate_bbox = params.obfuscate_bbox, \
-                                   function_stl = params.function_stl)
+                            params.min_sz_segm, topC = params.topC,\
+                            alpha = alphas, \
+                            obfuscate_bbox = params.obfuscate_bbox, \
+                            function_stl = params.function_stl,\
+                            padding = params.padding,\
+                            single_color_space = params.single_color_space)
     # create folder
     if os.path.exists(output_dir + '/%05d'%idx_process) == False:
         os.makedirs(output_dir + '/%05d'%idx_process)
@@ -77,68 +85,75 @@ def pipeline(input_dir, output_dir, alphas, idx_process, params):
         for shard in params.execute_shards:
             inputdb = input_dir + '/%05d'%shard + '.db'
             outputdb = output_dir + '/%05d'%idx_process  + '/%05d'%shard + '.db'
-            # retrieve all the AnnotatedImages and images from the database
-            logging.info('Opening ' + inputdb)
-            db_input = bsddb.btopen(inputdb, 'r')
-            db_output = bsddb.btopen(outputdb, 'c')
-            db_keys = db_input.keys()
-            if not params.use_fullimg_GT_label:
-                classifier_name = 'OBFSEARCH_TOPC'
-            else:
-                classifier_name = 'OBFSEARCH_GT'
-            # loop over the images
-            for image_key in db_keys:
-                # get database entry
-                anno = pickle.loads(db_input[image_key])
-                # get stuff from database entry
-                img = anno.get_image()
-                logging.info('***** Elaborating ' + os.path.basename(anno.image_name))
-                # resize img to fit the size of the network
-                image_resz = skimage.transform.resize(img,\
-                                            (net.get_input_dim(), net.get_input_dim()))
-                image_resz = skimage.img_as_ubyte(image_resz)
-                img_width, img_height = np.shape(image_resz)[0:2]
-                # extract segments
-                segment_lists = {}
+            try: # if DB exists, check integrity
+                db_output = bsddb.btopen(outputdb, 'r')
+                db_output.close()
+                logging.info('--- DB successfully opened.'+\
+                             ' We do not overwrite {0}'.format(outputdb))
+            except:
+                # retrieve all the AnnotatedImages and images from the database
+                logging.info('Opening ' + inputdb)
+                db_input = bsddb.btopen(inputdb, 'r')
+                db_output = bsddb.btopen(outputdb, 'c')
+                db_keys = db_input.keys()
                 if not params.use_fullimg_GT_label:
-                    this_label = 'none'
-                    segment_lists[this_label] = stl_grayout.extract_greedy(image_resz)
+                    classifier_name = 'OBFSEARCH_TOPC'
                 else:
-                    for GT_label in  anno.gt_objects.keys():
-                        segment_lists[GT_label] = \
-                                 stl_grayout.extract_greedy(image_resz, label=GT_label)
-                anno.pred_objects[classifier_name] = {}
-                for this_label in segment_lists.keys():
+                    classifier_name = 'OBFSEARCH_GT'
+                # loop over the images
+                for image_key in db_keys:
+                    # get database entry
+                    anno = pickle.loads(db_input[image_key])
+                    # get stuff from database entry
+                    img = anno.get_image()
+                    logging.info('***** Elaborating ' + os.path.basename(anno.image_name))
+                    # resize img to fit the size of the network
+                    image_resz = skimage.transform.resize(img,\
+                                            (net.get_input_dim(), net.get_input_dim()))
+                    image_resz = skimage.img_as_ubyte(image_resz)
+                    img_height, img_width = np.shape(image_resz)[0:2]
+                    # extract segments
+                    segment_lists = {}
                     if not params.use_fullimg_GT_label:
-                        assert this_label != 'none'
-                    # Convert the segmentation lists to BBoxes
-                    pred_bboxes_unnorm = segments_to_bboxes(segment_lists[this_label])
-                    # Normalize the bboxes
-                    pred_bboxes = []
-                    for j in range(np.shape(pred_bboxes_unnorm)[0]):
-                        pred_bboxes_unnorm[j].normalize_to_outer_box(BBox(0, 0, \
+                        this_label = 'none'
+                        segment_lists[this_label] = stl_grayout.extract_greedy(image_resz)
+                    else:
+                        for GT_label in  anno.gt_objects.keys():
+                            segment_lists[GT_label] = \
+                                 stl_grayout.extract_greedy(image_resz, label=GT_label)
+                    anno.pred_objects[classifier_name] = {}
+                    for this_label in segment_lists.keys():
+                        if not params.use_fullimg_GT_label:
+                            assert this_label == 'none'
+                        # Convert the segmentation lists to BBoxes
+                        pred_bboxes_unnorm = segments_to_bboxes(segment_lists[this_label])
+                        # Normalize the bboxes
+                        pred_bboxes = []
+                        for j in range(np.shape(pred_bboxes_unnorm)[0]):
+                            pred_bboxes_unnorm[j].normalize_to_outer_box(BBox(0, 0, \
                                                             img_width, img_height))
-                        pred_bboxes.append(pred_bboxes_unnorm[j])
-                    # store results
-                    pred_obj = AnnotatedObject(label = this_label)
-                    pred_obj.bboxes = pred_bboxes
-                    anno.pred_objects[classifier_name][this_label] = pred_obj
-                    logging.info(str(anno))
-                    # adding the AnnotatedImage to the database
-                    logging.info('Adding the record to the database')
-                    value = pickle.dumps(anno, protocol=2)
-                    db_output[image_key] = value
-                    logging.info('End record')
-            # write the database
-            logging.info('Writing file ' + outputdb)
-            db_output.sync()
-            db_output.close()
+                            pred_bboxes.append(pred_bboxes_unnorm[j])
+                        # store results
+                        pred_obj = AnnotatedObject(label = this_label)
+                        pred_obj.bboxes = pred_bboxes
+                        anno.pred_objects[classifier_name][this_label] = pred_obj
+                        logging.info(str(anno))
+                        # adding the AnnotatedImage to the database
+                        logging.info('Adding the record to the database')
+                        value = pickle.dumps(anno, protocol=2)
+                        db_output[image_key] = value
+                        logging.info('End record')
+                # write the database
+                logging.info('Writing file ' + outputdb)
+                db_output.sync()
+                db_output.close()
 
     # Perform NMS = 0.5
     params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_05')
     params_stats.nms_execution = True
     params_stats.nms_iou_threshold = 0.5
     params_stats.run_on_anthill = False
+    params_stats.calculate_histogram = False
     params_stats.tasks = params.execute_shards
     params_stats.input_dir = output_dir + '/%05d'%idx_process
     if os.path.exists(output_dir + 'stats_NMS_05') == False:
@@ -146,10 +161,10 @@ def pipeline(input_dir, output_dir, alphas, idx_process, params):
     params_stats.output_dir = output_dir + 'stats_NMS_05' + '/%05d'%idx_process
     compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
 
-    # clean results
-    for shard in params.execute_shards:
-        shutil.rmtree(params_stats.input_dir +  '/%05d'%shard + '.db')
-        shutil.rmtree(params_stats.output_dir + '/%05d'%shard + '.db')
+    ## clean results
+    #for shard in params.execute_shards:
+    #    shutil.rmtree(params_stats.input_dir +  '/%05d'%shard + '.db')
+    #    shutil.rmtree(params_stats.output_dir + '/%05d'%shard + '.db')
 
     return 0
 
@@ -175,7 +190,7 @@ def run_exp(params):
     alphas = np.append(alphas[:, keep_alphas], \
                     np.expand_dims(alpha_last[:, keep_alphas], axis=0), axis=0)
     # save the alphas to mat
-    scipy.io.savemat(params.output_dir + 'list_of_alphas.mat', \
+    scipy.io.savemat(params.output_dir + '/list_of_alphas.mat', \
                     {'alphas': alphas})
     # # Decomment if you want to visualize the simplex points
     # from mpl_toolkits.mplot3d import Axes3D

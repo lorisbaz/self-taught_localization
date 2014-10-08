@@ -523,15 +523,15 @@ def run_exp_per_class(params):
         precision_mean /= (len(stats_list.keys())-1)
         average_precision_mean /= (len(stats_list.keys())-1)
         ABO_mean /= (len(stats_list.keys())-1)
-        # Figure: recall vs numPredBboxesImage
-        line, = plt.plot(params.stats_using_num_pred_bboxes_image,\
-                         recall_mean, \
-                         '-', linewidth=2)
-        plt.xlabel('number of predicted bboxes per image')
-        plt.ylabel('Mean Recall Per Class')
-        plt.savefig(imgs_output_dir + '/recall_vs_numPredBboxesImage.png')
-        plt.savefig(imgs_output_dir + '/recall_vs_numPredBboxesImage.pdf')
-        plt.close()
+        ## Figure: recall vs numPredBboxesImage
+        #line, = plt.plot(params.stats_using_num_pred_bboxes_image,\
+        #                 recall_mean, \
+        #                 '-', linewidth=2)
+        #plt.xlabel('number of predicted bboxes per image')
+        #plt.ylabel('Mean Recall Per Class')
+        #plt.savefig(imgs_output_dir + '/recall_vs_numPredBboxesImage.png')
+        #plt.savefig(imgs_output_dir + '/recall_vs_numPredBboxesImage.pdf')
+        #plt.close()
         # Save .mat file for visualization in matlab (use aggregate_results.m)
         savemat(mat_output_dir + '/recall_vs_numPredBboxesImage',\
                     {'recall': recall_all['ALL'], \

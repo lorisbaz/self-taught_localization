@@ -22,7 +22,7 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp31_01'
     # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp30_07stats_NMS_05'
+    params.exp_name_input = 'exp30_07'
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # default Configuration, image and label files

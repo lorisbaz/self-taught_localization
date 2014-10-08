@@ -36,9 +36,9 @@ class ReRankerTest(unittest.TestCase):
                             'ILSVRC2012_val_00000001_n01751748.JPEG')
         for bb in self.bboxes:
             bb.confidence = self.reranker.evaluate(image, bb)
-        self.assertAlmostEqual(self.bboxes[0].confidence, 0.48127699)
-        self.assertAlmostEqual(self.bboxes[1].confidence, 0.25004232)
-        self.assertAlmostEqual(self.bboxes[2].confidence, 0.20871276)
+        self.assertAlmostEqual(self.bboxes[0].confidence, 0.01585524)
+        self.assertAlmostEqual(self.bboxes[1].confidence, 0.08206509)
+        self.assertAlmostEqual(self.bboxes[2].confidence, 0.00354953)
 
 # ------------ perform test ------------ #
 if __name__ == '__main__':

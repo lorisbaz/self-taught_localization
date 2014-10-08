@@ -16,7 +16,7 @@ if __name__ == "__main__":
     # experiment name
     params.exp_name = 'exp30_02_alphas'
     # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp03_07'
+    params.exp_name_input = 'exp19_02'
     # Run only evaluation
     params.only_evaluation = True
     # Num elements in batch (for decaf/caffe eval)
@@ -28,15 +28,13 @@ if __name__ == "__main__":
     params.center_only = True
     # select top C classes used to generate the predicted bboxes
     params.topC = 5     # if 0, take the max across classes
-    # method for calculating the confidence
-    params.heatextractor_confidence_tech = 'full_obf_positive'
     # obfuscation search params
-    params.num_of_elements_per_alpha = 10
-    params.num_alphas = 3
+    params.num_of_elements_per_alpha = 8
+    params.num_alphas = 4
     params.min_sz_segm = 5 # keep this low (because we resize!!)
-    params.function_stl = 'similarity'
+    params.function_stl = 'similarity+cnnfeature'
     params.obfuscate_bbox = True
-    params.use_fullimg_GT_label = True # if true params.topC is not used!
+    params.use_fullimg_GT_label = False # if true params.topC is not used!
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name

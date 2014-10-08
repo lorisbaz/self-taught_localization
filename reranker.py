@@ -24,6 +24,9 @@ class ReRankerNet(ReRanker):
         Given a bbox, it will rerank it with a new network. We take the max of
         the softmax output.
         """
+        # get the top1 label
+        top1 = np.argmax(self.network_.evaluate(image, \
+                                                layer_name = self.layer_))
         image_height, image_width = np.shape(image)[0:2]
         # rescale
         bbox = bb.copy()
@@ -34,4 +37,4 @@ class ReRankerNet(ReRanker):
         # predict CNN reponse for obfuscation
         caffe_rep = self.network_.evaluate(image_box, layer_name = self.layer_)
         # take the max
-        return np.max(caffe_rep)
+        return caffe_rep[top1]
