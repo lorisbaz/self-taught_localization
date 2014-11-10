@@ -154,7 +154,7 @@ def pipeline(input_dir, output_dir, alphas, idx_process, params):
     params_stats.nms_iou_threshold = 0.5
     params_stats.run_on_anthill = False
     params_stats.calculate_histogram = False
-    params_stats.tasks = params.execute_shards
+    params_stats.task = params.execute_shards
     params_stats.input_dir = output_dir + '/%05d'%idx_process
     if os.path.exists(output_dir + 'stats_NMS_05') == False:
         os.makedirs(output_dir + 'stats_NMS_05')

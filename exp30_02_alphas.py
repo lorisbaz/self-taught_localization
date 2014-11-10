@@ -18,7 +18,7 @@ if __name__ == "__main__":
     # input (GT AnnotatatedImages)
     params.exp_name_input = 'exp19_02'
     # Run only evaluation
-    params.only_evaluation = True
+    params.only_evaluation = False
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # default Configuration, image and label files
