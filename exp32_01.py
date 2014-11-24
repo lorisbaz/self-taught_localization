@@ -7,16 +7,16 @@ from vlg.util.parfun import *
 
 from configuration import *
 from compute_statistics_exp import *
-import exp30
+import exp32
 
 if __name__ == "__main__":
     # load configurations and parameters
     conf = Configuration()
-    params = exp30.Params()
+    params = exp32.Params()
     # experiment name
-    params.exp_name = 'exp30_09'
+    params.exp_name = 'exp32_01'
     # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp03_07'
+    params.exp_name_input = 'exp03_05'
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # default Configuration, image and label files
@@ -33,7 +33,9 @@ if __name__ == "__main__":
     params.alpha = 1/4.0*np.ones((4,))
     params.function_stl = 'similarity+cnnfeature'
     params.obfuscate_bbox = True
-    params.use_fullimg_GT_label = False # if true params.topC is not used!
+    params.use_fullimg_GT_label = True      # not actually using the GT_label...
+    params.use_fullimg_top5_estimate = True # use convnet estimate instead of GT
+    params.nms_iou_threshold = 0.5
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
@@ -45,16 +47,5 @@ if __name__ == "__main__":
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    if 0:
-        exp30.run_exp(params)
-    # RUN THE STATISTICS PIPELINE
-    if 0:
-        compute_statistics_exp(input_exp=params.exp_name)
-    # RUN THE STATISTICS PIPELINE WITH NMS
     if 1:
-        # NMS=0.5
-        params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_05')
-        params_stats.nms_execution = True
-        params_stats.nms_iou_threshold = 0.5
-        params_stats.delete_pred_objects = False
-        compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
+        exp32.run_exp(params)

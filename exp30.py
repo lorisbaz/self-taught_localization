@@ -40,6 +40,8 @@ class Params:
         # Select a single parametrization of Feltz alg (i.e., single color space
         # and k)
         self.single_color_space = False
+        # Remove obfuscation?
+        self.no_obfuscation = False
 
 def pipeline(inputdb, outputdb, params):
     # Instantiate some objects, and open the database
@@ -73,7 +75,8 @@ def pipeline(inputdb, outputdb, params):
                             obfuscate_bbox = params.obfuscate_bbox, \
                             function_stl = params.function_stl,\
                             padding = params.padding,\
-                            single_color_space = params.single_color_space)
+                            single_color_space = params.single_color_space, \
+                            no_obfuscation = params.no_obfuscation)
     # retrieve all the AnnotatedImages and images from the database
     logging.info('Opening ' + inputdb)
     db_input = bsddb.btopen(inputdb, 'r')

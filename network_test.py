@@ -4,7 +4,7 @@ from configuration import *
 import unittest
 import numpy as np
 
-#@unittest.skip("Skipping Decaf Test")
+@unittest.skip("Skipping Decaf Test because it is deprecated")
 class NetworkDecafTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()
@@ -71,7 +71,7 @@ class NetworkDecafTest(unittest.TestCase):
         self.assertAlmostEqual(scores[0,3530], 15.6157, places=4)
 
 #=============================================================================
-
+@unittest.skip("Skipping old caffe Test")
 class NetworkCaffeTest(unittest.TestCase):
     def setUp(self):
         self.conf = Configuration()
@@ -178,6 +178,79 @@ class NetworkCaffeTest(unittest.TestCase):
         self.assertAlmostEqual(features[0,0,0], 0.0, places=5)
         self.assertAlmostEqual(features[255,10,10], 0.0, places=5)
         self.assertAlmostEqual(np.max(features), 335.69110, places=5)
+
+#=============================================================================
+class NetworkCaffe1114Test(unittest.TestCase):
+    def setUp(self):
+        self.conf = Configuration(caffe_model = 'deep_VGG_19')
+        # deprecated way to construct the network
+        self.net = NetworkCaffe1114(self.conf.ilsvrc2012_caffe_model_spec,\
+                                self.conf.ilsvrc2012_caffe_model,\
+                                self.conf.ilsvrc2012_caffe_wnids_words,\
+                                self.conf.ilsvrc2012_caffe_avg_image, \
+                                center_only = True)
+        # using the factory
+        params = NetworkCaffe1114Params(self.conf.ilsvrc2012_caffe_model_spec,\
+                                    self.conf.ilsvrc2012_caffe_model,\
+                                    self.conf.ilsvrc2012_caffe_wnids_words,\
+                                    self.conf.ilsvrc2012_caffe_avg_image, \
+                                    center_only = True)
+        self.net2 = Network.create_network(params)
+        # using the factory
+        self.wnid_my_subset = ['n01440764', 'n01443537', 'n01751748']
+        params2 = NetworkCaffe1114Params(self.conf.ilsvrc2012_caffe_model_spec,\
+                                    self.conf.ilsvrc2012_caffe_model,\
+                                    self.conf.ilsvrc2012_caffe_wnids_words,\
+                                    self.conf.ilsvrc2012_caffe_avg_image, \
+                                    center_only = True, \
+                                    wnid_subset = self.wnid_my_subset)
+        self.net3 = Network.create_network(params2)
+
+    def tearDown(self):
+        self.net = None
+        self.net2 = None
+        self.net3 = None
+
+    def test_get_label_id(self):
+        self.assertEqual(self.net.get_label_id('n01440764'), 0)
+        self.assertEqual(self.net.get_label_id('n01443537'), 1)
+        self.assertEqual(self.net.get_label_id('n15075141'), 999)
+
+    def test_get_label_desc(self):
+        self.assertEqual(self.net.get_label_desc('n01440764'), \
+                         'tench, Tinca tinca')
+        self.assertEqual(self.net.get_label_desc('n01443537'), \
+                         'goldfish, Carassius auratus')
+        self.assertEqual(self.net.get_label_desc('n15075141'), \
+                         'toilet tissue, toilet paper, bathroom tissue')
+
+    def test_get_labels(self):
+        labels = self.net.get_labels()
+        self.assertEqual(labels[0], 'n01440764')
+        self.assertEqual(labels[1], 'n01443537')
+        self.assertEqual(labels[999], 'n15075141')
+
+    def test_evaluate2(self):
+        img = np.asarray(io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG'))
+        scores = self.net2.evaluate(img, layer_name = 'softmax')
+        self.assertAlmostEqual(scores[0], 0.00014687564, places=5)
+        self.assertAlmostEqual(scores[999], 0.00083345216, places=5)
+        self.assertAlmostEqual(max(scores), 0.07127481, places=5)
+
+    def test_evaluate_layers2(self):
+        img = np.asarray(io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG'))
+        features = self.net2.evaluate(img, layer_name = 'fc7')
+        self.assertAlmostEqual(features[0], 0.0, places=5)
+        self.assertAlmostEqual(features[4095], 0.0, places=5)
+        self.assertAlmostEqual(max(features), 5.4486914, places=5)
+        features = self.net2.evaluate(img, layer_name = 'pool5')
+        self.assertAlmostEqual(features[0,0,0], 0.0, places=5)
+        self.assertAlmostEqual(features[255,5,5], 0.0, places=5)
+        self.assertAlmostEqual(np.max(features), 75.780647, places=5)
+        features = self.net2.evaluate(img, layer_name = 'conv2_2')
+        self.assertAlmostEqual(features[0,0,0], 20.883495, places=5)
+        self.assertAlmostEqual(features[100,10,10], 0.0, places=5)
+        self.assertAlmostEqual(np.max(features), 3724.2454, places=4)
 
 #=============================================================================
 

@@ -8,10 +8,13 @@ try:
     import decaf.util.transform
 except:
     print "Warning: Decaf not loaded. \n"
-try:
-    import caffe.imagenet
+try: # kept for back-compatibility
+    from caffe.imagenet import *
 except:
-    print "Warning: Caffe not loaded. \n"
+    try: # for the new version of caffe
+        import caffe
+    except:
+        print "Warning: Caffe not loaded. \n"
 import matplotlib.pyplot as plt
 
 import util
@@ -84,6 +87,8 @@ class Network:
             return NetworkDecaf(params)
         elif isinstance(params, NetworkCaffeParams):
             return NetworkCaffe(params)
+        elif isinstance(params, NetworkCaffe1114Params):
+            return NetworkCaffe1114(params)
         else:
             raise ValueError('NetworkParams instance not recognized')
 
@@ -131,6 +136,517 @@ class NetworkFake(Network):
 
 #=============================================================================
 
+class NetworkCaffeParams(NetworkParams):
+    def __init__(self, model_spec_filename, model_filename,\
+                 wnid_words_filename, mean_img_filename,\
+                 caffe_mode = 'cpu', center_only = False, wnid_subset = []):
+        self.model_spec_filename = model_spec_filename
+        self.model_filename = model_filename
+        self.wnid_words_filename = wnid_words_filename
+        self.mean_img_filename = mean_img_filename
+        self.caffe_mode = caffe_mode
+        self.center_only = center_only
+        self.wnid_subset = wnid_subset
+
+class NetworkCaffe(Network):
+    """
+    Implementation for the Caffe library.
+    """
+    def __init__(self, model_spec_filename, model_filename=None,\
+                 wnid_words_filename=None, mean_img_filename=None, \
+                 caffe_mode='cpu', center_only=False, wnid_subset = []):
+        """
+        *** PRIVATE CONSTRUCTOR ***
+        """
+        # the following is just an hack to allow retro-compatibility
+        # with existing code
+        if isinstance(model_spec_filename, NetworkCaffeParams):
+            params = model_spec_filename
+            model_spec_filename = params.model_spec_filename
+            model_filename = params.model_filename
+            wnid_words_filename = params.wnid_words_filename
+            mean_img_filename = params.mean_img_filename
+            caffe_mode = params.caffe_mode
+            center_only = params.center_only
+            try:
+                wnid_subset = params.wnid_subset
+            except: # this was done for the detection challenge 2013
+                wnid_subset = []
+        else:
+            assert isinstance(model_spec_filename, str)
+            assert model_filename != None
+            assert wnid_words_filename != None
+            assert mean_img_filename != None
+        # for now, we support only the single full-image evaluation
+        assert center_only == True
+        # load Caffe model
+        self.net_ = ImageNetClassifier( \
+                            model_spec_filename, model_filename, \
+                            center_only)
+        self.net_.caffenet.set_phase_test()
+        if caffe_mode == 'cpu':
+            self.net_.caffenet.set_mode_cpu()
+        elif caffe_mode == 'gpu':
+            self.net_.caffenet.set_mode_gpu()
+        else:
+            raise ValueError('caffe_mode not recognized')
+        # build a dictionary label --> description
+        # and a dictionary label --> label_id
+        self.dict_label_desc_ = {}
+        self.dict_label_id_ = {}
+        self.labels_ = []
+        fd = open(wnid_words_filename)
+        line_number = 0
+        for line in fd:
+            wnid = line[0:9].strip()
+            words = line[10:].strip()
+            self.dict_label_desc_[wnid] = words
+            self.dict_label_id_[wnid] = line_number
+            self.labels_.append(wnid)
+            line_number += 1
+        fd.close()
+        # Load the mean vector from file
+        self.net_.mean_img = np.load(\
+                   os.path.join(os.path.dirname(__file__), mean_img_filename))
+        # mean of 3 channels
+        self.net_.mean_img = np.mean(np.mean(self.net_.mean_img,axis=1),axis=0)
+        # it is in BGR convert in RGB
+        self.net_.mean_img = self.net_.mean_img[::-1]
+        # extract the list of layers
+        try:
+            self.layer_list = [k for k, dummy in \
+                                    self.net_.caffenet.blobs.items()]
+        except:
+            print 'Warning: Old version of Caffe, please install a more ' \
+                                'recent version (23 April 2014) or only ' \
+                                'softmax output layer is supported.'
+        # subset of ids
+        self.wnid_subset = wnid_subset
+
+    def get_mean_img(self):
+        return self.net_.mean_img
+
+    def get_input_dim(self):
+        return CROPPED_DIM
+
+    def get_label_id(self, label):
+        return self.dict_label_id_[label]
+
+    def get_label_desc(self, label):
+        return self.dict_label_desc_[label]
+
+    def get_labels(self):
+        return self.labels_
+
+    def evaluate(self, img, layer_name = 'softmax'):
+        """
+        Evaluates an image with caffe and extracts features at the layer_name.
+        layer_name can assume different values dependengly on the network
+        architecture that you are using.
+        Most common names are:
+        - 'prob' or 'softmax' (default): for the last layer representation
+            usually used for classitication
+        - 'fc<N>', <N> is the level number: the fully connected layers
+        - 'conv<N>': the convolutional layers
+        - 'pool<N>': the pooling layers
+        - 'norm<N>': the fully connected layers
+        """
+        # if the image in in grayscale, we make it to 3-channels
+        if img.ndim == 2:
+            img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
+        elif img.shape[2] == 4:
+            img = img[:, :, :3]
+        # first, extract the 227x227 center, and convert it to BGR
+        dim = self.get_input_dim()
+        image = util.crop_image_center(img)
+        image_reshape = skimage.transform.resize(image, (dim, dim))
+        image_reshape = (image_reshape * 255)[:, :, ::-1]
+        # subtract the mean, cropping the 256x256 mean image
+        xoff = (IMAGENET_MEAN.shape[1] - dim)/2
+        yoff = (IMAGENET_MEAN.shape[0] - dim)/2
+        image_reshape -= IMAGENET_MEAN[yoff+yoff+dim, xoff:xoff+dim]
+        # oversample code
+        image = image_reshape.swapaxes(1, 2).swapaxes(0, 1)
+        input_blob = [np.ascontiguousarray(image[np.newaxis], dtype=np.float32)]
+        # forward pass to the network
+        num = 1
+        try:
+            last_layer = self.net_.caffenet.blobs.items()[-1]
+            num_output = len(last_layer[1].data.flatten())
+        except: # it means you have the old version of caffe
+            num_output = 1000
+        output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
+        self.net_.caffenet.Forward(input_blob, output_blobs)
+        #assert layer_name == 'softmax', 'layer_name not supported'
+        # NOTE: decaf and caffe have different name conventions (keep softmax
+        #       for back-compatibility)
+        if layer_name == 'softmax':
+            layer_name = 'prob'
+        try:
+            net_representation = {k: output for k, output in \
+                                    self.net_.caffenet.blobs.items()}
+            if net_representation.has_key(layer_name):
+                scores = net_representation[layer_name].data[0]
+                assert np.shape(net_representation[layer_name].data)[0] == 1
+                # Done for back-compatibility (remove single dimentions)
+                if np.shape(scores)[1]==1 and np.shape(scores)[2]==1:
+                    scores = scores.flatten()
+            else:
+                raise ValueError('layer_name not supported')
+        except:
+            scores = output_blobs[0].mean(0).flatten()
+            print 'Warning: Old version of Caffe, please install a more ' \
+                                'recent version (23 April 2014). The softmax' \
+                                'layer is now output of this function.'
+        # if a subset is provided, we zero out the entry not used
+        if self.wnid_subset != [] and layer_name == 'prob':
+            for wnid in self.labels_:
+                if wnid not in self.wnid_subset:
+                    scores[self.get_label_id(wnid)] = 0.0
+        return scores
+
+    def extract_all(self, img):
+        """
+        Evaluates an image with caffe and extracts features for each layer.
+        """
+        # if the image in in grayscale, we make it to 3-channels
+        if img.ndim == 2:
+            img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
+        elif img.shape[2] == 4:
+            img = img[:, :, :3]
+        # first, extract the 227x227 center, and convert it to BGR
+        dim = self.get_input_dim()
+        image = util.crop_image_center(img)
+        image_reshape = skimage.transform.resize(image, (dim, dim))
+        image_reshape = (image_reshape * 255)[:, :, ::-1]
+        # subtract the mean, cropping the 256x256 mean image
+        xoff = (IMAGENET_MEAN.shape[1] - dim)/2
+        yoff = (IMAGENET_MEAN.shape[0] - dim)/2
+        image_reshape -= IMAGENET_MEAN[yoff+yoff+dim, xoff:xoff+dim]
+        # oversample code
+        image = image_reshape.swapaxes(1, 2).swapaxes(0, 1)
+        input_blob = [np.ascontiguousarray(image[np.newaxis], dtype=np.float32)]
+        # forward pass to the network
+        num = 1
+        try:
+            last_layer = self.net_.caffenet.blobs.items()[-1]
+            num_output = len(last_layer[1].data.flatten())
+        except: # it means you have the old version of caffe
+            num_output = 1000
+        output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
+        self.net_.caffenet.Forward(input_blob, output_blobs)
+        net_representation = {k: output for k, output in \
+                                    self.net_.caffenet.blobs.items()}
+        return net_representation
+
+    def visualize_features(self, net_representation, layers = [], \
+                                fig_handle = 0, subsample_kernels = 4,\
+                                dump_image_path = '', string_drop=''):
+        plt.rcParams['image.interpolation'] = 'nearest'
+        i = 1
+        if layers == []:
+            layers = net_representation.keys()
+        for layer in layers:
+            feat  = net_representation[layer].data[0].copy()
+            fig_handle.add_subplot(3,len(layers),len(layers)+i)
+            plt.title(layer)
+            if layer == 'data':
+                # input
+                image = feat
+                image -= image.min()
+                image /= image.max()
+                self.showimage_(image.transpose(1, 2, 0))
+                if not string_drop=='':
+                    plt.text(-10, 300, string_drop, backgroundcolor='white')
+            elif 'fc' in layer or 'prob' in layer:
+                # full connections
+                plt.plot(feat.flat)
+                plt.xticks([0, len(feat.flat)])
+                plt.yticks([np.ceil(np.min(feat.flat)), \
+                                        np.floor(np.max(feat.flat))])
+            else: # 'conv' in layer or 'pool' in layer or 'norm' in layer
+                # conv layers
+                self.vis_square_(feat[::subsample_kernels,:,:], padval=1)
+            i += 1
+        if not dump_image_path == '':
+            plt.savefig(dump_image_path + '.eps', dpi = 100,\
+                                        bbox_inches = 'tight')
+
+
+    def showimage_(self, im):
+        """
+        The network takes BGR images, so we need to switch
+        color channels
+        """
+        if im.ndim == 3:
+            im = im[:, :, ::-1]
+        plt.imshow(im)
+        plt.axis('off')
+
+    def vis_square_(self, data, padsize=1, padval=0):
+        """
+        Take an array of shape (n, height, width) or (n, height, width,
+        channels) and visualize each (height, width) thing in a grid of
+        size approx. sqrt(n) by sqrt(n)
+        """
+        data -= data.min()
+        data /= data.max()
+        # force the number of filters to be square
+        n = int(np.ceil(np.sqrt(data.shape[0])))
+        padding = ((0, n ** 2 - data.shape[0]), (0, padsize), (0, padsize)) \
+                    + ((0, 0),) * (data.ndim - 3)
+        data = np.pad(data, padding, mode='constant', \
+                                constant_values=(padval, padval))
+        # tile the filters into an image
+        data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) \
+                    + tuple(range(4, data.ndim + 1)))
+        data = data.reshape((n * data.shape[1], n * data.shape[3]) \
+                    + data.shape[4:])
+        self.showimage_(data)
+
+
+#=============================================================================
+# Compatible with the newest version of Caffe (Nov. 2014)
+class NetworkCaffe1114Params(NetworkParams):
+    def __init__(self, model_spec_filename, model_filename,\
+                 wnid_words_filename, mean_img_filename,\
+                 caffe_mode = 'cpu', center_only = False, wnid_subset = []):
+        self.model_spec_filename = model_spec_filename
+        self.model_filename = model_filename
+        self.wnid_words_filename = wnid_words_filename
+        self.mean_img_filename = mean_img_filename
+        self.caffe_mode = caffe_mode
+        self.center_only = center_only
+        self.wnid_subset = wnid_subset
+
+
+class NetworkCaffe1114(Network):
+    """
+    Implementation for the Caffe library.
+    """
+    def __init__(self, model_spec_filename, model_filename=None,\
+                 wnid_words_filename=None, mean_img_filename=None, \
+                 caffe_mode='cpu', center_only=False, wnid_subset = []):
+        """
+        *** PRIVATE CONSTRUCTOR ***
+        """
+        # the following is just an hack to allow retro-compatibility
+        # with existing code
+        if isinstance(model_spec_filename, NetworkCaffe1114Params):
+            params = model_spec_filename
+            model_spec_filename = params.model_spec_filename
+            model_filename = params.model_filename
+            wnid_words_filename = params.wnid_words_filename
+            mean_img_filename = params.mean_img_filename
+            caffe_mode = params.caffe_mode
+            center_only = params.center_only
+            try:
+                wnid_subset = params.wnid_subset
+            except: # this was done for the detection challenge 2013
+                wnid_subset = []
+        else:
+            assert isinstance(model_spec_filename, str)
+            assert model_filename != None
+            assert wnid_words_filename != None
+            assert mean_img_filename != None
+        # for now, we support only the single full-image evaluation
+        assert center_only == True
+        self.center_only_ = center_only
+        # load Caffe model
+        self.net_ = caffe.Classifier(model_spec_filename, model_filename);
+        self.net_.set_phase_test()
+        if caffe_mode == 'cpu':
+            self.net_.set_mode_cpu()
+        elif caffe_mode == 'gpu':
+            self.net_.set_mode_gpu()
+        else:
+            raise ValueError('caffe_mode not recognized')
+        # Load the mean
+        mean = np.load(os.path.join(\
+                            os.path.dirname(__file__), mean_img_filename))
+        self.net_.set_mean('data', mean)
+        # the model operates on images in [0,255] range instead of [0,1]
+        self.net_.set_raw_scale('data', 255)
+        # the has channels in BGR order instead of RGB
+        self.net_.set_channel_swap('data', (2,1,0))
+        # build a dictionary label --> description
+        # and a dictionary label --> label_id
+        self.dict_label_desc_ = {}
+        self.dict_label_id_ = {}
+        self.labels_ = []
+        fd = open(wnid_words_filename)
+        line_number = 0
+        for line in fd:
+            wnid = line[0:9].strip()
+            words = line[10:].strip()
+            self.dict_label_desc_[wnid] = words
+            self.dict_label_id_[wnid] = line_number
+            self.labels_.append(wnid)
+            line_number += 1
+        fd.close()
+        # mean of 3 channels
+        self.net_.mean_img = np.mean(np.mean(mean,axis=2),axis=1)
+        # it is in BGR convert in RGB
+        self.net_.mean_img = self.net_.mean_img[::-1]
+        # # it is in BGR convert in RGB
+        # self.net_.mean_img = self.net_.mean_img[::-1]
+        # extract the list of layers
+        try:
+            self.layer_list = [k for k, dummy in \
+                                    self.net_.blobs.items()]
+        except:
+            print 'Warning: Old version of Caffe, please install a more ' \
+                                'recent version (23 April 2014) or only ' \
+                                'softmax output layer is supported.'
+        # subset of ids
+        self.wnid_subset = wnid_subset
+
+    def get_mean_img(self):
+        return self.net_.mean_img
+
+    def get_input_dim(self):
+        return self.net_.image_dims[1]
+
+    def get_label_id(self, label):
+        return self.dict_label_id_[label]
+
+    def get_label_desc(self, label):
+        return self.dict_label_desc_[label]
+
+    def get_labels(self):
+        return self.labels_
+
+    def evaluate(self, img, layer_name = 'softmax'):
+        """
+        Evaluates an image with caffe and extracts features at the layer_name.
+        layer_name can assume different values dependengly on the network
+        architecture that you are using.
+        Most common names are:
+        - 'prob' or 'softmax' (default): for the last layer representation
+            usually used for classitication
+        - 'fc<N>', <N> is the level number: the fully connected layers
+        - 'conv<N>': the convolutional layers
+        - 'pool<N>': the pooling layers
+        - 'norm<N>': the fully connected layers
+        """
+        # if the image in in grayscale, we make it to 3-channels
+        img = img/256.0
+        if img.ndim == 2:
+            img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
+        elif img.shape[2] == 4:
+            img = img[:, :, :3]
+        # perform prediction
+        self.net_.predict([img], oversample = not(self.center_only_))
+        # Gather layer-wise outputs
+        if layer_name == 'softmax':
+            layer_name = 'prob'
+        try:
+            net_representation = {k: output for k, output in \
+                                    self.net_.blobs.items()}
+            if net_representation.has_key(layer_name):
+                scores = net_representation[layer_name].data[0]
+                assert np.shape(net_representation[layer_name].data)[0] == 1
+                # Done for back-compatibility (remove single dimentions)
+                if np.shape(scores)[1]==1 and np.shape(scores)[2]==1:
+                    scores = scores.flatten()
+            else:
+                raise ValueError('layer_name not supported')
+        except:
+            scores = output_blobs[0].mean(0).flatten()
+            print 'Warning: Old version of Caffe, please install a more ' \
+                                'recent version (23 April 2014). The softmax' \
+                                'layer is now output of this function.'
+        # if a subset is provided, we zero out the entry not used
+        if self.wnid_subset != [] and layer_name == 'prob':
+            for wnid in self.labels_:
+                if wnid not in self.wnid_subset:
+                    scores[self.get_label_id(wnid)] = 0.0
+        return scores
+
+    def extract_all(self, img):
+        """
+        Evaluates an image with caffe and extracts features for each layer.
+        """
+        # if the image in in grayscale, we make it to 3-channels
+        img = img/256.0
+        if img.ndim == 2:
+            img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
+        elif img.shape[2] == 4:
+            img = img[:, :, :3]
+        # perform prediction
+        self.net_.predict([img], oversample = not(self.center_only_))
+        # Gather layer-wise outputs
+        net_representation = {k: output for k, output in \
+                                    self.net_.blobs.items()}
+        return net_representation
+
+    def visualize_features(self, net_representation, layers = [], \
+                                fig_handle = 0, subsample_kernels = 4,\
+                                dump_image_path = '', string_drop=''):
+        plt.rcParams['image.interpolation'] = 'nearest'
+        i = 1
+        if layers == []:
+            layers = net_representation.keys()
+        for layer in layers:
+            feat  = net_representation[layer].data[0].copy()
+            fig_handle.add_subplot(3,len(layers),len(layers)+i)
+            plt.title(layer)
+            if layer == 'data':
+                # input
+                plt.imshow(self.net_.deprocess('data', feat))
+                plt.axis('off')
+                if not string_drop=='':
+                    plt.text(-10, 300, string_drop, backgroundcolor='white')
+            elif 'fc' in layer or 'prob' in layer:
+                # full connections
+                plt.plot(feat.flat)
+                plt.xticks([0, len(feat.flat)])
+                plt.yticks([np.ceil(np.min(feat.flat)), \
+                                        np.floor(np.max(feat.flat))])
+            else: # 'conv' in layer or 'pool' in layer or 'norm' in layer
+                # conv layers
+                self.vis_square_(feat[::subsample_kernels,:,:], padval=1)
+            i += 1
+        if not dump_image_path == '':
+            plt.savefig(dump_image_path + '.eps', dpi = 100,\
+                                        bbox_inches = 'tight')
+
+
+    def showimage_(self, im):
+        """
+        The network takes BGR images, so we need to switch
+        color channels
+        """
+        if im.ndim == 3:
+            im = im[:, :, ::-1]
+        plt.imshow(im)
+        plt.axis('off')
+
+    def vis_square_(self, data, padsize=1, padval=0):
+        """
+        Take an array of shape (n, height, width) or (n, height, width,
+        channels) and visualize each (height, width) thing in a grid of
+        size approx. sqrt(n) by sqrt(n)
+        """
+        data -= data.min()
+        data /= data.max()
+        # force the number of filters to be square
+        n = int(np.ceil(np.sqrt(data.shape[0])))
+        padding = ((0, n ** 2 - data.shape[0]), (0, padsize), (0, padsize)) \
+                    + ((0, 0),) * (data.ndim - 3)
+        data = np.pad(data, padding, mode='constant', \
+                                constant_values=(padval, padval))
+        # tile the filters into an image
+        data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) \
+                    + tuple(range(4, data.ndim + 1)))
+        data = data.reshape((n * data.shape[1], n * data.shape[3]) \
+                    + data.shape[4:])
+        self.showimage_(data)
+
+
+
+# =============================================================================
+# DEPRECATED!!!!
 class NetworkDecafParams(NetworkParams):
     def __init__(self, model_spec_filename, model_filename,\
                  wnid_words_filename, center_only = False, wnid_subset = []):
@@ -242,275 +758,3 @@ class NetworkDecaf(Network):
         else:
             raise ValueError('layer_name not supported')
         return self.net_.feature(layer_name)
-
-#=============================================================================
-
-class NetworkCaffeParams(NetworkParams):
-    def __init__(self, model_spec_filename, model_filename,\
-                 wnid_words_filename, mean_img_filename,\
-                 caffe_mode = 'cpu', center_only = False, wnid_subset = []):
-        self.model_spec_filename = model_spec_filename
-        self.model_filename = model_filename
-        self.wnid_words_filename = wnid_words_filename
-        self.mean_img_filename = mean_img_filename
-        self.caffe_mode = caffe_mode
-        self.center_only = center_only
-        self.wnid_subset = wnid_subset
-
-class NetworkCaffe(Network):
-    """
-    Implementation for the Caffe library.
-    """
-    def __init__(self, model_spec_filename, model_filename=None,\
-                 wnid_words_filename=None, mean_img_filename=None, \
-                 caffe_mode='cpu', center_only=False, wnid_subset = []):
-        """
-        *** PRIVATE CONSTRUCTOR ***
-        """
-        # the following is just an hack to allow retro-compatibility
-        # with existing code
-        if isinstance(model_spec_filename, NetworkCaffeParams):
-            params = model_spec_filename
-            model_spec_filename = params.model_spec_filename
-            model_filename = params.model_filename
-            wnid_words_filename = params.wnid_words_filename
-            mean_img_filename = params.mean_img_filename
-            caffe_mode = params.caffe_mode
-            center_only = params.center_only
-            try:
-                wnid_subset = params.wnid_subset
-            except: # this was done for the detection challenge 2013
-                wnid_subset = []
-        else:
-            assert isinstance(model_spec_filename, str)
-            assert model_filename != None
-            assert wnid_words_filename != None
-            assert mean_img_filename != None
-        # for now, we support only the single full-image evaluation
-        assert center_only == True
-        # load Caffe model
-        self.net_ = caffe.imagenet.ImageNetClassifier( \
-                            model_spec_filename, model_filename, \
-                            center_only)
-        self.net_.caffenet.set_phase_test()
-        if caffe_mode == 'cpu':
-            self.net_.caffenet.set_mode_cpu()
-        elif caffe_mode == 'gpu':
-            self.net_.caffenet.set_mode_gpu()
-        else:
-            raise ValueError('caffe_mode not recognized')
-        # build a dictionary label --> description
-        # and a dictionary label --> label_id
-        self.dict_label_desc_ = {}
-        self.dict_label_id_ = {}
-        self.labels_ = []
-        fd = open(wnid_words_filename)
-        line_number = 0
-        for line in fd:
-            wnid = line[0:9].strip()
-            words = line[10:].strip()
-            self.dict_label_desc_[wnid] = words
-            self.dict_label_id_[wnid] = line_number
-            self.labels_.append(wnid)
-            line_number += 1
-        fd.close()
-        # Load the mean vector from file
-        self.net_.mean_img = np.load(\
-                   os.path.join(os.path.dirname(__file__), mean_img_filename))
-        # mean of 3 channels
-        self.net_.mean_img = np.mean(np.mean(self.net_.mean_img,axis=1),axis=0)
-        # it is in BGR convert in RGB
-        self.net_.mean_img = self.net_.mean_img[::-1]
-        # extract the list of layers
-        try:
-            self.layer_list = [k for k, dummy in \
-                                    self.net_.caffenet.blobs.items()]
-        except:
-            print 'Warning: Old version of Caffe, please install a more ' \
-                                'recent version (23 April 2014) or only ' \
-                                'softmax output layer is supported.'
-        # subset of ids
-        self.wnid_subset = wnid_subset
-
-    def get_mean_img(self):
-        return self.net_.mean_img
-
-    def get_input_dim(self):
-        return caffe.imagenet.CROPPED_DIM
-
-    def get_label_id(self, label):
-        return self.dict_label_id_[label]
-
-    def get_label_desc(self, label):
-        return self.dict_label_desc_[label]
-
-    def get_labels(self):
-        return self.labels_
-
-    def evaluate(self, img, layer_name = 'softmax'):
-        """
-        Evaluates an image with caffe and extracts features at the layer_name.
-        layer_name can assume different values dependengly on the network
-        architecture that you are using.
-        Most common names are:
-        - 'prob' or 'softmax' (default): for the last layer representation
-            usually used for classitication
-        - 'fc<N>', <N> is the level number: the fully connected layers
-        - 'conv<N>': the convolutional layers
-        - 'pool<N>': the pooling layers
-        - 'norm<N>': the fully connected layers
-        """
-        # if the image in in grayscale, we make it to 3-channels
-        if img.ndim == 2:
-            img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
-        elif img.shape[2] == 4:
-            img = img[:, :, :3]
-        # first, extract the 227x227 center, and convert it to BGR
-        dim = self.get_input_dim()
-        image = util.crop_image_center(img)
-        image_reshape = skimage.transform.resize(image, (dim, dim))
-        image_reshape = (image_reshape * 255)[:, :, ::-1]
-        # subtract the mean, cropping the 256x256 mean image
-        xoff = (caffe.imagenet.IMAGENET_MEAN.shape[1] - dim)/2
-        yoff = (caffe.imagenet.IMAGENET_MEAN.shape[0] - dim)/2
-        image_reshape -= caffe.imagenet\
-                            .IMAGENET_MEAN[yoff+yoff+dim, xoff:xoff+dim]
-        # oversample code
-        image = image_reshape.swapaxes(1, 2).swapaxes(0, 1)
-        input_blob = [np.ascontiguousarray(image[np.newaxis], dtype=np.float32)]
-        # forward pass to the network
-        num = 1
-        try:
-            last_layer = self.net_.caffenet.blobs.items()[-1]
-            num_output = len(last_layer[1].data.flatten())
-        except: # it means you have the old version of caffe
-            num_output = 1000
-        output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
-        self.net_.caffenet.Forward(input_blob, output_blobs)
-        #assert layer_name == 'softmax', 'layer_name not supported'
-        # NOTE: decaf and caffe have different name conventions (keep softmax
-        #       for back-compatibility)
-        if layer_name == 'softmax':
-            layer_name = 'prob'
-        try:
-            net_representation = {k: output for k, output in \
-                                    self.net_.caffenet.blobs.items()}
-            if net_representation.has_key(layer_name):
-                scores = net_representation[layer_name].data[0]
-                assert np.shape(net_representation[layer_name].data)[0] == 1
-                # Done for back-compatibility (remove single dimentions)
-                if np.shape(scores)[1]==1 and np.shape(scores)[2]==1:
-                    scores = scores.flatten()
-            else:
-                raise ValueError('layer_name not supported')
-        except:
-            scores = output_blobs[0].mean(0).flatten()
-            print 'Warning: Old version of Caffe, please install a more ' \
-                                'recent version (23 April 2014). The softmax' \
-                                'layer is now output of this function.'
-        # if a subset is provided, we zero out the entry not used
-        if self.wnid_subset != [] and layer_name == 'prob':
-            for wnid in self.labels_:
-                if wnid not in self.wnid_subset:
-                    scores[self.get_label_id(wnid)] = 0.0
-        return scores
-
-    def extract_all(self, img):
-        """
-        Evaluates an image with caffe and extracts features for each layer.
-        """
-        # if the image in in grayscale, we make it to 3-channels
-        if img.ndim == 2:
-            img = np.tile(img[:, :, np.newaxis], (1, 1, 3))
-        elif img.shape[2] == 4:
-            img = img[:, :, :3]
-        # first, extract the 227x227 center, and convert it to BGR
-        dim = self.get_input_dim()
-        image = util.crop_image_center(img)
-        image_reshape = skimage.transform.resize(image, (dim, dim))
-        image_reshape = (image_reshape * 255)[:, :, ::-1]
-        # subtract the mean, cropping the 256x256 mean image
-        xoff = (caffe.imagenet.IMAGENET_MEAN.shape[1] - dim)/2
-        yoff = (caffe.imagenet.IMAGENET_MEAN.shape[0] - dim)/2
-        image_reshape -= caffe.imagenet\
-                            .IMAGENET_MEAN[yoff+yoff+dim, xoff:xoff+dim]
-        # oversample code
-        image = image_reshape.swapaxes(1, 2).swapaxes(0, 1)
-        input_blob = [np.ascontiguousarray(image[np.newaxis], dtype=np.float32)]
-        # forward pass to the network
-        num = 1
-        try:
-            last_layer = self.net_.caffenet.blobs.items()[-1]
-            num_output = len(last_layer[1].data.flatten())
-        except: # it means you have the old version of caffe
-            num_output = 1000
-        output_blobs = [np.empty((num, num_output, 1, 1), dtype=np.float32)]
-        self.net_.caffenet.Forward(input_blob, output_blobs)
-        net_representation = {k: output for k, output in \
-                                    self.net_.caffenet.blobs.items()}
-        return net_representation
-
-    def visualize_features(self, net_representation, layers = [], \
-                                fig_handle = 0, subsample_kernels = 4,\
-                                dump_image_path = '', string_drop=''):
-        plt.rcParams['image.interpolation'] = 'nearest'
-        i = 1
-        if layers == []:
-            layers = net_representation.keys()
-        for layer in layers:
-            feat  = net_representation[layer].data[0].copy()
-            fig_handle.add_subplot(3,len(layers),len(layers)+i)
-            plt.title(layer)
-            if layer == 'data':
-                # input
-                image = feat
-                image -= image.min()
-                image /= image.max()
-                self.showimage_(image.transpose(1, 2, 0))
-                if not string_drop=='':
-                    plt.text(-10, 300, string_drop, backgroundcolor='white')
-            elif 'fc' in layer or 'prob' in layer:
-                # full connections
-                plt.plot(feat.flat)
-                plt.xticks([0, len(feat.flat)])
-                plt.yticks([np.ceil(np.min(feat.flat)), \
-                                        np.floor(np.max(feat.flat))])
-            else: # 'conv' in layer or 'pool' in layer or 'norm' in layer
-                # conv layers
-                self.vis_square_(feat[::subsample_kernels,:,:], padval=1)
-            i += 1
-        if not dump_image_path == '':
-            plt.savefig(dump_image_path + '.eps', dpi = 100,\
-                                        bbox_inches = 'tight')
-
-
-    def showimage_(self, im):
-        """
-        The network takes BGR images, so we need to switch
-        color channels
-        """
-        if im.ndim == 3:
-            im = im[:, :, ::-1]
-        plt.imshow(im)
-        plt.axis('off')
-
-    def vis_square_(self, data, padsize=1, padval=0):
-        """
-        Take an array of shape (n, height, width) or (n, height, width,
-        channels) and visualize each (height, width) thing in a grid of
-        size approx. sqrt(n) by sqrt(n)
-        """
-        data -= data.min()
-        data /= data.max()
-        # force the number of filters to be square
-        n = int(np.ceil(np.sqrt(data.shape[0])))
-        padding = ((0, n ** 2 - data.shape[0]), (0, padsize), (0, padsize)) \
-                    + ((0, 0),) * (data.ndim - 3)
-        data = np.pad(data, padding, mode='constant', \
-                                constant_values=(padval, padval))
-        # tile the filters into an image
-        data = data.reshape((n, n) + data.shape[1:]).transpose((0, 2, 1, 3) \
-                    + tuple(range(4, data.ndim + 1)))
-        data = data.reshape((n * data.shape[1], n * data.shape[3]) \
-                    + data.shape[4:])
-        self.showimage_(data)

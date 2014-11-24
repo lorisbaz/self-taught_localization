@@ -502,7 +502,6 @@ def PipelineDetector_evaluate_single_image(pi, detector, category, \
     stats = Stats()
     stats.compute_stats(pred_bboxes, gt_bboxes)
     pi.clear_ai()
-    gc.collect()
     return stats
 
 class PipelineDetector:
@@ -614,6 +613,7 @@ class PipelineDetector:
                 logging.info('The stats file for iteration {0} already '\
                              'exists: {1}'.format(iteration, fname))
             else:
+                self.params.iterations_to_evaluate = [1] # Hack: remove me!
                 if self.iteration in self.params.iterations_to_evaluate:
                     logging.info('Evaluation the model of iteration {0}'.format( \
                                  iteration))
@@ -652,6 +652,7 @@ class PipelineDetector:
         assert Xtrain.shape[0] == num_examples
         assert Ytrain.size == num_examples
         # train the detector
+        gc.collect()
         logging.info('Train the detector')
         self.detector.train(Xtrain, Ytrain)
 
@@ -732,6 +733,7 @@ class PipelineDetector:
         assert len(stats_all)==len(self.test_set)
         # aggregate the stats for this detector
         stats, hist_overlap = Stats.aggregate_results(stats_all)
+        gc.collect()
         return stats
 
     def load(self, fname):

@@ -35,7 +35,8 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
     def __init__(self, network, img_segmenter, min_sz_segm = 0, \
                         topC = 0, alpha = np.ones((4,)), obfuscate_bbox = False, \
                         function_stl = 'diversity', padding = 0.0, \
-                        layer = 'fc7', single_color_space = False):
+                        layer = 'fc7', single_color_space = False, \
+                        no_obfuscation = False):
         """
         - network: neural net used for classification
         - img_segmenter: segmentation algorithm in the class ImgSegm
@@ -59,6 +60,8 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                 similarity function.
         - single_color_space: it selects only a single color space of the
                 segmentation algorithm
+        - no_obfuscation: remove the obfuscation term. The confidence of each
+                bbox is its level in the hierarchy.
         """
         self.img_segmenter_ = img_segmenter
         self.min_sz_segm_ = min_sz_segm
@@ -70,6 +73,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
         self.padding_ = padding
         self.layer_ = layer
         self.single_color_space_ = single_color_space
+        self.no_obfuscation_ = no_obfuscation
 
     @staticmethod
     def segments_to_bboxes(self, segments):
@@ -130,9 +134,12 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                 if (xmax-xmin >= self.min_sz_segm_) and \
                         (ymax-ymin >= self.min_sz_segm_): # filter small
                     # compute confidence
-                    confidence = self.obfuscation_confidence_(image, \
-                         segm_mask, id_segment, caffe_rep_full, class_guess, \
-                         xmin, xmax, ymin, ymax)
+                    if self.no_obfuscation_:
+                        confidence = 1.0 # first layer of hierarchy
+                    else:
+                        confidence = self.obfuscation_confidence_(image, \
+                            segm_mask, id_segment, caffe_rep_full, class_guess, \
+                            xmin, xmax, ymin, ymax)
                     # compute CNN features
                     feature_vec = self.extract_bbox_cnnfeature_(image, \
                                                     xmin, xmax, ymin, ymax)
@@ -216,8 +223,12 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
         segm_mask_support[segm_mask_support==id_segment2] = max_segm_id
         mask = np.copy(segm_mask_support == max_segm_id)
         mask_tmp = np.copy(mask[ymin:ymax,xmin:xmax])
-        # perform obfuscation
-        conf = self.obfuscation_confidence_(image, segm_mask_support, \
+        if self.no_obfuscation_:
+            # layer of hierarchy in which the segm is merged
+            conf = segm_1['bbox'].confidence + segm_2['bbox'].confidence
+        else:
+            # perform obfuscation
+            conf = self.obfuscation_confidence_(image, segm_mask_support, \
                                     max_segm_id, caffe_rep_full, class_guess,\
                                     xmin, xmax, ymin, ymax)
         # create bbox object

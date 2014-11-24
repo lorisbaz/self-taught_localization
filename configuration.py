@@ -103,7 +103,7 @@ class Configuration:
            root directory storing all the partial and final results
     """
 
-    def __init__(self, load_Girshick_caffe_model = False):
+    def __init__(self, load_Girshick_caffe_model = False, caffe_model = ''):
         hostname = os.uname()[1]
         if  'anthill' in hostname or \
             'bokken' in hostname or \
@@ -131,21 +131,43 @@ class Configuration:
                 ilsvrc2012_root + '/decaf_model_131205/imagenet.decafnet.meta'
             self.ilsvrc2012_decaf_model = \
                 ilsvrc2012_root +'/decaf_model_131205/imagenet.decafnet.epoch90'
-            if not load_Girshick_caffe_model:
-                self.ilsvrc2012_caffe_model_spec = \
-                    './imagenet_deploy_GRAYOBFUSCATION.prototxt'
-                self.ilsvrc2012_caffe_model = \
-                    ilsvrc2012_root + '/caffe_model_131211'\
-                    '/caffe_reference_imagenet_model'
-            else:
-                self.ilsvrc2012_caffe_model_spec = \
-                    './rcnn_batch_256_output_fc7_GRAYOBFUSCATION.prototxt'
-                self.ilsvrc2012_caffe_model = \
-                    '/home/anthill/vlg/rcnn/data/caffe_nets' \
-                    '/ilsvrc_2012_train_iter_310k'
             self.ilsvrc2012_caffe_avg_image = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/ilsvrc_2012_mean.npy'
+            if caffe_model == '':
+                if not load_Girshick_caffe_model:
+                    self.ilsvrc2012_caffe_model_spec = \
+                        './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                    self.ilsvrc2012_caffe_model = \
+                        ilsvrc2012_root + '/caffe_model_131211'\
+                        '/caffe_reference_imagenet_model'
+                else:
+                    self.ilsvrc2012_caffe_model_spec = \
+                        './rcnn_batch_256_output_fc7_GRAYOBFUSCATION.prototxt'
+                    self.ilsvrc2012_caffe_model = \
+                        '/home/anthill/vlg/rcnn/data/caffe_nets' \
+                        '/ilsvrc_2012_train_iter_310k'
+            else:
+                if caffe_model == 'finetuned_pascal':
+                    self.ilsvrc2012_caffe_model_spec = \
+                        './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                    self.ilsvrc2012_caffe_model = \
+                        ilsvrc2012_root + '/caffe_model_131211'\
+                        '/caffe_reference_imagenet_model'
+                elif caffe_model == 'deep_VGG_16':
+                    self.ilsvrc2012_caffe_model_spec = \
+                        './VGG_ILSVRC_16_layers_deploy_1input.prototxt'
+                    self.ilsvrc2012_caffe_model = \
+                        ilsvrc2012_root + '/caffe_model_131211'\
+                        '/VGG_ILSVRC_16_layers.caffemodel'
+                    self.ilsvrc2012_caffe_avg_image = '/export/apps/src/caffe_11_18_14/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+                elif caffe_model == 'deep_VGG_19':
+                    self.ilsvrc2012_caffe_model_spec = \
+                        './VGG_ILSVRC_19_layers_deploy_1input.prototxt'
+                    self.ilsvrc2012_caffe_model = \
+                        ilsvrc2012_root + '/caffe_model_131211'\
+                        '/VGG_ILSVRC_19_layers.caffemodel'
+                    self.ilsvrc2012_caffe_avg_image = '/export/apps/src/caffe_11_18_14/python/caffe/imagenet/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/synset_words.txt'
@@ -178,21 +200,43 @@ class Configuration:
                 ilsvrc2013_root + '/decaf_model_131205/imagenet.decafnet.meta'
             self.ilsvrc2013_decaf_model = \
                 ilsvrc2013_root +'/decaf_model_131205/imagenet.decafnet.epoch90'
-            if not load_Girshick_caffe_model:
-                self.ilsvrc2013_caffe_model_spec = \
-                    './imagenet_deploy_GRAYOBFUSCATION.prototxt'
-                self.ilsvrc2013_caffe_model = \
-                    ilsvrc2013_root + '/caffe_model_131211'\
-                    '/caffe_reference_imagenet_model'
-            else:
-                self.ilsvrc2013_caffe_model_spec = \
-                    './rcnn_batch_256_output_fc7_GRAYOBFUSCATION.prototxt'
-                self.ilsvrc2013_caffe_model = \
-                    '/home/anthill/vlg/rcnn/data/caffe_nets' \
-                    '/ilsvrc_2012_train_iter_310k'
             self.ilsvrc2013_caffe_avg_image = \
                 ilsvrc2013_root + '/caffe_model_131211'\
                 '/ilsvrc_2012_mean.npy'
+            if caffe_model == '':
+                if not load_Girshick_caffe_model:
+                    self.ilsvrc2013_caffe_model_spec = \
+                        './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                    self.ilsvrc2013_caffe_model = \
+                        ilsvrc2013_root + '/caffe_model_131211'\
+                        '/caffe_reference_imagenet_model'
+                else:
+                    self.ilsvrc2013_caffe_model_spec = \
+                        './rcnn_batch_256_output_fc7_GRAYOBFUSCATION.prototxt'
+                    self.ilsvrc2013_caffe_model = \
+                        '/home/anthill/vlg/rcnn/data/caffe_nets' \
+                        '/ilsvrc_2012_train_iter_310k'
+            else:
+                if caffe_model == 'finetuned_pascal':
+                    self.ilsvrc2013_caffe_model_spec = \
+                        './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                    self.ilsvrc2013_caffe_model = \
+                        ilsvrc2013_root + '/caffe_model_131211'\
+                        '/caffe_reference_imagenet_model'
+                elif caffe_model == 'deep_VGG_16':
+                    self.ilsvrc2013_caffe_model_spec = \
+                        './VGG_ILSVRC_16_layers_deploy_1input.prototxt'
+                    self.ilsvrc2013_caffe_model = \
+                        ilsvrc2013_root + '/caffe_model_131211'\
+                        '/VGG_ILSVRC_16_layers.caffemodel'
+                    self.ilsvrc2013_caffe_avg_image = '/export/apps/src/caffe_11_18_14/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+                elif caffe_model == 'deep_VGG_19':
+                    self.ilsvrc2013_caffe_model_spec = \
+                        './VGG_ILSVRC_19_layers_deploy_1input.prototxt'
+                    self.ilsvrc2013_caffe_model = \
+                        ilsvrc2013_root + '/caffe_model_131211'\
+                        '/VGG_ILSVRC_19_layers.caffemodel'
+                    self.ilsvrc2013_caffe_avg_image = '/export/apps/src/caffe_11_18_14/python/caffe/imagenet/ilsvrc_2012_mean.npy'
             self.ilsvrc2013_caffe_wnids_words = \
                 ilsvrc2013_root + '/caffe_model_131211'\
                 '/synset_words.txt'
@@ -330,5 +374,3 @@ class Configuration:
                '/home/lbazzani/CODE/DATA/obfuscation_results'
 	else:
             raise ValueError('The current machine is not supported')
-
-

@@ -14,9 +14,9 @@ if __name__ == "__main__":
     conf = Configuration()
     params = exp30.Params()
     # experiment name
-    params.exp_name = 'exp30_09'
+    params.exp_name = 'exp30_14'
     # input (GT AnnotatatedImages)
-    params.exp_name_input = 'exp03_07'
+    params.exp_name_input = 'exp19_01'
     # Num elements in batch (for decaf/caffe eval)
     params.batch_sz = 1
     # default Configuration, image and label files
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     params.heatextractor_confidence_tech = 'full_obf_positive'
     # obfuscation search params
     params.min_sz_segm = 5 # keep this low (because we resize!!)
-    params.alpha = 1/4.0*np.ones((4,))
+    params.alpha = np.array([0.1429, 0.2857, 0.1429, 0.4286])
     params.function_stl = 'similarity+cnnfeature'
     params.obfuscate_bbox = True
     params.use_fullimg_GT_label = False # if true params.topC is not used!
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     params.task = []
     logging.info('Started')
     # RUN THE EXPERIMENT
-    if 0:
+    if 1:
         exp30.run_exp(params)
     # RUN THE STATISTICS PIPELINE
     if 0:
