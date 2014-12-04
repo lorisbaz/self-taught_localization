@@ -175,7 +175,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                 dummy = S.pop(min(i_max, j_max))
                 # Add merged segment to S
                 S.append(segment)
-                assert np.sum(segment['mask'])>0
+                #assert np.sum(segment['mask'])>0
                 # compute similarity of the new segment with the rest
                 simtmp = np.zeros((np.shape(similarity)[0] + 1, \
                                     np.shape(similarity)[1] + 1))
@@ -359,6 +359,8 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                         s_feature = compare_feature_vec(\
                                         segm_i['feature'], segm_j['feature'])
                         similarity[i,j] += alpha[3]*s_feature
+                    if np.isnan(similarity[i,j]):
+                        similarity[i,j] = 0.0
         return similarity
 
 #   def nms(self):

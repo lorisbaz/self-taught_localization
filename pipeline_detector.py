@@ -613,7 +613,7 @@ class PipelineDetector:
                 logging.info('The stats file for iteration {0} already '\
                              'exists: {1}'.format(iteration, fname))
             else:
-                self.params.iterations_to_evaluate = [1] # Hack: remove me!
+                #self.params.iterations_to_evaluate = [1] # Hack: remove me!
                 if self.iteration in self.params.iterations_to_evaluate:
                     logging.info('Evaluation the model of iteration {0}'.format( \
                                  iteration))

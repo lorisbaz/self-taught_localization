@@ -158,16 +158,29 @@ class Configuration:
                     self.ilsvrc2012_caffe_model_spec = \
                         './VGG_ILSVRC_16_layers_deploy_1input.prototxt'
                     self.ilsvrc2012_caffe_model = \
-                        ilsvrc2012_root + '/caffe_model_131211'\
+                        ilsvrc2012_root + '/caffe_model_141118'\
                         '/VGG_ILSVRC_16_layers.caffemodel'
-                    self.ilsvrc2012_caffe_avg_image = '/export/apps/src/caffe_11_18_14/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+                    self.ilsvrc2012_caffe_avg_image = \
+                        ilsvrc2012_root + '/caffe_model_141118'\
+                        '/ilsvrc_2012_mean.npy'
                 elif caffe_model == 'deep_VGG_19':
                     self.ilsvrc2012_caffe_model_spec = \
                         './VGG_ILSVRC_19_layers_deploy_1input.prototxt'
                     self.ilsvrc2012_caffe_model = \
-                        ilsvrc2012_root + '/caffe_model_131211'\
+                        ilsvrc2012_root + '/caffe_model_141118'\
                         '/VGG_ILSVRC_19_layers.caffemodel'
-                    self.ilsvrc2012_caffe_avg_image = '/export/apps/src/caffe_11_18_14/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+                    self.ilsvrc2012_caffe_avg_image = \
+                        ilsvrc2012_root + '/caffe_model_141118'\
+                        '/ilsvrc_2012_mean.npy'
+                elif caffe_model == 'alexnet':
+                    self.ilsvrc2012_caffe_model_spec = \
+                        './imagenet_deploy_1input.prototxt'
+                    self.ilsvrc2012_caffe_model = \
+                        ilsvrc2012_root + '/caffe_model_141118'\
+                        '/bvlc_reference_caffenet.caffemodel'
+                    self.ilsvrc2012_caffe_avg_image = \
+                        ilsvrc2012_root + '/caffe_model_141118'\
+                        '/ilsvrc_2012_mean.npy'
             self.ilsvrc2012_caffe_wnids_words = \
                 ilsvrc2012_root + '/caffe_model_131211'\
                 '/synset_words.txt'
@@ -227,16 +240,29 @@ class Configuration:
                     self.ilsvrc2013_caffe_model_spec = \
                         './VGG_ILSVRC_16_layers_deploy_1input.prototxt'
                     self.ilsvrc2013_caffe_model = \
-                        ilsvrc2013_root + '/caffe_model_131211'\
+                        ilsvrc2013_root + '/caffe_model_141118'\
                         '/VGG_ILSVRC_16_layers.caffemodel'
-                    self.ilsvrc2013_caffe_avg_image = '/export/apps/src/caffe_11_18_14/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+                    self.ilsvrc2013_caffe_avg_image = \
+                        ilsvrc2013_root + '/caffe_model_141118'\
+                        '/ilsvrc_2012_mean.npy'
                 elif caffe_model == 'deep_VGG_19':
                     self.ilsvrc2013_caffe_model_spec = \
                         './VGG_ILSVRC_19_layers_deploy_1input.prototxt'
                     self.ilsvrc2013_caffe_model = \
-                        ilsvrc2013_root + '/caffe_model_131211'\
+                        ilsvrc2013_root + '/caffe_model_141118'\
                         '/VGG_ILSVRC_19_layers.caffemodel'
-                    self.ilsvrc2013_caffe_avg_image = '/export/apps/src/caffe_11_18_14/python/caffe/imagenet/ilsvrc_2012_mean.npy'
+                    self.ilsvrc2013_caffe_avg_image = \
+                        ilsvrc2013_root + '/caffe_model_141118'\
+                        '/ilsvrc_2012_mean.npy'
+                elif caffe_model == 'alexnet':
+                    self.ilsvrc2013_caffe_model_spec = \
+                        './imagenet_deploy_1input.prototxt'
+                    self.ilsvrc2013_caffe_model = \
+                        ilsvrc2013_root + '/caffe_model_141118'\
+                        '/bvlc_reference_caffenet.caffemodel'
+                    self.ilsvrc2013_caffe_avg_image = \
+                        ilsvrc2013_root + '/caffe_model_141118'\
+                        '/ilsvrc_2012_mean.npy'
             self.ilsvrc2013_caffe_wnids_words = \
                 ilsvrc2013_root + '/caffe_model_131211'\
                 '/synset_words.txt'
