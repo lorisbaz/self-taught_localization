@@ -36,7 +36,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                         topC = 0, alpha = np.ones((4,)), obfuscate_bbox = False, \
                         function_stl = 'diversity', padding = 0.0, \
                         layer = 'fc7', single_color_space = False, \
-                        no_obfuscation = False):
+                        no_obfuscation = False, mapping = {}):
         """
         - network: neural net used for classification
         - img_segmenter: segmentation algorithm in the class ImgSegm
@@ -62,6 +62,8 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
                 segmentation algorithm
         - no_obfuscation: remove the obfuscation term. The confidence of each
                 bbox is its level in the hierarchy.
+        - mapping: in case of using other datasets other than imagenet and
+                you know the mapping of the categories
         """
         self.img_segmenter_ = img_segmenter
         self.min_sz_segm_ = min_sz_segm
@@ -74,6 +76,7 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
         self.layer_ = layer
         self.single_color_space_ = single_color_space
         self.no_obfuscation_ = no_obfuscation
+        self.mapping_ = mapping
 
     @staticmethod
     def segments_to_bboxes(self, segments):
@@ -105,7 +108,13 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
         if label=='':
             class_guess = np.argmax(caffe_rep_full)
         else: # if the label is provided, we use the GT!
-            class_guess = self.net_.get_label_id(label)
+            if self.mapping_=={}:
+                class_guess = self.net_.get_label_id(label)
+            else:
+                map_labels = self.mapping_[label].keys()
+                class_guess = []
+                for map_label in map_labels:
+                    class_guess.append(self.net_.get_label_id(map_label))
             self.topC_ = 0 # hack to force the use of the class_guess
         # Our Obfuscation Search---
         segm_all_list = []
@@ -279,8 +288,14 @@ class SelfTaughtLoc_Grayout(SelfTaughtLoc):
         caffe_rep_obf = self.net_.evaluate(image_obf)
         # Given the class of the image, select the confidence
         if self.topC_ == 0:
-            confidence = max(caffe_rep_full[class_guess] - \
-                            caffe_rep_obf[class_guess], 0.0)
+            if self.mapping_=={}:
+                confidence = max(caffe_rep_full[class_guess] - \
+                                caffe_rep_obf[class_guess], 0.0)
+            else:
+                tmp_full = max(caffe_rep_full[class_guess])
+                tmp_obf = max(caffe_rep_obf[class_guess])
+                confidence = max(tmp_full - tmp_obf, 0.0)
+
         else:
             idx_sort = np.argsort(caffe_rep_full)[::-1]
             idx_sort = idx_sort[0:self.topC_]

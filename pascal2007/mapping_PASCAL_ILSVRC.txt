@@ -1,0 +1,71 @@
+aeroplane	231	n04552348	warplane, military plane
+aeroplane	232	n02692877	airship, dirigible
+aeroplane	230	n02690373	airliner
+aeroplane	234	n04266014	space shuttle
+bicycle	254	n02835271	bicycle-built-for-two, tandem bicycle, tandem
+bicycle	291	n04482393	tricycle, trike, velocipede
+bicycle	292	n04509417	unicycle, monocycle
+bicycle	255	n03792782	mountain bike, all-terrain bike, off-roader
+bird	422	n02002556	white stork, Ciconia ciconia
+bird	388	n01532829	house finch, linnet, Carpodacus mexicanus
+bird	441	n02058221	albatross, mollymawk
+bird	387	n01531178	goldfinch, Carduelis carduelis
+bird	396	n01601694	water ouzel, dipper
+boat	236	n03447447	gondola
+boat	237	n04273569	speedboat
+boat	238	n03662601	lifeboat
+boat	240	n04612504	yawl
+boat	235	n03344393	fireboat
+bottle	777	n02823428	beer bottle
+bottle	788	n03983396	pop bottle, soda bottle
+bottle	831	n04591713	wine bottle
+bottle	901	n03937543	pill bottle
+bottle	958	n04557648	water bottle
+bus	882	n04487081	trolleybus, trolley coach, trackless trolley
+bus	920	n03769881	minibus
+bus	962	n04146614	school bus
+car	267	n02930766	cab, hack, taxi, taxicab
+car	269	n03594945	jeep, landrover
+car	271	n03770679	minivan
+car	266	n02814533	beach wagon, station wagon, wagon, estate car, beach waggon, station waggon, waggon
+car	269	n03594945	jeep, landrover
+cat	8	n02124075	Egyptian cat
+cat	10	n02123394	Persian cat
+cat	55	n02123159	tiger cat
+cat	95	n02123597	Siamese cat, Siamese
+cat	174	n02123045	tabby, tabby cat
+chair	307	n02791124	barber chair
+chair	309	n03376595	folding chair
+chair	310	n04099969	rocking chair, rocker
+chair	308	n04429376	throne
+chair	312	n04447861	toilet seat
+cow	162	n02408429	water buffalo, water ox, Asiatic buffalo, Bubalus bubalis
+cow	108	n02403003	ox
+cow	165	n02410509	bison
+diningtable	314	n03982430	pool table, billiard table, snooker table
+diningtable	315	n03201208	dining table, board
+diningtable	313	n03179701	desk
+dog	196	n02102480	Sussex spaniel
+dog	90	n02100583	vizsla, Hungarian pointer
+dog	160	n02095314	wire-haired fox terrier
+dog	144	n02099429	curly-coated retriever
+dog	26	n02098105	soft-coated wheaten terrier
+horse	39	n02389026	sorrel
+horse	80	n02391049	zebra
+motorbike	277	n03785016	moped
+person	954	n09835506	ballplayer, baseball player
+person	982	n10565667	scuba diver
+person	848	n10148035	groom, bridegroom
+pottedplant	357	n11939491	daisy
+pottedplant	358	n12057211	yellow lady's slipper, yellow lady-slipper, Cypripedium calceolus, Cypripedium parviflorum
+sheep	186	n02437616	llama
+sheep	9	n02417914	ibex, Capra ibex
+sheep	52	n02415577	bighorn, bighorn sheep, cimarron, Rocky Mountain bighorn, Rocky Mountain sheep, Ovis canadensis
+sheep	57	n02422699	impala, Aepyceros melampus
+sheep	81	n02412080	ram, tup
+sofa	311	n04344873	studio couch, day bed
+sofa	306	n03891251	park bench
+train	887	n02917067	bullet train, bullet
+train	262	n03272562	electric locomotive
+train	263	n04310018	steam locomotive
+tvmonitor	869	n03782006	monitor

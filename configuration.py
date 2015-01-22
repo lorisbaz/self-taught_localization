@@ -288,6 +288,7 @@ class Configuration:
             # ***** GRAYOBFUSCATION PROJECT *****
             self.experiments_output_directory = \
                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'
+            self.pascal2007_mapping_file = 'pascal2007/mapping_PASCAL_ILSVRC.txt'
 	elif hostname == 'alessandro-Linux':
             # ***** ILSVRC 2012 *****
             ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'

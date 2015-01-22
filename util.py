@@ -446,3 +446,15 @@ def compare_feature_vec(feature_vec_i, feature_vec_j, \
     else:
         raise NotImplementedError()
     return out_dist
+
+
+def read_mapping_file(mapping_file):
+    pid = open(mapping_file)
+    mapping = {}
+    for line in pid.readlines():
+        parsed_line = line.split("\t")
+        if parsed_line[0] not in mapping.keys():
+            mapping[parsed_line[0]] = {}
+        mapping[parsed_line[0]][parsed_line[2]] = parsed_line[1] + " " + parsed_line[3]
+    pid.close()
+    return mapping
