@@ -7,14 +7,14 @@ from vlg.util.parfun import *
 
 from configuration import *
 from compute_statistics_exp import *
-import exp35
+import exp34
 
 if __name__ == "__main__":
     # load configurations and parameters
     conf = Configuration(caffe_model='alexnet')
-    params = exp35.Params()
+    params = exp34.Params()
     # experiment name
-    params.exp_name = 'exp35_01'
+    params.exp_name = 'exp34_06'
     # input (GT AnnotatatedImages)
     params.exp_name_input = 'exp19_02'
     # Num elements in batch (for decaf/caffe eval)
@@ -33,10 +33,7 @@ if __name__ == "__main__":
     params.alpha = 1/4.0*np.ones((4,))
     params.function_stl = 'similarity+cnnfeature'
     params.obfuscate_bbox = True
-    params.use_fullimg_GT_label = True # if true params.topC is not used!
-    # NMS params
-    params.nms_execution = True
-    params.nms_iou_threshold = 0.5
+    params.use_fullimg_GT_label = False # if true params.topC is not used!
     # input/output directory
     params.output_dir = conf.experiments_output_directory \
                         + '/' + params.exp_name
@@ -49,7 +46,15 @@ if __name__ == "__main__":
     logging.info('Started')
     # RUN THE EXPERIMENT
     if 1:
-        exp35.run_exp(params)
-    # RUN THE STATISTICS PIPELINE WITHOUT NMS (already done in exp35 pipeline)
-    if 1:
+        exp34.run_exp(params)
+    # RUN THE STATISTICS PIPELINE
+    if 0:
         compute_statistics_exp(input_exp=params.exp_name)
+    # RUN THE STATISTICS PIPELINE WITH NMS
+    if 1:
+        # NMS=0.5
+        params_stats = ComputeStatParams(params.exp_name, 'stats_NMS_05')
+        params_stats.nms_execution = True
+        params_stats.nms_iou_threshold = 0.5
+        params_stats.delete_pred_objects = False
+        compute_statistics_exp(input_exp=params.exp_name, params=params_stats)
