@@ -28,25 +28,35 @@ Getting started
 ### Reproduce the experiments on the paper
 
 ILSVRC2012-train-200-RANDOM
+```
 exp03_07: load and generate dataset
 exp34_02: STL-CL
 exp34_04: STL-U
+```
 
 ILSVRC2012-val-200-RANDOM
+```
 exp03_06: load and generate dataset
 exp34_07: STL-U
+```
 
 ILSVRC2012-val-1000
+```
 exp03_05: load and generate dataset
 exp34_08: STL-U
+```
 
 PASCAL2007-trainval
+```
 exp19_02: load and generate dataset
 exp34_06: STL-U
+```
 
 PASCAL2007-test
+```
 exp19_01: load and generate dataset
 exp34_05: STL-U
+```
 
 ### Additional Info
 
