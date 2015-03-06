@@ -1,6 +1,31 @@
 
+STL
+=====
+In this package, we provide the python code for following paper:
 
-Reproduce the experiments on the paper:
+[**Self-taught Object Localization using Deep Networks**](http://arxiv.org/abs/1409.3964)
+L. Bazzani, A. Bergamo, D. Anguelov, and L. Torresani
+*CoRR 2014.*
+
+We included
+* A demo that shows how STL be used to extract the objectness of any image
+* A set of scripts to reproduce the results reported in the original paper
+
+Dependencies
+------------
+* Python 2.7 
+* [NumPy](http://www.numpy.org/), [SciPy](http://www.scipy.org/), and [Matplotlib](http://matplotlib.org/) packages.
+* [Matlab](http://www.mathworks.com/products/matlab/)
+* [Caffe](https://github.com/BVLC/caffe): we used the commit commit c18d22eb92488f02c0256a3fe4ac20a8ad827596 Date: Mon Oct 20 12:57:18 2014 -0700
+
+
+Getting started
+---------------
+
+### Demo 
+
+
+### Reproduce the experiments on the paper
 
 ILSVRC2012-train-200-RANDOM
 exp03_07: load and generate dataset
@@ -23,9 +48,10 @@ PASCAL2007-test
 exp19_01: load and generate dataset
 exp34_05: STL-U
 
+### Additional Info
 
-
-List of 200 classes for ILSVRC2012-*-200-RANDOM:
+List of 200 classes randomly selected for the ILSVRC2012-(val,train)-200-RANDOM:
+```
 classs_list_200 = {...
     'n01930112';'n03461385';'n01688243';'n02120505';'n04067472';'n02119022';'n03673027';'n03126707';...
     'n03494278';'n07749582';'n01641577';'n07747607';'n02802426';'n03930630';'n02107142';'n03724870';...
@@ -53,3 +79,6 @@ classs_list_200 = {...
     'n03803284';'n02206856';'n03977966';'n02086240';'n04040759';'n03670208';'n02280649';'n02441942';...
     'n03761084';'n03908618';'n02510455';'n02794156';'n02841315';'n02865351';'n02088238';'n02927161'...
 };
+```
+
+L. Bazzani and A. Bergamo contributed equally for the project.
