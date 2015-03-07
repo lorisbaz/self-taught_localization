@@ -137,26 +137,26 @@ class Configuration:
             if caffe_model == '':
                 if not load_Girshick_caffe_model:
                     self.ilsvrc2012_caffe_model_spec = \
-                        './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                        './prototxt/imagenet_deploy_GRAYOBFUSCATION.prototxt'
                     self.ilsvrc2012_caffe_model = \
                         ilsvrc2012_root + '/caffe_model_131211'\
                         '/caffe_reference_imagenet_model'
                 else:
                     self.ilsvrc2012_caffe_model_spec = \
-                        './rcnn_batch_256_output_fc7_GRAYOBFUSCATION.prototxt'
+                        './prototxt/rcnn_batch_256_output_fc7_GRAYOBFUSCATION.prototxt'
                     self.ilsvrc2012_caffe_model = \
                         '/home/anthill/vlg/rcnn/data/caffe_nets' \
                         '/ilsvrc_2012_train_iter_310k'
             else:
                 if caffe_model == 'finetuned_pascal':
                     self.ilsvrc2012_caffe_model_spec = \
-                        './imagenet_deploy_GRAYOBFUSCATION.prototxt'
+                        './prototxt/imagenet_deploy_GRAYOBFUSCATION.prototxt'
                     self.ilsvrc2012_caffe_model = \
                         ilsvrc2012_root + '/caffe_model_131211'\
                         '/caffe_reference_imagenet_model'
                 elif caffe_model == 'deep_VGG_16':
                     self.ilsvrc2012_caffe_model_spec = \
-                        './VGG_ILSVRC_16_layers_deploy_1input.prototxt'
+                        './prototxt/VGG_ILSVRC_16_layers_deploy_1input.prototxt'
                     self.ilsvrc2012_caffe_model = \
                         ilsvrc2012_root + '/caffe_model_141118'\
                         '/VGG_ILSVRC_16_layers.caffemodel'
@@ -165,7 +165,7 @@ class Configuration:
                         '/ilsvrc_2012_mean.npy'
                 elif caffe_model == 'deep_VGG_19':
                     self.ilsvrc2012_caffe_model_spec = \
-                        './VGG_ILSVRC_19_layers_deploy_1input.prototxt'
+                        './prototxt/VGG_ILSVRC_19_layers_deploy_1input.prototxt'
                     self.ilsvrc2012_caffe_model = \
                         ilsvrc2012_root + '/caffe_model_141118'\
                         '/VGG_ILSVRC_19_layers.caffemodel'
@@ -174,7 +174,7 @@ class Configuration:
                         '/ilsvrc_2012_mean.npy'
                 elif caffe_model == 'alexnet':
                     self.ilsvrc2012_caffe_model_spec = \
-                        './imagenet_deploy_1input.prototxt'
+                        './prototxt/imagenet_deploy_1input.prototxt'
                     self.ilsvrc2012_caffe_model = \
                         ilsvrc2012_root + '/caffe_model_141118'\
                         '/bvlc_reference_caffenet.caffemodel'
@@ -289,115 +289,6 @@ class Configuration:
             self.experiments_output_directory = \
                 '/home/ironfs/scratch/vlg/Data_projects/grayobfuscation'
             self.pascal2007_mapping_file = 'pascal2007/mapping_PASCAL_ILSVRC.txt'
-	elif hostname == 'alessandro-Linux':
-            # ***** ILSVRC 2012 *****
-            ilsvrc2012_root = '/home/alessandro/Data/ILSVRC2012'
-            self.ilsvrc2012_root_images_dir = ilsvrc2012_root
-            self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
-            self.ilsvrc2012_val_images_dir = ilsvrc2012_root + '/val'
-            self.ilsvrc2012_test_images_dir = ilsvrc2012_root + '/test'
-            self.ilsvrc2012_val_images = ilsvrc2012_root + '/val_images.txt'
-            self.ilsvrc2012_val_labels = ilsvrc2012_root + '/val_labels.txt'
-            self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/bbox_train'
-            self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/bbox_val'
-            self.ilsvrc2012_classid_wnid_words = \
-                ilsvrc2012_root + '/classid_wnid_words.txt'
-            self.ilsvrc2012_decaf_model_spec = \
-                '/home/alessandro/Data/decaf_ImageNet_model'\
-                '/imagenet.decafnet.meta'
-            self.ilsvrc2012_decaf_model = \
-                '/home/alessandro/Data/decaf_ImageNet_model'\
-                '/imagenet.decafnet.epoch90'
-            self.ilsvrc2012_caffe_model_spec = \
-                '/home/alessandro/Code/caffe_131211/caffe/examples'\
-                '/imagenet_deploy.prototxt'
-            self.ilsvrc2012_caffe_model = \
-                '/home/alessandro/Data/ILSVRC2012/caffe_model'\
-                '/caffe_reference_imagenet_model'
-            self.ilsvrc2012_caffe_avg_image = \
-                '/home/alessandro/Code/caffe_131211/caffe/python/caffe/imagenet'\
-                '/ilsvrc_2012_mean.npy'
-            self.ilsvrc2012_caffe_wnids_words = \
-                '/home/alessandro/Code/caffe_131211/caffe/examples'\
-                '/synset_words.txt'
-       	    self.ilsvrc2012_segm_results_dir = \
-                '/home/alessandro/Data_projects/grayobfuscation/'\
-                'segment_ILSVRC2012'
-            # ***** ILSVRC 2013 Detection *****
-            # TODOOO: now only anthill is supported
-            # ***** PASCAL VOC 2007 *****
-            self.pascal2007_root_dir = \
-                '/home/alessandro/Data/VOCdevkit/VOC2007'
-            self.pascal2007_images_dir = \
-                self.pascal2007_root_dir + '/JPEGImages'
-            self.pascal2007_image_file_extension = '.jpg'
-            self.pascal2007_classes = \
-                 ['aeroplane','bicycle','bird','boat',\
-                 'bottle','bus','car','cat',\
-                 'chair','cow','diningtable','dog',\
-                 'horse','motorbike','person','pottedplant',\
-                 'sheep','sofa','train','tvmonitor']
-            self.pascal2007_sets_dir = \
-                self.pascal2007_root_dir + '/ImageSets/Main'
-            self.pascal2007_annotations_dir = \
-                self.pascal2007_root_dir + '/Annotations'
-            # ***** GRAYOBFUSCATION PROJECT *****
-            self.experiments_output_directory = \
-                '/home/alessandro/Data_projects/grayobfuscation'
-	elif hostname == 'lbazzani-desk':
-            # ***** ILSVRC 2012 *****
-            ilsvrc2012_root = '/home/lbazzani/DATASETS/ILSVRC2012'
-            self.ilsvrc2012_root_images_dir = ilsvrc2012_root
-            self.ilsvrc2012_train_images_dir = ilsvrc2012_root + '/train'
-            self.ilsvrc2012_val_images_dir = ilsvrc2012_root + '/val'
-            self.ilsvrc2012_test_images_dir = ilsvrc2012_root + '/test'
-            self.ilsvrc2012_val_images = ilsvrc2012_root + '/val_images.txt'
-            self.ilsvrc2012_val_labels = ilsvrc2012_root + '/val_labels.txt'
-            self.ilsvrc2012_train_box_gt = ilsvrc2012_root + '/bbox_train'
-            self.ilsvrc2012_val_box_gt = ilsvrc2012_root + '/bbox_val'
-            self.ilsvrc2012_classid_wnid_words = \
-                ilsvrc2012_root + '/classid_wnid_words.txt'
-            self.ilsvrc2012_decaf_model_spec = \
-               '/home/lbazzani/CODE/DATA/decaf_ImageNet_model'\
-               '/imagenet.decafnet.meta'
-            self.ilsvrc2012_decaf_model = \
-               '/home/lbazzani/CODE/DATA/decaf_ImageNet_model'\
-               '/imagenet.decafnet.epoch90'
-            self.ilsvrc2012_caffe_model_spec = \
-                '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
-                '/imagenet_deploy.prototxt'
-            self.ilsvrc2012_caffe_model = \
-                '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
-                '/caffe_reference_imagenet_model'
-            self.ilsvrc2012_caffe_avg_image = \
-                '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
-                '/ilsvrc_2012_mean.npy'
-            self.ilsvrc2012_caffe_wnids_words = \
-                '/home/lbazzani/CODE/DATA/caffe_ImageNet_model'\
-                '/synset_words.txt'
-       	    self.ilsvrc2012_segm_results_dir = \
-               '/home/lbazzani/CODE/DATA/obfuscation_results/'\
-               'segment_ILSVRC2012'
-            # ***** ILSVRC 2013 Detection *****
-            # TODOOO: now only anthill is supported
-            # ***** PASCAL VOC 2007 *****
-            self.pascal2007_root_dir = \
-                '/home/lbazzani/DATASETS/VOC2007'
-            self.pascal2007_images_dir = \
-                self.pascal2007_root_dir + '/JPEGImages'
-            self.pascal2007_image_file_extension = '.jpg'
-            self.pascal2007_classes = \
-                 ['aeroplane','bicycle','bird','boat',\
-                 'bottle','bus','car','cat',\
-                 'chair','cow','diningtable','dog',\
-                 'horse','motorbike','person','pottedplant',\
-                 'sheep','sofa','train','tvmonitor']
-            self.pascal2007_sets_dir = \
-                self.pascal2007_root_dir + '/ImageSets/Main'
-            self.pascal2007_annotations_dir = \
-                self.pascal2007_root_dir + '/Annotations'
-            # ***** GRAYOBFUSCATION PROJECT *****
-            self.experiments_output_directory = \
-               '/home/lbazzani/CODE/DATA/obfuscation_results'
-	else:
+        else:
+            # TODO: create here your own configurations
             raise ValueError('The current machine is not supported')

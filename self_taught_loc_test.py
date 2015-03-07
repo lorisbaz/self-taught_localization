@@ -9,8 +9,8 @@ from self_taught_loc import *
 
 class SelfTaughtLocTest(unittest.TestCase):
     def setUp(self):
-        conf = Configuration()
-        netParams = NetworkCaffeParams(conf.ilsvrc2012_caffe_model_spec, \
+        conf = Configuration(caffe_model = 'alexnet')
+        netParams = NetworkCaffe1114Params(conf.ilsvrc2012_caffe_model_spec, \
                            conf.ilsvrc2012_caffe_model, \
                            conf.ilsvrc2012_caffe_wnids_words, \
                            conf.ilsvrc2012_caffe_avg_image, \
