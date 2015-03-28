@@ -11,13 +11,13 @@ set(gca, 'fontsize', conf.fs);
 ylabel('Classes');
 xlabel('Difference in Average Precision');
 
-%%%TMP CODE
-nozero = (EBdet.average_precision~=0);
-EBdet.average_precision = EBdet.average_precision(nozero);
-OBFSgt.average_precision = OBFSgt.average_precision(nozero);
-num_classes = sum(nozero)
-mean(EBdet.average_precision)
-%%%END TMP CODE
+% %%%TMP CODE
+% nozero = (EBdet.average_precision~=0);
+% EBdet.average_precision = EBdet.average_precision(nozero);
+% OBFSgt.average_precision = OBFSgt.average_precision(nozero);
+% num_classes = sum(nozero)
+% mean(EBdet.average_precision)
+% %%%END TMP CODE
 avg_prec = mean(sort(OBFSgt.average_precision-EBdet.average_precision))*100;
 legend_string = sprintf('%s\n-minus-\n%s\n(AVG=%.4f)', OBFSgt.legend, EBdet.legend, avg_prec);
 this_legend = plot_detection_graph(sort(OBFSgt.average_precision-EBdet.average_precision), [1:num_classes], 'o', legend_string, OBFSgt.color);
