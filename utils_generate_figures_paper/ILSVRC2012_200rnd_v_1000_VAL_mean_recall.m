@@ -28,7 +28,8 @@ num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000
 mean_recall = [ 0.377169, 0.477222, 0.521555, 0.549911, 0.570349, 0.587273, 0.601085, 0.612298, 0.622261, 0.631556, 0.639678, 0.646979, 0.653938, 0.660155, 0.665991, 0.688544, 0.720843, 0.759103, 0.809899, 0.853417, 0.902924, 0.907974 ];
 plot(num_bboxes, mean_recall, ['-' OBFStopC_s2.marker], 'DisplayName', OBFStopC_s2.legend, 'Color', OBFStopC_s2.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+set(h,'position',conf.legend_position)
 
-legend(h, 'Location', 'Best');
+%legend('Location', 'SouthEast');
 
 end

@@ -35,8 +35,8 @@ num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000
 mean_precision = [ 0.238228, 0.143336, 0.108723, 0.088350, 0.075752, 0.067822, 0.061629, 0.056677, 0.053033, 0.049161, 0.045992, 0.043289, 0.041008, 0.039004, 0.037187, 0.030176, 0.023027, 0.017056, 0.010484, 0.006013, 0.002729, 0.001458, 0.000771, 0.000769 ];
 plot(num_bboxes, mean_precision, ['-' BING.marker], 'DisplayName', BING.legend, 'Color', BING.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+set(h,'position',conf.legend_position)
 
-
-legend(h, 'Location', 'Best');
+%legend('Location', 'SouthEast');
 
 end

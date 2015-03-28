@@ -69,7 +69,8 @@ num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000
 mean_precision = [ 0.543300, 0.339100, 0.245933, 0.193975, 0.159900, 0.136583, 0.119171, 0.106087, 0.095878, 0.087450, 0.080400, 0.074442, 0.069300, 0.064793, 0.060880, 0.046980, 0.032427, 0.020157, 0.010440, 0.005442, 0.003098, 0.003034, 0.003034 ];
 plot(num_bboxes, mean_precision, ['-' OBFStopC.marker], 'DisplayName', OBFStopC.legend, 'Color', OBFStopC.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+set(h,'position',conf.legend_position)
 
-legend(h, 'Location', 'Best');
+%legend('Location', 'SouthEast');
 
 end

@@ -35,8 +35,8 @@ num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000
 mean_recall = [ 0.174096, 0.209681, 0.236915, 0.255477, 0.272941, 0.292083, 0.309075, 0.324505, 0.341502, 0.351664, 0.361089, 0.369596, 0.378222, 0.386282, 0.393932, 0.424864, 0.483356, 0.589425, 0.708100, 0.799721, 0.890425, 0.943949, 0.959432 ];
 plot(num_bboxes, mean_recall, ['-' BING.marker], 'DisplayName', BING.legend, 'Color', BING.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+set(h,'position',conf.legend_position)
 
-
-legend(h, 'Location', 'Best');
+%legend('Location', 'SouthEast');
 
 end

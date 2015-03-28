@@ -29,6 +29,7 @@ MATLAB.Color.brownDark = [64 32 0]./255; % brown dark
 conf.figure_width = 900;
 conf.figure_height = 600;
 conf.figure_position = [1 1 conf.figure_width conf.figure_height];
+conf.legend_position = [0.57 0.3 0.35 0.35];
 
 % line width, marker size, font size
 conf.lw = 3;
