@@ -11,13 +11,13 @@ set(gca, 'fontsize', conf.fs);
 ylabel('Classes');
 xlabel('Difference in Average Precision');
 
-%%%TMP CODE
-nozero = (MCGdet.average_precision~=0);
-MCGdet.average_precision = MCGdet.average_precision(nozero);
-OBFSgt.average_precision = OBFSgt.average_precision(nozero);
-num_classes = sum(nozero)
+% %%%TMP CODE
+% nozero = (MCGdet.average_precision~=0);
+% MCGdet.average_precision = MCGdet.average_precision(nozero);
+% OBFSgt.average_precision = OBFSgt.average_precision(nozero);
+% num_classes = sum(nozero)
 mean(MCGdet.average_precision)
-%%%END TMP CODE
+% %%%END TMP CODE
 avg_prec = mean(sort(OBFSgt.average_precision-MCGdet.average_precision))*100;
 legend_string = sprintf('%s\n-minus-\n%s\n(AVG=%.4f)', OBFSgt.legend, MCGdet.legend, avg_prec);
 this_legend = plot_detection_graph(sort(OBFSgt.average_precision-MCGdet.average_precision), [1:num_classes], 'o', legend_string, OBFSgt.color);
