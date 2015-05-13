@@ -9,7 +9,7 @@ L. Bazzani, A. Bergamo, D. Anguelov, and L. Torresani
 
 We included
 * A demo that shows how STL be used to extract the objectness of any image
-* The bounding boxes generate in the experiments of our paper
+* The bounding boxes of STL generated in our experiments
 * The scripts to generate the plots in our paper
 
 Dependencies
