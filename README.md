@@ -9,86 +9,27 @@ L. Bazzani, A. Bergamo, D. Anguelov, and L. Torresani
 
 We included
 * A demo that shows how STL be used to extract the objectness of any image
-* A set of scripts to reproduce the results reported in the original paper
+* The bounding boxes generate in the experiments of our paper
 
 Dependencies
 ------------
-* Python 2.7 
+* Python 2.7
 * [NumPy](http://www.numpy.org/), [SciPy](http://www.scipy.org/), and [Matplotlib](http://matplotlib.org/) packages.
 * [Matlab](http://www.mathworks.com/products/matlab/)
-* [Caffe](https://github.com/BVLC/caffe): we used the commit commit c18d22eb92488f02c0256a3fe4ac20a8ad827596 Date: Mon Oct 20 12:57:18 2014 -0700
+* [Caffe](https://github.com/BVLC/caffe): we used the gist_id [c18d22eb92](https://github.com/BVLC/caffe/tree/c18d22eb92488f02c0256a3fe4ac20a8ad827596) Date: Mon Oct 20 12:57:18 2014 -0700
 
 
 Getting started
 ---------------
 
-### Demo 
+### Demo
 
 
-### Reproduce the experiments on the paper
+### Bounding Boxes
 
-ILSVRC2012-train-200-RANDOM
-```
-exp03_07: load and generate dataset
-exp34_02: STL-CL
-exp34_04: STL-U
-```
-
-ILSVRC2012-val-200-RANDOM
-```
-exp03_06: load and generate dataset
-exp34_07: STL-U
-```
-
-ILSVRC2012-val-1000
-```
-exp03_05: load and generate dataset
-exp34_08: STL-U
-```
-
-PASCAL2007-trainval
-```
-exp19_02: load and generate dataset
-exp34_06: STL-U
-```
-
-PASCAL2007-test
-```
-exp19_01: load and generate dataset
-exp34_05: STL-U
-```
 
 ### Additional Info
 
-List of 200 classes randomly selected for the ILSVRC2012-(val,train)-200-RANDOM:
-```
-classs_list_200 = {...
-    'n01930112';'n03461385';'n01688243';'n02120505';'n04067472';'n02119022';'n03673027';'n03126707';...
-    'n03494278';'n07749582';'n01641577';'n07747607';'n02802426';'n03930630';'n02107142';'n03724870';...
-    'n01692333';'n02115641';'n04562935';'n02111500';'n02672831';'n02110627';'n02113023';'n02256656';...
-    'n04579145';'n03710193';'n02484975';'n02087394';'n04409515';'n02093859';'n02111129';'n04141975';...
-    'n03372029';'n03133878';'n03733805';'n01798484';'n04560804';'n02950826';'n03935335';'n04141076';...
-    'n02483362';'n03825788';'n04501370';'n03785016';'n02906734';'n01828970';'n07720875';'n03134739';...
-    'n02277742';'n01443537';'n03290653';'n01773549';'n02091032';'n03259280';'n03085013';'n01990800';...
-    'n02437312';'n04355338';'n03804744';'n03874293';'n02815834';'n02108089';'n02396427';'n01616318';...
-    'n02114367';'n04371430';'n02168699';'n10565667';'n04485082';'n03337140';'n04399382';'n03976657';...
-    'n03792782';'n04311174';'n03787032';'n04325704';'n02177972';'n04335435';'n03832673';'n02116738';...
-    'n02749479';'n02095314';'n02099712';'n03814906';'n03445777';'n06874185';'n03908714';'n03983396';...
-    'n04467665';'n02128385';'n04111531';'n04254777';'n02233338';'n04209239';'n07697537';'n04311004';...
-    'n02777292';'n03355925';'n02110958';'n01530575';'n02107908';'n04200800';'n04154565';'n04023962';...
-    'n01514668';'n03180011';'n03131574';'n03124043';'n03902125';'n12768682';'n03775546';'n07714571';...
-    'n03594734';'n02480495';'n02099267';'n03967562';'n03866082';'n03379051';'n03417042';'n02104365';...
-    'n07730033';'n01729977';'n01698640';'n04252225';'n03476991';'n03796401';'n01514859';'n03729826';...
-    'n03201208';'n01614925';'n07711569';'n02356798';'n07684084';'n01882714';'n04153751';'n04049303';...
-    'n07718747';'n04004767';'n04591157';'n02115913';'n04447861';'n03781244';'n01693334';'n07745940';...
-    'n07753592';'n01537544';'n04398044';'n04589890';'n02607072';'n04037443';'n02783161';'n02093256';...
-    'n02412080';'n12267677';'n02909870';'n02165456';'n02487347';'n02108915';'n02504013';'n02106382';...
-    'n03220513';'n02087046';'n03065424';'n02099601';'n02127052';'n04592741';'n03476684';'n01883070';...
-    'n02102973';'n02226429';'n03347037';'n03887697';'n04428191';'n02276258';'n03733281';'n03424325';...
-    'n02948072';'n02992211';'n03400231';'n04296562';'n02490219';'n03888257';'n02965783';'n03998194';...
-    'n03803284';'n02206856';'n03977966';'n02086240';'n04040759';'n03670208';'n02280649';'n02441942';...
-    'n03761084';'n03908618';'n02510455';'n02794156';'n02841315';'n02865351';'n02088238';'n02927161'...
-};
-```
+List of 200 classes randomly selected for the ILSVRC2012-(val,train)-200-RND can be found in the file list_classes_ILSVRC2012-200-RND.txt
 
-L. Bazzani and A. Bergamo contributed equally for the project.
+L. Bazzani and A. Bergamo contributed equally to the project.
