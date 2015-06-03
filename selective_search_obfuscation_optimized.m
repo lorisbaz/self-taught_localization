@@ -21,18 +21,16 @@ assert(numel(testIms) == numel(outFiles));
 if nargin < 3
   ss_version = 'quality';
 end
-  
+
 % add the path to the SelectiveSearch toolbox
-addpath('/home/anthill/vlg/SelectiveSearchCodeIJCV');
-addpath('/home/anthill/vlg/SelectiveSearchCodeIJCV/Dependencies');
-addpath('./HierSegmentation_SelSearch/utils')
+addpath('./img_segmentation')
 
 % select the color spaces
 colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};
 
 % Thresholds for the Felzenszwalb and Huttenlocher segmentation algorithm.
 % Note that by default, we set minSize = k, and sigma = 0.8.
-ks = [50 100 150 300]; % controls size of segments of initial segmentation. 
+ks = [50 100 150 300]; % controls size of segments of initial segmentation.
 sigma = 0.8;
 
 % SelectiveSearch version
@@ -55,12 +53,12 @@ for i=1:length(testIms)
       % if the image is in grayscale, we convert it to colors
       if size(im, 3) == 1
         im = repmat(im, [1, 1, 3]);
-      end      
+      end
       % try many Segmentation thresholds k
       idx = 1;
       blobIndIm = cell(1, length(ks)*length(colorTypes));
       for j=1:length(ks)
-          k = ks(j); 
+          k = ks(j);
           minSize = k; % We set minSize = k
           % try many color spaces
           for n = 1:length(colorTypes)
@@ -70,7 +68,7 @@ for i=1:length(testIms)
               [colourIm, imageToSegment] = Image2ColourSpace(im, colorType);
               [blobIndIm{idx}, blobBoxes, neighbours] = mexFelzenSegmentIndex(imageToSegment, sigma, k, minSize);
               totalTime = totalTime + toc;
-              
+
               idx = idx + 1;
           end
       end
@@ -81,7 +79,7 @@ for i=1:length(testIms)
       save(outFiles{i}, 'blobIndIm', 'img_width', 'img_height');
     catch Exception
       Exception
-      fprintf('AN ERROR HAS OCCURED!\n');      
+      fprintf('AN ERROR HAS OCCURED!\n');
     end
 end
 fprintf('\n');
@@ -89,4 +87,3 @@ fprintf('\n');
 fprintf('Time per image: %.2f\n', totalTime ./ length(testIms));
 
 end
-
