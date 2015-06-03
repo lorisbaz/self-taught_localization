@@ -28,10 +28,11 @@ class FeatureExtractorNetworkTest(unittest.TestCase):
         img = skimage.transform.resize(img, (height, width))
         img_anno.set_image(img)
         self.img_anno = img_anno
-        self.conf = Configuration()
+        root = "/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012/caffe_model_141118"
+        self.conf = Configuration(root=root)
         # reset the FeatureExtractorNetwork.network_ field
         FeatureExtractorNetwork.network_ = None
-        
+
     def tearDown(self):
         pass
 
@@ -49,8 +50,8 @@ class FeatureExtractorNetworkTest(unittest.TestCase):
 
     def test_extract(self):
         # create params
-        netparams = NetworkFakeParams()        
-        params = FeatureExtractorNetworkParams(netparams)        
+        netparams = NetworkFakeParams()
+        params = FeatureExtractorNetworkParams(netparams)
         params.cache_features = True
         # init
         fe = FeatureExtractorNetwork(self.img_anno, params)
@@ -58,7 +59,7 @@ class FeatureExtractorNetworkTest(unittest.TestCase):
         # extract
         feats = fe.extract(self.img_anno.pred_objects['C1']['label1'].bboxes)
         self.assertEqual(feats.shape[0], 2)
-        self.assertEqual(feats.shape[1], 1000)        
+        self.assertEqual(feats.shape[1], 1000)
         key0 = '11-24-13-28'
         key1 = '21-44-23-48'
         self.assertEqual(len(fe.cache[name]['featidx']), 2)
@@ -74,7 +75,7 @@ class FeatureExtractorNetworkTest(unittest.TestCase):
         # extract new bboxes
         feats = fe.extract(self.img_anno.pred_objects['C1']['label2'].bboxes)
         self.assertEqual(feats.shape[0], 1)
-        self.assertEqual(feats.shape[1], 1000)        
+        self.assertEqual(feats.shape[1], 1000)
         key2 = '31-64-33-68'
         self.assertEqual(len(fe.cache[name]['featidx']), 3)
         self.assertTrue(key2 in fe.cache[name]['featidx'])
@@ -86,15 +87,15 @@ class FeatureExtractorNetworkTest(unittest.TestCase):
         # extract the last bbox again
         feats = fe.extract(self.img_anno.pred_objects['C1']['label2'].bboxes)
         self.assertEqual(feats.shape[0], 1)
-        self.assertEqual(feats.shape[1], 1000)        
+        self.assertEqual(feats.shape[1], 1000)
         self.assertEqual(len(fe.cache[name]['featidx']), 3)
         self.assertTrue(key2 in fe.cache[name]['featidx'])
         self.assertEqual(fe.cache[name]['featidx'][key2], 2)
         self.assertIsInstance(fe.cache[name]['featdata'], np.ndarray)
         self.assertEqual(fe.cache[name]['featdata'].shape[0], 3)
         self.assertEqual(fe.cache[name]['featdata'].shape[1], 1000)
-        self.assertEqual(fe.cache[name]['featdata'][2,0], 99.0)                
-                
+        self.assertEqual(fe.cache[name]['featdata'][2,0], 99.0)
+
 #=============================================================================
 
 if __name__ == '__main__':

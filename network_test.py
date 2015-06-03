@@ -6,26 +6,21 @@ import numpy as np
 
 class NetworkCaffe1114Test(unittest.TestCase):
     def setUp(self):
-        self.conf = Configuration(caffe_model = 'alexnet')
-        # deprecated way to construct the network
-        self.net = NetworkCaffe1114(self.conf.ilsvrc2012_caffe_model_spec,\
-                                self.conf.ilsvrc2012_caffe_model,\
-                                self.conf.ilsvrc2012_caffe_wnids_words,\
-                                self.conf.ilsvrc2012_caffe_avg_image, \
-                                center_only = True)
+        root = "/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012/caffe_model_141118"
+        self.conf = Configuration(root=root)
         # using the factory
-        params = NetworkCaffe1114Params(self.conf.ilsvrc2012_caffe_model_spec,\
-                                    self.conf.ilsvrc2012_caffe_model,\
-                                    self.conf.ilsvrc2012_caffe_wnids_words,\
-                                    self.conf.ilsvrc2012_caffe_avg_image, \
+        params = NetworkCaffe1114Params(self.conf.caffe_model_spec,\
+                                    self.conf.caffe_model,\
+                                    self.conf.caffe_wnids_words,\
+                                    self.conf.caffe_avg_image, \
                                     center_only = True)
         self.net2 = Network.create_network(params)
         # using the factory
         self.wnid_my_subset = ['n01440764', 'n01443537', 'n01751748']
-        params2 = NetworkCaffe1114Params(self.conf.ilsvrc2012_caffe_model_spec,\
-                                    self.conf.ilsvrc2012_caffe_model,\
-                                    self.conf.ilsvrc2012_caffe_wnids_words,\
-                                    self.conf.ilsvrc2012_caffe_avg_image, \
+        params2 = NetworkCaffe1114Params(self.conf.caffe_model_spec,\
+                                    self.conf.caffe_model,\
+                                    self.conf.caffe_wnids_words,\
+                                    self.conf.caffe_avg_image, \
                                     center_only = True, \
                                     wnid_subset = self.wnid_my_subset)
         self.net3 = Network.create_network(params2)
@@ -36,20 +31,20 @@ class NetworkCaffe1114Test(unittest.TestCase):
         self.net3 = None
 
     def test_get_label_id(self):
-        self.assertEqual(self.net.get_label_id('n01440764'), 0)
-        self.assertEqual(self.net.get_label_id('n01443537'), 1)
-        self.assertEqual(self.net.get_label_id('n15075141'), 999)
+        self.assertEqual(self.net2.get_label_id('n01440764'), 0)
+        self.assertEqual(self.net2.get_label_id('n01443537'), 1)
+        self.assertEqual(self.net2.get_label_id('n15075141'), 999)
 
     def test_get_label_desc(self):
-        self.assertEqual(self.net.get_label_desc('n01440764'), \
+        self.assertEqual(self.net2.get_label_desc('n01440764'), \
                          'tench, Tinca tinca')
-        self.assertEqual(self.net.get_label_desc('n01443537'), \
+        self.assertEqual(self.net2.get_label_desc('n01443537'), \
                          'goldfish, Carassius auratus')
-        self.assertEqual(self.net.get_label_desc('n15075141'), \
+        self.assertEqual(self.net2.get_label_desc('n15075141'), \
                          'toilet tissue, toilet paper, bathroom tissue')
 
     def test_get_labels(self):
-        labels = self.net.get_labels()
+        labels = self.net2.get_labels()
         self.assertEqual(labels[0], 'n01440764')
         self.assertEqual(labels[1], 'n01443537')
         self.assertEqual(labels[999], 'n15075141')

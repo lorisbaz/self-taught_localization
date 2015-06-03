@@ -3,7 +3,6 @@ import unittest
 
 from annotatedimage import *
 from bbox import *
-from heatmap import *
 from featextractor import *
 
 class AnnotatedImageTest(unittest.TestCase):
@@ -23,7 +22,7 @@ class AnnotatedImageTest(unittest.TestCase):
         img_anno.pred_objects['C1'] = {}
         img_anno.pred_objects['C1']['label1'] = obj1
         img_anno.pred_objects['C1']['label2'] = obj2
-        img_anno.pred_objects['C2'] = {}        
+        img_anno.pred_objects['C2'] = {}
         self.img_anno = img_anno
 
     def tearDown(self):
@@ -40,13 +39,13 @@ class AnnotatedImageTest(unittest.TestCase):
         img_anno = pickle.loads(s)
         # check
         self.assertFalse( hasattr(img_anno, 'feature_extractor_') )
-        
+
     def test_set_image(self):
         img = skimage.io.imread('test_data/ILSVRC2012_val_00000001_n01751748.JPEG')
         skimage.io.imshow(img)
         self.img_anno.set_image(img)
         img2 = self.img_anno.get_image()
-        skimage.io.imshow(img2)    
+        skimage.io.imshow(img2)
         #skimage.io.show()
 
     def test_export_pred_bboxes_to_text(self):
@@ -83,7 +82,7 @@ class AnnotatedImageTest(unittest.TestCase):
         self.assertEqual(feats.shape[1], 5)
         self.assertEqual(feats[0,0], 1.0)
         self.assertEqual(self.img_anno.features['FeatureExtractorFake'], 123)
-        
+
 #=============================================================================
 
 if __name__ == '__main__':

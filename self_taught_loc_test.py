@@ -9,11 +9,12 @@ from self_taught_loc import *
 
 class SelfTaughtLocTest(unittest.TestCase):
     def setUp(self):
-        conf = Configuration(caffe_model = 'alexnet')
-        netParams = NetworkCaffe1114Params(conf.ilsvrc2012_caffe_model_spec, \
-                           conf.ilsvrc2012_caffe_model, \
-                           conf.ilsvrc2012_caffe_wnids_words, \
-                           conf.ilsvrc2012_caffe_avg_image, \
+        root = "/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012/caffe_model_141118"
+        conf = Configuration(root=root)
+        netParams = NetworkCaffe1114Params(conf.caffe_model_spec, \
+                           conf.caffe_model, \
+                           conf.caffe_wnids_words, \
+                           conf.caffe_avg_image, \
                            center_only = True,\
                            wnid_subset = [])
         # instantiate network
