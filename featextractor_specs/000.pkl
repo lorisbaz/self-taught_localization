@@ -1,7 +1,0 @@
-€(cfeatextractor
-FeatureExtractorNetworkParams
-qoq}q(U	netparamsq(cnetwork
-NetworkCaffeParams
-qoq}q(U
-caffe_modeqUcpuq	Umean_img_filenameq
-UW/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012/caffe_model_131211/ilsvrc_2012_mean.npyqUmodel_filenameqUa/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012/caffe_model_131211/caffe_reference_imagenet_modelqUwnid_words_filenameqUS/home/ironfs/scratch/vlg/Data/Images/ILSVRC2012/caffe_model_131211/synset_words.txtqUcenter_onlyqˆUmodel_spec_filenameqU*./imagenet_deploy_GRAYOBFUSCATION.prototxtqubUlayerqUfc7qUcache_featuresqˆub.

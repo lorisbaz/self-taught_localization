@@ -23,7 +23,7 @@ if nargin < 3
 end
 
 % add the path to the SelectiveSearch toolbox
-addpath('./img_segmentation')
+addpath(genpath('./img_segmentation'))
 
 % select the color spaces
 colorTypes = {'Hsv', 'Lab', 'RGI', 'H', 'Intensity'};

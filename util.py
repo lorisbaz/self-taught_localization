@@ -12,8 +12,8 @@ logging.getLogger().setLevel(logging.INFO)
 import os
 logging.info(os.uname())
 
-import bsddb
-import cPickle as pickle
+#import bsddb
+#import cPickle as pickle
 import numpy as np
 import os.path
 import random
