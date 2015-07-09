@@ -53,6 +53,12 @@ num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000
 mean_precision = [ 0.506420, 0.322710, 0.236673, 0.188255, 0.156940, 0.135220, 0.119054, 0.106482, 0.096496, 0.088386, 0.081589, 0.075823, 0.070883, 0.066599, 0.062829, 0.049114, 0.034720, 0.022296, 0.012170, 0.006622, 0.003851, 0.003771 ];
 plot(num_bboxes, mean_precision, ['-' OBFStopC.marker], 'DisplayName', OBFStopC.legend, 'Color', OBFStopC.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
+
+% ****** exp30_06stats_NMS_05 / mean_precision *** STL-CL   **********
+num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000000, 8.000000, 9.000000, 10.000000, 11.000000, 12.000000, 13.000000, 14.000000, 15.000000, 20.000000, 30.000000, 50.000000, 100.000000, 200.000000, 500.000000, 1000.000000 ];
+mean_precision = [ 0.502020, 0.320330, 0.236187, 0.188615, 0.157224, 0.135440, 0.119214, 0.106635, 0.096629, 0.088396, 0.081605, 0.075830, 0.070766, 0.066369, 0.062599, 0.048896, 0.034419, 0.021996, 0.011922, 0.006458, 0.003830, 0.003758 ];
+plot(num_bboxes, mean_precision, ['-' OBFSgt.marker], 'DisplayName', OBFSgt.legend, 'Color', OBFSgt.color);
+h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 set(h,'position',conf.legend_position)
 
 %legend('Location', 'SouthEast');
