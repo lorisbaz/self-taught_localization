@@ -9,7 +9,6 @@ L. Bazzani, A. Bergamo, D. Anguelov, and L. Torresani
 
 We include:
 * A demo that shows how STL can be used to extract the objectness bounding boxes of an image
-* [TODO] The link of the bounding boxes of STL used in our experiments
 * The scripts to generate the plots of our paper
 
 Dependencies
@@ -33,10 +32,6 @@ Getting started
 In order to play around with the parameters of STL, open the file `stl_params.py` and look at what you can pass to the the initialization function as argument.
 
 By default the code runs the unsupervised version of STL, but it can be changed to the supervised version by choosing `use_fullimg_GT_label=True`. Note that the label(s) should be provided along with the image at row 24. See the file `prototxt/synset_words.txt` for the list of labels. For the example in the demo, it should be used `gt_labels = ["n01744401"]`.
-
-### Bounding Boxes
-
-TODO: We make available soon the bounding boxes for the dataset we used.
 
 ### Generate Plots Paper
 
