@@ -61,6 +61,11 @@ mean_precision = [ 0.506420, 0.322710, 0.236673, 0.188255, 0.156940, 0.135220, 0
 plot(num_bboxes, mean_precision, ['-' OBFStopC.marker], 'DisplayName', OBFStopC.legend, 'Color', OBFStopC.color);
 h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 
+% ****** exp42_01bstats / mean_precision *** STL+MCG   **********
+num_bboxes = [ 1.000000, 2.000000, 3.000000, 4.000000, 5.000000, 6.000000, 7.000000, 8.000000, 9.000000, 10.000000, 11.000000, 12.000000, 13.000000, 14.000000, 15.000000, 20.000000, 30.000000, 50.000000, 100.000000, 200.000000, 500.000000, 1000.000000, 2000.000000, 3000.000000, 5000.000000 ];
+mean_precision = [ 0.499760, 0.321970, 0.236427, 0.188040, 0.156776, 0.135053, 0.118897, 0.106398, 0.096398, 0.088240, 0.083655, 0.079680, 0.075635, 0.071759, 0.068183, 0.054364, 0.038548, 0.024601, 0.013144, 0.006912, 0.002904, 0.001513, 0.000944, 0.000876, 0.000874 ];
+plot(num_bboxes, mean_precision, ['-' STLWL_MCG.marker], 'DisplayName', STLWL_MCG.legend, 'Color', STLWL_MCG.color);
+h=legend('-DynamicLegend'); set(h,'Interpreter','none');
 set(h,'position',conf.legend_position)
 
 %legend('Location', 'SouthEast');
